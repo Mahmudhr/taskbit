@@ -1,0 +1,95 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id              Int       @id @default(autoincrement())
+  name            String
+  email           String    @unique
+  password        String
+  phone           String?
+  whatsapp        String?
+  bkashNumber     String?   @map("bkash_number")
+  nagadNumber     String?   @map("nagad_number")
+  bankAccountNumber String? @map("bank_account_number")
+  branchName      String?   @map("branch_name")
+  bankName        String?   @map("bank_name")
+  swiftCode       String?   @map("swift_code")
+  role            Role      @default(USER)
+  status          UserStatus @default(ACTIVE)
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
+  tasks           Task[]    @relation("AssignedTasks")
+  createdTasks    Task[]    @relation("CreatedTasks")
+  payments        Payment[] @relation("UserPayments")
+
+  @@map("users")
+}
+
+model Task {
+  id              Int       @id @default(autoincrement())
+  title           String
+  description     String?
+  link            String?
+  amount          Float
+  status          TaskStatus @default(PENDING)
+  isDeleted       Boolean   @default(false) @map("is_deleted")
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
+  assignedTo      User?     @relation("AssignedTasks", fields: [assignedToId], references: [id])
+  assignedToId    Int?      @map("assigned_to_id")
+  payments        Payment[] @relation("TaskPayments")
+  createdBy       User?     @relation("CreatedTasks", fields: [createdById], references: [id])
+  createdById     Int?      @map("created_by_id")
+
+  @@map("tasks")
+}
+
+model Payment {
+  id              Int          @id @default(autoincrement())
+  referenceNumber String       @map("reference_number")
+  paymentType     PaymentType  @map("payment_type")
+  amount          Float
+  status          PaymentStatus @default(PENDING)
+  createdAt       DateTime     @default(now()) @map("created_at")
+  task            Task         @relation("TaskPayments", fields: [taskId], references: [id])
+  taskId          Int          @map("task_id")
+  user            User         @relation("UserPayments", fields: [userId], references: [id])
+  userId          Int          @map("user_id")
+
+  @@map("payments")
+}
+
+enum Role {
+  ADMIN
+  USER
+}
+
+enum UserStatus {
+  ACTIVE
+  INACTIVE
+}
+
+enum TaskStatus {
+  PENDING
+  IN_PROGRESS
+  SUBMITTED
+  COMPLETED
+}
+
+enum PaymentStatus {
+  PENDING
+  COMPLETED
+  FAILED
+}
+
+enum PaymentType {
+  BKASH
+  NAGAD
+  BANK_TRANSFER
+}
