@@ -136,7 +136,7 @@ export default function UpdateUserForm({
           control={form.control}
           name='name'
           render={({ field }) => (
-            <FormItem className='flex-start'>
+            <FormItem>
               <FormLabel>Name</FormLabel>
               <FormControl>
                 <Input
@@ -261,7 +261,12 @@ export default function UpdateUserForm({
             </FormItem>
           )}
         />
-        <Button type='submit' disabled={isPending}>
+
+        <Button
+          type='submit'
+          disabled={isPending}
+          className='flex justify-start'
+        >
           {isPending && <Loader2Icon className='animate-spin' />}
           Update
         </Button>

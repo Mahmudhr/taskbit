@@ -235,7 +235,11 @@ export default function AddUserForm({
             </FormItem>
           )}
         />
-        <Button type='submit' disabled={isPending}>
+        <Button
+          type='submit'
+          disabled={isPending}
+          className='flex justify-start'
+        >
           {isPending && <Loader2Icon className='animate-spin' />}
           Create
         </Button>

@@ -253,7 +253,7 @@ export default function UsersPage() {
               fetchUsers.data.map((user, index) => (
                 <Card key={user.id} className='p-4'>
                   <div className='flex justify-between items-start mb-3'>
-                    <div className='flex items-center gap-2'>
+                    <div className='flex items-start gap-2'>
                       <span className='text-sm text-muted-foreground'>
                         #{index + 1}
                       </span>
@@ -290,7 +290,11 @@ export default function UsersPage() {
                     </div>
                     <div className='flex justify-between'>
                       <span className='text-muted-foreground'>Email:</span>
-                      <span className='capitalize'>{user.email}</span>
+                      <span>
+                        {user.email.length > 25
+                          ? user.email.slice(0, 25) + '...'
+                          : user.email}
+                      </span>
                     </div>
                     <div className='flex justify-between'>
                       <span className='text-muted-foreground'>Phone:</span>
@@ -298,7 +302,7 @@ export default function UsersPage() {
                     </div>
                     <div className='flex justify-between items-center'>
                       <span className='text-muted-foreground'>Status:</span>
-                      {getStatusBadge(user.status)}
+                      <span>{getStatusBadge(user.status)}</span>
                     </div>
                   </div>
                 </Card>
@@ -358,7 +362,7 @@ export default function UsersPage() {
       <AlertModal
         isOpen={updateUserModal}
         setIsOpen={setUpdateUserModal}
-        title='Create new user'
+        title='Update user'
         description=' '
       >
         <UpdateUserForm setIsOpen={setUpdateUserModal} data={updateUser} />
