@@ -1,34 +1,36 @@
 'use client';
 
-import { useForm } from 'react-hook-form';
-import { Button } from '../ui/button';
+import { UserType } from '@/types/common';
 import {
   Form,
   FormControl,
-  FormDescription,
   FormField,
   FormItem,
   FormLabel,
   FormMessage,
 } from '../ui/form';
 import { Input } from '../ui/input';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { z } from 'zod';
 import {
   Select,
   SelectContent,
-  SelectGroup,
   SelectItem,
-  SelectLabel,
   SelectTrigger,
   SelectValue,
 } from '../ui/select';
-import { toast } from 'sonner';
-import { useTransition } from 'react';
-import { createUser } from '@/server/user/user';
-import { getErrorMessage } from '@/lib/utils';
-import { useUser } from '@/hooks/use-user';
+import { Button } from '../ui/button';
 import { Loader2Icon } from 'lucide-react';
+import { useTransition } from 'react';
+import { useUser } from '@/hooks/use-user';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
+import { toast } from 'sonner';
+import { getErrorMessage } from '@/lib/utils';
+
+type UpdateUserFormProps = {
+  data: UserType | null;
+  setIsOpen: (open: boolean) => void;
+};
 
 export const FormSchema = z
   .object({
@@ -39,15 +41,12 @@ export const FormSchema = z
       .string()
       .email({ message: 'Please enter a valid email address' })
       .min(5, { message: 'Email must be at least 5 characters long' }),
-
     password: z
       .string()
-      .min(8, { message: 'Password must be at least 8 characters long' }),
-
-    confirmPassword: z
-      .string()
-      .min(8, { message: 'Password must be at least 8 characters long' }),
-
+      .min(8, { message: 'Password must be at least 8 characters long' })
+      .optional()
+      .or(z.literal('')),
+    confirmPassword: z.string().optional().or(z.literal('')),
     phone: z
       .string()
       .min(10, { message: 'Phone number must be at least 10 digits long' })
@@ -55,75 +54,81 @@ export const FormSchema = z
       .regex(/^[+]?[0-9]+$/, {
         message: 'Phone number can only contain numbers and optional + prefix',
       }),
-
     role: z.enum(['USER', 'ADMIN'], {
       errorMap: () => ({ message: 'Please select a valid role' }),
     }),
+    status: z.enum(['ACTIVE', 'INACTIVE'], {
+      errorMap: () => ({ message: 'Please select a valid status' }),
+    }),
   })
-  .refine((data) => data.password === data.confirmPassword, {
-    message: "Passwords don't match",
-    path: ['confirmPassword'],
-  });
+  .refine(
+    (data) => {
+      if (data.password && data.password.length > 0) {
+        return data.password.length >= 8;
+      }
+      return true;
+    },
+    {
+      message: 'Password must be at least 8 characters long',
+      path: ['password'],
+    }
+  )
+  .refine(
+    (data) => {
+      if (data.password && data.password.length > 0) {
+        return data.password === data.confirmPassword;
+      }
+      return true;
+    },
+    {
+      message: "Passwords don't match",
+      path: ['confirmPassword'],
+    }
+  );
 
-const fields = [
-  {
-    name: 'name',
-    label: 'Name',
-    placeholder: 'John Doe',
-  },
-  {
-    name: 'email',
-    label: 'Email',
-    placeholder: 'email@example.com',
-  },
-  {
-    name: 'password',
-    label: 'Password',
-    placeholder: 'enter your password',
-  },
-  {
-    name: 'confirmPassword',
-    label: 'Confirm password',
-    placeholder: 'enter confirm password',
-  },
-  {
-    name: 'phone',
-    label: 'Phone',
-    placeholder: 'enter your number',
-  },
-];
-
-export default function AddUserForm({
+export default function UpdateUserForm({
+  data,
   setIsOpen,
-}: {
-  setIsOpen: (open: boolean) => void;
-}) {
+}: UpdateUserFormProps) {
   const [isPending, startTransition] = useTransition();
-  const { createUserAsync } = useUser();
+  const { updateUserAsync } = useUser();
   const form = useForm<z.infer<typeof FormSchema>>({
     resolver: zodResolver(FormSchema),
     defaultValues: {
-      name: '',
-      email: '',
+      name: data?.name || '',
+      email: data?.email || '',
       password: '',
       confirmPassword: '',
-      phone: '',
+      phone: data?.phone || '',
+      role: data?.role || undefined,
+      status: data?.status || undefined,
     },
   });
 
-  function onSubmit(data: z.infer<typeof FormSchema>) {
+  function onSubmit(formData: z.infer<typeof FormSchema>) {
+    if (!data?.id) return;
+    const payload = {
+      id: data.id,
+      data: {
+        name: formData.name,
+        email: formData.email,
+        password: formData.password ? formData.password : '',
+        phone: formData.phone,
+        role: formData.role,
+        status: formData.status,
+      },
+    };
     startTransition(() => {
-      toast.promise(createUserAsync(data), {
-        loading: 'Creating user...',
+      toast.promise(updateUserAsync(payload), {
+        loading: 'Updating user...',
         success: (res) => {
           setIsOpen(false);
-          return res.message || 'Successfully created user';
+          return res.message || 'Successfully updated user';
         },
         error: (err) => getErrorMessage(err),
       });
     });
   }
-
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className='space-y-6'>
@@ -131,7 +136,7 @@ export default function AddUserForm({
           control={form.control}
           name='name'
           render={({ field }) => (
-            <FormItem>
+            <FormItem className='flex-start'>
               <FormLabel>Name</FormLabel>
               <FormControl>
                 <Input
@@ -235,9 +240,30 @@ export default function AddUserForm({
             </FormItem>
           )}
         />
+        <FormField
+          control={form.control}
+          name='status'
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Status</FormLabel>
+              <Select onValueChange={field.onChange} defaultValue={field.value}>
+                <FormControl>
+                  <SelectTrigger>
+                    <SelectValue placeholder='Select a user status' />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent className='z-[9999]'>
+                  <SelectItem value='ACTIVE'>Active</SelectItem>
+                  <SelectItem value='INACTIVE'>Inactive</SelectItem>
+                </SelectContent>
+              </Select>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
         <Button type='submit' disabled={isPending}>
           {isPending && <Loader2Icon className='animate-spin' />}
-          Create
+          Update
         </Button>
       </form>
     </Form>

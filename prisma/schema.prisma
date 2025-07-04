@@ -27,6 +27,7 @@ model User {
   tasks           Task[]    @relation("AssignedTasks")
   createdTasks    Task[]    @relation("CreatedTasks")
   payments        Payment[] @relation("UserPayments")
+  isDeleted       Boolean   @default(false) @map("is_deleted")
 
   @@map("users")
 }

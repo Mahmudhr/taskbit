@@ -4,6 +4,7 @@ import { Inter } from 'next/font/google';
 import './globals.css';
 import { ThemeProvider } from '@/components/theme-provider';
 import { Fragment } from 'react';
+import { Toaster } from 'sonner';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -31,6 +32,7 @@ export default function RootLayout({
           disableTransitionOnChange
         >
           <div suppressHydrationWarning>{children}</div>
+          <Toaster richColors position='top-center' />
         </ThemeProvider>
       </body>
     </html>

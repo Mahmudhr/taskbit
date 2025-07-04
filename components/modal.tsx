@@ -1,3 +1,4 @@
+import { VisuallyHidden } from '@radix-ui/react-visually-hidden';
 import {
   Dialog,
   DialogContent,
@@ -14,8 +15,8 @@ interface ModalProps {
   handleSubmit?: (e: React.FormEvent) => void;
   submitHandler?: () => void;
   children: React.ReactNode;
-  description?: string;
-  title?: string;
+  description: string;
+  title: string;
   reset?: () => void;
 }
 
