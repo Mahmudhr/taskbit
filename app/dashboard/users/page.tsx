@@ -40,6 +40,8 @@ import ConfirmModal from '@/components/confirm-modal';
 import { toast } from 'sonner';
 import UpdateUserForm from '@/components/forms/update-user-form';
 import { UserType } from '@/types/common';
+import UserTableSkeleton from '@/components/skeletons/user-table-skeleton';
+import UserCardSkeleton from '@/components/skeletons/user-card-skeleton';
 
 const getStatusBadge = (status: string) => {
   const variants = {
@@ -105,7 +107,7 @@ export default function UsersPage() {
   return (
     <div className='space-y-6'>
       <div className='flex items-center justify-between'>
-        <h1 className='text-3xl font-bold'>Users</h1>
+        <h1 className='text-xl md:text-3xl font-bold'>Users</h1>
         <Button onClick={() => setAddUserOpen(true)}>
           <Plus className='mr-2 h-4 w-4' />
           Create User
@@ -192,122 +194,134 @@ export default function UsersPage() {
         </CardHeader>
         <CardContent>
           {/* Desktop Table View */}
-          <div className='hidden md:block'>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Serial</TableHead>
-                  <TableHead>Name</TableHead>
-                  <TableHead>Email</TableHead>
-                  <TableHead>Role</TableHead>
-                  <TableHead>Phone</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {fetchUsers &&
-                  fetchUsers.data.map((user, index) => (
-                    <TableRow key={user.id}>
-                      <TableCell>{index + 1}</TableCell>
-                      <TableCell className='font-medium'>{user.name}</TableCell>
-                      <TableCell className='font-medium'>
-                        {user.email}
-                      </TableCell>
-                      <TableCell className='capitalize'>{user.role}</TableCell>
-                      <TableCell>{user.phone}</TableCell>
-                      <TableCell>{getStatusBadge(user.status)}</TableCell>
-                      <TableCell>
-                        <div className='flex items-center gap-2'>
-                          <Button
-                            variant='outline'
-                            size='sm'
-                            onClick={() => {
-                              setUpdateUserModal(true);
-                              setUpdateUser(user);
-                            }}
-                          >
-                            <Edit className='h-4 w-4' />
-                          </Button>
-                          <Button
-                            variant='outline'
-                            size='sm'
-                            onClick={() => {
-                              setConfirmModal(true);
-                              setUserId(user.id);
-                            }}
-                          >
-                            <UserX className='h-4 w-4' />
-                          </Button>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-              </TableBody>
-            </Table>
-          </div>
+          {!fetchUsersQuery.isLoading ? (
+            <div className='hidden md:block'>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Serial</TableHead>
+                    <TableHead>Name</TableHead>
+                    <TableHead>Email</TableHead>
+                    <TableHead>Role</TableHead>
+                    <TableHead>Phone</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {fetchUsers &&
+                    fetchUsers.data.map((user, index) => (
+                      <TableRow key={user.id}>
+                        <TableCell>{index + 1}</TableCell>
+                        <TableCell className='font-medium'>
+                          {user.name}
+                        </TableCell>
+                        <TableCell className='font-medium'>
+                          {user.email}
+                        </TableCell>
+                        <TableCell className='capitalize'>
+                          {user.role}
+                        </TableCell>
+                        <TableCell>{user.phone}</TableCell>
+                        <TableCell>{getStatusBadge(user.status)}</TableCell>
+                        <TableCell>
+                          <div className='flex items-center gap-2'>
+                            <Button
+                              variant='outline'
+                              size='sm'
+                              onClick={() => {
+                                setUpdateUserModal(true);
+                                setUpdateUser(user);
+                              }}
+                            >
+                              <Edit className='h-4 w-4' />
+                            </Button>
+                            <Button
+                              variant='outline'
+                              size='sm'
+                              onClick={() => {
+                                setConfirmModal(true);
+                                setUserId(user.id);
+                              }}
+                            >
+                              <UserX className='h-4 w-4' />
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                </TableBody>
+              </Table>
+            </div>
+          ) : (
+            <UserTableSkeleton />
+          )}
 
           {/* Mobile Card View */}
-          <div className='md:hidden space-y-4'>
-            {fetchUsers &&
-              fetchUsers.data.map((user, index) => (
-                <Card key={user.id} className='p-4'>
-                  <div className='flex justify-between items-start mb-3'>
-                    <div className='flex items-start gap-2'>
-                      <span className='text-sm text-muted-foreground'>
-                        #{index + 1}
-                      </span>
-                      <h3 className='font-medium'>{user.name}</h3>
+          {!fetchUsersQuery.isLoading ? (
+            <div className='md:hidden space-y-4'>
+              {fetchUsers &&
+                fetchUsers.data.map((user, index) => (
+                  <Card key={user.id} className='p-4'>
+                    <div className='flex justify-between items-start mb-3'>
+                      <div className='flex items-start gap-2'>
+                        <span className='text-sm text-muted-foreground'>
+                          #{index + 1}
+                        </span>
+                        <h3 className='font-medium'>{user.name}</h3>
+                      </div>
+                      <div className='flex items-center gap-2'>
+                        <Button
+                          variant='outline'
+                          size='sm'
+                          onClick={() => {
+                            setUpdateUserModal(true);
+                            setUpdateUser(user);
+                          }}
+                        >
+                          <Edit className='h-4 w-4' />
+                        </Button>
+                        <Button
+                          variant='outline'
+                          size='sm'
+                          onClick={() => {
+                            setConfirmModal(true);
+                            setUserId(user.id);
+                          }}
+                        >
+                          <UserX className='h-4 w-4' />
+                        </Button>
+                      </div>
                     </div>
-                    <div className='flex items-center gap-2'>
-                      <Button
-                        variant='outline'
-                        size='sm'
-                        onClick={() => {
-                          setUpdateUserModal(true);
-                          setUpdateUser(user);
-                        }}
-                      >
-                        <Edit className='h-4 w-4' />
-                      </Button>
-                      <Button
-                        variant='outline'
-                        size='sm'
-                        onClick={() => {
-                          setConfirmModal(true);
-                          setUserId(user.id);
-                        }}
-                      >
-                        <UserX className='h-4 w-4' />
-                      </Button>
-                    </div>
-                  </div>
 
-                  <div className='space-y-2 text-sm'>
-                    <div className='flex justify-between'>
-                      <span className='text-muted-foreground'>Role:</span>
-                      <span className='capitalize'>{user.role}</span>
+                    <div className='space-y-2 text-sm'>
+                      <div className='flex justify-between'>
+                        <span className='text-muted-foreground'>Role:</span>
+                        <span className='capitalize'>{user.role}</span>
+                      </div>
+                      <div className='flex justify-between'>
+                        <span className='text-muted-foreground'>Email:</span>
+                        <span>
+                          {user.email.length > 25
+                            ? user.email.slice(0, 25) + '...'
+                            : user.email}
+                        </span>
+                      </div>
+                      <div className='flex justify-between'>
+                        <span className='text-muted-foreground'>Phone:</span>
+                        <span>{user.phone}</span>
+                      </div>
+                      <div className='flex justify-between items-center'>
+                        <span className='text-muted-foreground'>Status:</span>
+                        <span>{getStatusBadge(user.status)}</span>
+                      </div>
                     </div>
-                    <div className='flex justify-between'>
-                      <span className='text-muted-foreground'>Email:</span>
-                      <span>
-                        {user.email.length > 25
-                          ? user.email.slice(0, 25) + '...'
-                          : user.email}
-                      </span>
-                    </div>
-                    <div className='flex justify-between'>
-                      <span className='text-muted-foreground'>Phone:</span>
-                      <span>{user.phone}</span>
-                    </div>
-                    <div className='flex justify-between items-center'>
-                      <span className='text-muted-foreground'>Status:</span>
-                      <span>{getStatusBadge(user.status)}</span>
-                    </div>
-                  </div>
-                </Card>
-              ))}
-          </div>
+                  </Card>
+                ))}
+            </div>
+          ) : (
+            <UserCardSkeleton />
+          )}
 
           <div className='flex items-center justify-between space-x-2 py-4'>
             <div className='text-sm text-muted-foreground'>

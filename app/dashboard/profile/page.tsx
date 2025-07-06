@@ -38,8 +38,6 @@ export default function ProfilePage() {
   };
 
   const handleSave = () => {
-    // Handle save logic here
-    console.log('Saving profile:', formData);
     setIsEditing(false);
   };
 
