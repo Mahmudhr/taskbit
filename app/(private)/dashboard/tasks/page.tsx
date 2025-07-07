@@ -21,6 +21,8 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { Plus, Search, Edit, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import AlertModal from '@/components/alert-modal';
+import CreateTaskForm from '@/components/forms/create-task-form';
 
 // Mock data
 const mockTasks = [
@@ -59,6 +61,7 @@ export default function TasksPage() {
   const [timeFilter, setTimeFilter] = useState('all');
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
+  const [taskOpen, setTaskOpen] = useState(false);
 
   const getStatusBadge = (status: string) => {
     const variants = {
@@ -77,8 +80,8 @@ export default function TasksPage() {
   return (
     <div className='space-y-6'>
       <div className='flex items-center justify-between'>
-        <h1 className='text-3xl font-bold'>All Tasks</h1>
-        <Button>
+        <h1 className='text-xl md:text-3xl font-bold'>All Tasks</h1>
+        <Button onClick={() => setTaskOpen(true)}>
           <Plus className='mr-2 h-4 w-4' />
           Add Task
         </Button>
@@ -253,6 +256,14 @@ export default function TasksPage() {
           </div>
         </CardContent>
       </Card>
+      <AlertModal
+        isOpen={taskOpen}
+        setIsOpen={setTaskOpen}
+        title='Create new task'
+        description=' '
+      >
+        <CreateTaskForm setIsOpen={setTaskOpen} />
+      </AlertModal>
     </div>
   );
 }

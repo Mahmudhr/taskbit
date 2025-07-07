@@ -26,16 +26,7 @@ export function useUser(options?: string) {
     queryKey: ['users', options],
     queryFn: async () => {
       const res = await fetchAllUser(options);
-      return {
-        ...res,
-        data: res.data.map((user: any) => ({
-          password: '',
-          tasks: [],
-          createdTasks: [],
-          payments: [],
-          ...user,
-        })),
-      };
+      return res;
     },
     placeholderData: keepPreviousData,
   });

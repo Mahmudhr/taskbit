@@ -78,6 +78,8 @@ export default function UsersPage() {
   const queryString = generateQueryString(params);
   const { fetchUsers, fetchUsersQuery, deleteUserAsync } = useUser(queryString);
 
+  console.log({ check: fetchUsers, data: fetchUsersQuery.data });
+
   const handleDeleUser = () => {
     if (userId === null) return;
     startTransition(() => {

@@ -64,7 +64,7 @@ export default function MyPaymentsPage() {
   return (
     <div className='space-y-6'>
       <div className='flex items-center justify-between'>
-        <h1 className='text-3xl font-bold'>My Payments</h1>
+        <h1 className='text-xl md:text-3xl font-bold'>My Payments</h1>
       </div>
 
       <Card>

@@ -105,13 +105,30 @@ export const fetchAllUser = async (data?: string) => {
         phone: true,
         whatsapp: true,
         bkashNumber: true,
+        nagadNumber: true,
+        bankAccountNumber: true,
+        branchName: true,
+        bankName: true,
+        swiftCode: true,
         role: true,
         status: true,
         createdAt: true,
         updatedAt: true,
-        // password: false, // explicitly excluded
+        tasks: {
+          include: {
+            payments: true, // Include payments relation for tasks
+          },
+        },
+        createdTasks: {
+          include: {
+            payments: true, // Include payments relation for createdTasks
+          },
+        },
+        payments: true,
       },
     });
+
+    console.log('Raw Prisma users:', JSON.stringify(users, null, 2));
 
     return {
       data: users,
@@ -167,5 +184,40 @@ export const UpdateUser = async ({
     };
   } catch (e) {
     throw new Error('Failed to User');
+  }
+};
+
+/**
+ * Search users by name or email (case-insensitive, partial match)
+ * @param query string to search (name or email)
+ * @returns array of users with id, name, email
+ */
+export const searchUsers = async (query: string) => {
+  if (!query || query.trim() === '') return [];
+  try {
+    const users = await prisma.user.findMany({
+      where: {
+        OR: [
+          { name: { contains: query, mode: 'insensitive' } },
+          { email: { contains: query, mode: 'insensitive' } },
+        ],
+        status: 'ACTIVE',
+        isDeleted: false,
+      },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        phone: true,
+        role: true,
+        status: true,
+        createdAt: true,
+        updatedAt: true,
+      },
+      take: 10,
+    });
+    return users;
+  } catch (e) {
+    throw new Error('Failed to search users');
   }
 };
