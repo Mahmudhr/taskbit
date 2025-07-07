@@ -2,7 +2,8 @@
 
 import type React from 'react';
 
-import { useState } from 'react';
+import { signIn, SignInResponse, useSession } from 'next-auth/react';
+import { useEffect, useState, useTransition } from 'react';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -20,69 +21,121 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { useForm } from 'react-hook-form';
+import {
+  Form,
+  FormControl,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from '@/components/ui/form';
+import { z } from 'zod';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { toast } from 'sonner';
+
+const FormSchema = z.object({
+  email: z
+    .string()
+    .email({ message: 'Please enter a valid email address' })
+    .min(5, { message: 'Email must be at least 5 characters long' }),
+  password: z
+    .string()
+    .min(8, { message: 'Password must be at least 8 characters long' }),
+});
 
 export default function SignInPage() {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [role, setRole] = useState('');
+  const searchParams = useSearchParams();
+  const [isPending, startTransition] = useTransition();
+  const previousURL = searchParams.get('callbackUrl');
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    // Handle sign in logic here
-    console.log({ email, password, role });
-  };
+  const { data: session, status } = useSession();
+  const router = useRouter();
+
+  const form = useForm<z.infer<typeof FormSchema>>({
+    resolver: zodResolver(FormSchema),
+    defaultValues: {
+      email: '',
+      password: '',
+    },
+  });
+
+  function onSubmit(data: z.infer<typeof FormSchema>) {
+    startTransition(async () => {
+      const result: SignInResponse | undefined = await signIn('credentials', {
+        email: data.email,
+        password: data.password,
+        redirect: false,
+        callbackUrl: '/dashboard',
+      });
+
+      if (result) {
+        if (result.ok && result.status === 200) {
+          toast.success('Login successfully');
+          router.push(previousURL ?? '/dashboard');
+        } else {
+          toast.error('Wrong username or password');
+        }
+      } else {
+        toast.error('An error occurred during login');
+      }
+    });
+  }
+  useEffect(() => {
+    if (status === 'authenticated') {
+      const callbackUrl =
+        searchParams.get('callbackUrl') || '/dashboard/commercial/top';
+      router.replace(callbackUrl);
+    }
+  }, [status, router, searchParams]);
+
+  if (status === 'authenticated') {
+    return null;
+  }
 
   return (
     <div className='min-h-screen flex items-center justify-center bg-gray-50 dark:bg-background'>
       <Card className='w-full max-w-md'>
         <CardHeader className='space-y-1'>
-          <CardTitle className='text-2xl font-bold text-center'>
-            Sign In
-          </CardTitle>
-          <CardDescription className='text-center'>
+          <CardTitle className='text-2xl font-bold'>Sign In</CardTitle>
+          <CardDescription className=''>
             Enter your credentials to access the task management system
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleSubmit} className='space-y-4'>
-            <div className='space-y-2'>
-              <Label htmlFor='email'>Email</Label>
-              <Input
-                id='email'
-                type='email'
-                placeholder='Enter your email'
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)} className='space-y-6'>
+              <FormField
+                control={form.control}
+                name='email'
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Email</FormLabel>
+                    <FormControl>
+                      <Input placeholder='enter your email' {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
               />
-            </div>
-            <div className='space-y-2'>
-              <Label htmlFor='password'>Password</Label>
-              <Input
-                id='password'
-                type='password'
-                placeholder='Enter your password'
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
+              <FormField
+                control={form.control}
+                name='password'
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Password</FormLabel>
+                    <FormControl>
+                      <Input placeholder='shadcn' {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
               />
-            </div>
-            <div className='space-y-2'>
-              <Label htmlFor='role'>Role</Label>
-              <Select value={role} onValueChange={setRole} required>
-                <SelectTrigger>
-                  <SelectValue placeholder='Select your role' />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value='admin'>Admin</SelectItem>
-                  <SelectItem value='user'>User</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <Button type='submit' className='w-full'>
-              Sign In
-            </Button>
-          </form>
+              <Button type='submit'>Submit</Button>
+            </form>
+          </Form>
         </CardContent>
       </Card>
     </div>

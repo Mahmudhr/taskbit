@@ -1,0 +1,129 @@
+import { UserType } from '@/types/common';
+import { PrismaClient } from '@prisma/client';
+import bcrypt from 'bcryptjs';
+import NextAuth, { RequestInternal, SessionStrategy, User } from 'next-auth';
+import CredentialsProvider from 'next-auth/providers/credentials';
+
+// Extend NextAuth's User type to include additional fields
+declare module 'next-auth' {
+  interface User {
+    id: string; // NextAuth expects id as string
+    name: string | null;
+    email: string | null;
+    role: string; // Add role from your UserType
+    phone?: string | null; // Add other fields as needed
+    whatsapp?: string | null;
+    bkashNumber?: string | null;
+    nagadNumber?: string | null;
+    bankAccountNumber?: string | null;
+    branchName?: string | null;
+    bankName?: string | null;
+    swiftCode?: string | null;
+    status?: string;
+  }
+
+  interface Session {
+    user: User;
+  }
+}
+
+const prisma = new PrismaClient();
+
+const authOptions = {
+  session: {
+    strategy: 'jwt' as SessionStrategy,
+    maxAge: 30 * 24 * 60 * 60, // 30 days
+  },
+
+  providers: [
+    CredentialsProvider({
+      name: 'Credentials',
+      credentials: {
+        email: {
+          label: 'Email',
+          type: 'email',
+          placeholder: 'hello@example.com',
+        },
+        password: { label: 'Password', type: 'password' },
+      },
+      async authorize(
+        credentials: Record<'email' | 'password', string> | undefined,
+        req: Pick<RequestInternal, 'body' | 'query' | 'headers' | 'method'>
+      ): Promise<User | null> {
+        if (!credentials) {
+          throw new Error('Missing credentials');
+        }
+
+        const { email, password } = credentials;
+        if (!email || !password) {
+          throw new Error('Email and password are required');
+        }
+
+        const user = await prisma.user.findUnique({
+          where: { email, status: 'ACTIVE' },
+        });
+
+        if (!user || !(await bcrypt.compare(password, user?.password ?? ''))) {
+          return null;
+        }
+
+        // Map Prisma user to NextAuth User type
+        return {
+          id: user.id.toString(), // Convert number to string
+          email: user.email,
+          name: user.name,
+          role: user.role,
+          phone: user.phone,
+          whatsapp: user.whatsapp,
+          bkashNumber: user.bkashNumber,
+          nagadNumber: user.nagadNumber,
+          bankAccountNumber: user.bankAccountNumber,
+          branchName: user.branchName,
+          bankName: user.bankName,
+          swiftCode: user.swiftCode,
+          status: user.status,
+        };
+      },
+    }),
+  ],
+
+  pages: {
+    signIn: '/signin',
+    error: '/signin',
+  },
+
+  secret: process.env.NEXT_PUBLIC_AUTH_SECRET,
+
+  callbacks: {
+    async jwt({ token, user }: { token: any; user: any }) {
+      if (user) {
+        token.user = {
+          id: user.id, // Already a string
+          email: user.email,
+          name: user.name,
+          role: user.role,
+          phone: user.phone,
+          whatsapp: user.whatsapp,
+          bkashNumber: user.bkashNumber,
+          nagadNumber: user.nagadNumber,
+          bankAccountNumber: user.bankAccountNumber,
+          branchName: user.branchName,
+          bankName: user.bankName,
+          swiftCode: user.swiftCode,
+          status: user.status,
+        };
+      }
+      return token;
+    },
+
+    async session({ session, token }: { session: any; token: any }) {
+      if (token?.user) {
+        session.user = token.user;
+      }
+      return session;
+    },
+  },
+};
+
+const handler = NextAuth(authOptions);
+export { handler as GET, handler as POST };

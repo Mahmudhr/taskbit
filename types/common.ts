@@ -16,10 +16,10 @@ export type UserType = {
   swiftCode: string | null;
   role: $Enums.Role;
   status: $Enums.UserStatus;
-  createdAt: Date;
-  updatedAt: Date;
-  tasks: TaskType[];
-  createdTasks: TaskType[];
+  createdAt?: Date;
+  updatedAt?: Date;
+  tasks?: TaskType[];
+  createdTasks?: TaskType[];
   payments?: PaymentTypes[];
 };
 
