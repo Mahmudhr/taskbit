@@ -116,19 +116,17 @@ export const fetchAllUser = async (data?: string) => {
         updatedAt: true,
         tasks: {
           include: {
-            payments: true, // Include payments relation for tasks
+            payments: true,
           },
         },
         createdTasks: {
           include: {
-            payments: true, // Include payments relation for createdTasks
+            payments: true,
           },
         },
         payments: true,
       },
     });
-
-    console.log('Raw Prisma users:', JSON.stringify(users, null, 2));
 
     return {
       data: users,

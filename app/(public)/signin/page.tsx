@@ -35,6 +35,7 @@ import {
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { toast } from 'sonner';
+import { Loader2Icon } from 'lucide-react';
 
 const FormSchema = z.object({
   email: z
@@ -51,7 +52,7 @@ export default function SignInPage() {
   const [isPending, startTransition] = useTransition();
   const previousURL = searchParams.get('callbackUrl');
 
-  const { data: session, status } = useSession();
+  const { status } = useSession();
   const router = useRouter();
 
   const form = useForm<z.infer<typeof FormSchema>>({
@@ -133,7 +134,9 @@ export default function SignInPage() {
                   </FormItem>
                 )}
               />
-              <Button type='submit'>Submit</Button>
+              <Button type='submit' disabled={isPending}>
+                {isPending && <Loader2Icon className='animate-spin' />} Sign in
+              </Button>
             </form>
           </Form>
         </CardContent>

@@ -81,7 +81,7 @@ export default function CreateTaskForm({ setIsOpen }: CreateTaskFormProps) {
           loading: 'Creating task...',
           success: (res: any) => {
             setIsOpen(false);
-            console.log({ data });
+
             return res.message || 'Successfully created task';
           },
           error: (err) => err?.message || 'Failed to create task',
