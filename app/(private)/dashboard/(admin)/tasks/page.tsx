@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -19,10 +19,14 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { Plus, Search, Edit, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Plus, Search, Edit, ChevronLeft, ChevronRight, X } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import AlertModal from '@/components/alert-modal';
 import CreateTaskForm from '@/components/forms/create-task-form';
+import { generateQueryString } from '@/lib/utils';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { useTask } from '@/hooks/use-task';
+import { useDebouncedCallback } from 'use-debounce';
 
 // Mock data
 const mockTasks = [
@@ -56,12 +60,22 @@ const mockTasks = [
 ];
 
 export default function TasksPage() {
-  const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState('all');
-  const [timeFilter, setTimeFilter] = useState('all');
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 10;
+  const searchParams = useSearchParams();
   const [taskOpen, setTaskOpen] = useState(false);
+  const router = useRouter();
+  const [params, setParams] = useState({
+    search: searchParams.get('search') || '',
+    page: searchParams.get('page') || '1',
+    status: searchParams.get('status') || 'ALL',
+    date: searchParams.get('date') || 'ALL',
+  });
+  const [searchQuery, setSearchQuery] = useState(
+    searchParams.get('search') || ''
+  );
+
+  const queryString = generateQueryString(params);
+  const { fetchTasks } = useTask(queryString);
 
   const getStatusBadge = (status: string) => {
     const variants = {
@@ -77,6 +91,18 @@ export default function TasksPage() {
     );
   };
 
+  const debounced = useDebouncedCallback((value) => {
+    setParams((prevParams) => ({
+      ...prevParams,
+      search: value,
+      page: '1',
+    }));
+  }, 500);
+
+  useEffect(() => {
+    router.push(queryString);
+  }, [queryString, router]);
+
   return (
     <div className='space-y-6'>
       <div className='flex items-center justify-between'>
@@ -91,35 +117,54 @@ export default function TasksPage() {
         <CardHeader>
           <CardTitle>Search & Filters</CardTitle>
         </CardHeader>
-        <CardContent>
+        <CardContent className='space-y-2'>
           <div className='flex flex-col gap-4 md:flex-row md:items-center'>
             <div className='relative flex-1'>
               <Search className='absolute left-2 top-2.5 h-4 w-4 text-muted-foreground' />
               <Input
                 placeholder='Search tasks...'
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
+                value={searchQuery}
+                onChange={(e) => {
+                  debounced(e.target.value);
+                  setSearchQuery(e.target.value);
+                }}
                 className='pl-8'
               />
             </div>
-            <Select value={statusFilter} onValueChange={setStatusFilter}>
+            <Select
+              value={params.status}
+              onValueChange={(value) => {
+                setParams((prev) => ({
+                  ...prev,
+                  status: value,
+                }));
+              }}
+            >
               <SelectTrigger className='w-[180px]'>
                 <SelectValue placeholder='Filter by status' />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value='all'>All Status</SelectItem>
-                <SelectItem value='pending'>Pending</SelectItem>
-                <SelectItem value='incomplete'>Incomplete</SelectItem>
-                <SelectItem value='complete'>Complete</SelectItem>
-                <SelectItem value='time over'>Time Over</SelectItem>
+                <SelectItem value='ALL'>All Status</SelectItem>
+                <SelectItem value='PENDING'>Pending</SelectItem>
+                <SelectItem value='IN_PROGRESS'>In Progress</SelectItem>
+                <SelectItem value='SUBMITTED'>Submitted</SelectItem>
+                <SelectItem value='COMPLETED'>Completed</SelectItem>
               </SelectContent>
             </Select>
-            <Select value={timeFilter} onValueChange={setTimeFilter}>
+            <Select
+              value={params.date}
+              onValueChange={(value) => {
+                setParams((prev) => ({
+                  ...prev,
+                  date: value,
+                }));
+              }}
+            >
               <SelectTrigger className='w-[180px]'>
                 <SelectValue placeholder='Filter by time' />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value='all'>All Time</SelectItem>
+                <SelectItem value='ALL'>All Time</SelectItem>
                 <SelectItem value='last-day'>Last Day</SelectItem>
                 <SelectItem value='last-week'>Last Week</SelectItem>
                 <SelectItem value='last-month'>Last Month</SelectItem>
@@ -127,6 +172,54 @@ export default function TasksPage() {
                 <SelectItem value='last-year'>Last Year</SelectItem>
               </SelectContent>
             </Select>
+          </div>
+          <div className='flex flex-wrap gap-2'>
+            {params.search && (
+              <div className='pl-3 pr-2 py-1 border flex gap-2 items-center rounded-full text-sm'>
+                {params.search}
+                <span
+                  onClick={() => {
+                    setParams((prev) => ({
+                      ...prev,
+                      search: '',
+                    }));
+                    setSearchQuery('');
+                  }}
+                >
+                  <X className='w-5 h-5' />
+                </span>
+              </div>
+            )}
+            {params.status && (
+              <div className='pl-3 pr-2 py-1 border flex gap-2 items-center rounded-full text-sm'>
+                {params.status}
+                <span
+                  onClick={() => {
+                    setParams((prev) => ({
+                      ...prev,
+                      status: '',
+                    }));
+                  }}
+                >
+                  <X className='w-5 h-5' />
+                </span>
+              </div>
+            )}
+            {params.date && (
+              <div className='pl-3 pr-2 py-1 border flex gap-2 items-center rounded-full text-sm'>
+                {params.date}
+                <span
+                  onClick={() => {
+                    setParams((prev) => ({
+                      ...prev,
+                      date: '',
+                    }));
+                  }}
+                >
+                  <X className='w-5 h-5' />
+                </span>
+              </div>
+            )}
           </div>
         </CardContent>
       </Card>
@@ -152,31 +245,50 @@ export default function TasksPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {mockTasks.map((task, index) => (
-                  <TableRow key={task.id}>
-                    <TableCell>{index + 1}</TableCell>
-                    <TableCell className='font-medium'>{task.title}</TableCell>
-                    <TableCell>{task.dueDate}</TableCell>
-                    <TableCell>
-                      <a
-                        href={task.link}
-                        className='text-blue-600 hover:underline'
-                        target='_blank'
-                        rel='noopener noreferrer'
-                      >
-                        View Link
-                      </a>
-                    </TableCell>
-                    <TableCell>${task.amount}</TableCell>
-                    <TableCell>{getStatusBadge(task.status)}</TableCell>
-                    <TableCell>{task.assignee}</TableCell>
-                    <TableCell>
-                      <Button variant='outline' size='sm'>
-                        <Edit className='h-4 w-4' />
-                      </Button>
-                    </TableCell>
-                  </TableRow>
-                ))}
+                {fetchTasks &&
+                  fetchTasks.data.map((task, index) => (
+                    <TableRow key={task.id}>
+                      <TableCell>{index + 1}</TableCell>
+                      <TableCell className='font-medium'>
+                        {task.title}
+                      </TableCell>
+                      <TableCell>
+                        {task?.duration
+                          ? typeof task.duration === 'string'
+                            ? task.duration
+                            : `${task.duration
+                                .getDate()
+                                .toString()
+                                .padStart(2, '0')}-${(
+                                task.duration.getMonth() + 1
+                              )
+                                .toString()
+                                .padStart(
+                                  2,
+                                  '0'
+                                )}-${task.duration.getFullYear()}`
+                          : ''}
+                      </TableCell>
+                      <TableCell>
+                        <a
+                          href={task.link || ''}
+                          className='text-blue-600 hover:underline'
+                          target='_blank'
+                          rel='noopener noreferrer'
+                        >
+                          View Link
+                        </a>
+                      </TableCell>
+                      <TableCell>${task.amount}</TableCell>
+                      <TableCell>{getStatusBadge(task.status)}</TableCell>
+                      <TableCell>{task.assignedTo?.name}</TableCell>
+                      <TableCell>
+                        <Button variant='outline' size='sm'>
+                          <Edit className='h-4 w-4' />
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))}
               </TableBody>
             </Table>
           </div>

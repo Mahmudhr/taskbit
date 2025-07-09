@@ -22,13 +22,15 @@ import {
 } from '../ui/select';
 import { toast } from 'sonner';
 import { useTransition } from 'react';
-import { useUser } from '@/hooks/use-user';
-import { Loader2Icon } from 'lucide-react';
-import { TaskStatus } from '@prisma/client';
 import { useSearchUser, SearchUserOption } from '@/hooks/use-search-user';
 import ReactAsyncSelect from '../react-async-select';
 import { Card } from '../ui/card';
 import { useState } from 'react';
+import { getErrorMessage } from '@/lib/utils';
+import { useTask } from '@/hooks/use-task';
+import { Loader2Icon } from 'lucide-react';
+import { TaskStatus } from '@prisma/client';
+// import { useCreateTask } from '@/hooks/use-task';
 
 const FormSchema = z.object({
   title: z.string().min(2, { message: 'Title must be at least 2 characters.' }),
@@ -45,6 +47,7 @@ const FormSchema = z.object({
   assignedToId: z
     .string()
     .min(1, { message: 'Please select a user to assign' }),
+  duration: z.string().optional(),
 });
 
 type CreateTaskFormProps = {
@@ -53,11 +56,12 @@ type CreateTaskFormProps = {
 
 export default function CreateTaskForm({ setIsOpen }: CreateTaskFormProps) {
   const [isPending, startTransition] = useTransition();
-
+  const { createTaskMutationAsync } = useTask();
   const [selectedUser, setSelectedUser] = useState<SearchUserOption | null>(
     null
   );
   const { search } = useSearchUser();
+  // const createTaskMutation = useCreateTask();
 
   const form = useForm<z.infer<typeof FormSchema>>({
     resolver: zodResolver(FormSchema),
@@ -67,26 +71,25 @@ export default function CreateTaskForm({ setIsOpen }: CreateTaskFormProps) {
       amount: 0,
       status: TaskStatus.PENDING,
       assignedToId: '',
+      duration: '',
     },
   });
 
   function onSubmit(data: z.infer<typeof FormSchema>) {
-    startTransition(() => {
-      // TODO: Replace with actual createTask API call
-      toast.promise(
-        new Promise((resolve) =>
-          setTimeout(() => resolve({ message: 'Task created!' }), 1000)
-        ),
-        {
-          loading: 'Creating task...',
-          success: (res: any) => {
-            setIsOpen(false);
+    const payload = {
+      ...data,
+      duration: data.duration ? new Date(data.duration) : new Date(),
+    };
 
-            return res.message || 'Successfully created task';
-          },
-          error: (err) => err?.message || 'Failed to create task',
-        }
-      );
+    startTransition(() => {
+      toast.promise(createTaskMutationAsync(payload), {
+        loading: 'Creating user...',
+        success: (res) => {
+          setIsOpen(false);
+          return res.message || 'Successfully created user';
+        },
+        error: (err) => getErrorMessage(err),
+      });
     });
   }
 
@@ -137,7 +140,7 @@ export default function CreateTaskForm({ setIsOpen }: CreateTaskFormProps) {
                 name='assignedToId'
                 loadOptions={async (inputValue: string) => {
                   const users = await search(inputValue);
-                  return users.map((user: any) => ({
+                  return users.map((user: SearchUserOption['user']) => ({
                     label: `${user.name} (${user.email})`,
                     value: String(user.id),
                     user,
@@ -204,6 +207,24 @@ export default function CreateTaskForm({ setIsOpen }: CreateTaskFormProps) {
                   ))}
                 </SelectContent>
               </Select>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name='duration'
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Duration</FormLabel>
+              <FormControl>
+                <Input
+                  className='w-full'
+                  type='date'
+                  placeholder='Select date'
+                  {...field}
+                />
+              </FormControl>
               <FormMessage />
             </FormItem>
           )}

@@ -5,7 +5,6 @@ import * as DialogPrimitive from '@radix-ui/react-dialog';
 import { X } from 'lucide-react';
 
 import { cn } from '@/lib/utils';
-import { VisuallyHidden } from '@radix-ui/react-visually-hidden';
 
 const Dialog = DialogPrimitive.Root;
 

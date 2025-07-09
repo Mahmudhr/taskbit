@@ -1,7 +1,7 @@
 'use server';
 
 import { prisma } from '@/prisma/db';
-import { CreateUserType } from '../user-type';
+import { CreateUserType } from '../types/user-type';
 import bcrypt from 'bcryptjs';
 
 export async function createUser(data: CreateUserType) {
@@ -15,14 +15,14 @@ export async function createUser(data: CreateUserType) {
       throw new Error('User with this email already exists');
     }
 
-    const hashedPassword = await bcrypt.hash(data.password, 10);
+    const hashedPassword = await bcrypt.hash(password, 10);
     await prisma.user.create({
       data: {
-        name: data.name,
-        email: data.email,
-        phone: data.phone,
+        name,
+        email,
+        phone,
         password: hashedPassword,
-        role: data.role,
+        role,
       },
     });
     return {
@@ -37,7 +37,7 @@ export const fetchAllUser = async (data?: string) => {
   const params = new URLSearchParams(data);
   const search = params.get('search') || '';
   const page = parseInt(params.get('page') ?? '1') || 1;
-  const status = params.get('status');
+  // const status = params.get('status');
   const limit = 10;
 
   try {
@@ -137,7 +137,7 @@ export const fetchAllUser = async (data?: string) => {
         totalPages,
       },
     };
-  } catch (e) {
+  } catch {
     throw new Error('Failed to load users');
   }
 };
@@ -150,7 +150,7 @@ export async function deleteUser(id: number) {
     });
 
     return updateUser;
-  } catch (e) {
+  } catch {
     throw new Error('Failed to update commercial track position');
   }
 }
@@ -180,7 +180,7 @@ export const UpdateUser = async ({
       ...updateUser,
       message: 'User updated successfully',
     };
-  } catch (e) {
+  } catch {
     throw new Error('Failed to User');
   }
 };
@@ -215,7 +215,7 @@ export const searchUsers = async (query: string) => {
       take: 10,
     });
     return users;
-  } catch (e) {
+  } catch {
     throw new Error('Failed to search users');
   }
 };

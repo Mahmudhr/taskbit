@@ -18,7 +18,6 @@ import {
   SidebarRail,
 } from '@/components/ui/sidebar';
 import { UserNav } from './user.nav';
-import { SheetTitle } from './ui/sheet';
 
 const adminMenuItems = [
   {

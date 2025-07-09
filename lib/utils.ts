@@ -21,7 +21,7 @@ export const getErrorMessage = (error: unknown) => {
   return message;
 };
 
-export function generateQueryString(params: any) {
+export function generateQueryString(params: Record<string, string>) {
   const isEmpty = Object.values(params).every((value) => value === '');
 
   if (isEmpty) {
@@ -29,8 +29,7 @@ export function generateQueryString(params: any) {
   }
 
   const queryString = Object.entries(params)
-    // eslint-disable-next-line no-unused-vars
-    .filter(([key, value]) => value !== '')
+    .filter(([, value]) => value !== '')
     .map(
       ([key, value]) =>
         `${encodeURIComponent(key)}=${encodeURIComponent(

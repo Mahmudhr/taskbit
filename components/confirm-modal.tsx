@@ -24,9 +24,7 @@ export default function ConfirmModal({
   setIsOpen,
   onClick,
   title,
-  reset,
   loading,
-  ...props
 }: ConfirmModalProps) {
   const onOpenChange = () => {
     setIsOpen(false);

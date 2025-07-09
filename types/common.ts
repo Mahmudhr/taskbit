@@ -35,8 +35,9 @@ export type TaskType = {
   updatedAt: Date;
   assignedToId?: number | null;
   assignedTo?: UserType | null;
+  duration: Date | null;
   createdById?: number | null;
-  payments: PaymentTypes[];
+  // payments: PaymentTypes[];
 };
 
 export type PaymentTypes = {

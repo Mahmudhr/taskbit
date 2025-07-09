@@ -5,7 +5,6 @@ import { Button } from '../ui/button';
 import {
   Form,
   FormControl,
-  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -17,15 +16,12 @@ import { z } from 'zod';
 import {
   Select,
   SelectContent,
-  SelectGroup,
   SelectItem,
-  SelectLabel,
   SelectTrigger,
   SelectValue,
 } from '../ui/select';
 import { toast } from 'sonner';
 import { useTransition } from 'react';
-import { createUser } from '@/server/user/user';
 import { getErrorMessage } from '@/lib/utils';
 import { useUser } from '@/hooks/use-user';
 import { Loader2Icon } from 'lucide-react';
@@ -64,34 +60,6 @@ export const FormSchema = z
     message: "Passwords don't match",
     path: ['confirmPassword'],
   });
-
-const fields = [
-  {
-    name: 'name',
-    label: 'Name',
-    placeholder: 'John Doe',
-  },
-  {
-    name: 'email',
-    label: 'Email',
-    placeholder: 'email@example.com',
-  },
-  {
-    name: 'password',
-    label: 'Password',
-    placeholder: 'enter your password',
-  },
-  {
-    name: 'confirmPassword',
-    label: 'Confirm password',
-    placeholder: 'enter confirm password',
-  },
-  {
-    name: 'phone',
-    label: 'Phone',
-    placeholder: 'enter your number',
-  },
-];
 
 export default function AddUserForm({
   setIsOpen,

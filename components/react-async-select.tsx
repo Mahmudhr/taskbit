@@ -1,11 +1,10 @@
 import AsyncSelect from 'react-select/async';
-import { ComponentProps } from 'react';
 import clsx from 'clsx';
 
 export type ReactAsyncSelectOption = {
   label: string;
   value: string;
-  [key: string]: any;
+  [key: string]: unknown;
 };
 
 export type ReactAsyncSelectProps<T = ReactAsyncSelectOption> = {

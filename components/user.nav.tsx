@@ -1,6 +1,6 @@
 'use client';
 
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -14,29 +14,19 @@ import {
 import { User, Settings, LogOut, ChevronsUpDown } from 'lucide-react';
 import { signOut, useSession } from 'next-auth/react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
 
 export function UserNav() {
-  const router = useRouter();
-  const { data: session, status } = useSession();
-
-  const handleLogout = () => {
-    // Handle logout logic here
-    console.log('Logging out...');
-    // Clear authentication tokens, etc.
-    router.push('/signin');
-  };
+  const { data: session } = useSession();
 
   const initials =
     session?.user.name &&
     session?.user.name
       .split(' ')
       .map((word) => word[0])
-      .slice(0, 2) // take only first two initials
+      .slice(0, 2)
       .join('')
       .toUpperCase();
 
-  console.log({ name: initials });
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>

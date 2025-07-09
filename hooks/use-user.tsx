@@ -10,13 +10,8 @@ import {
   deleteUser,
   UpdateUser,
 } from '../server/user/user';
-import { CreateUserType } from '../server/user-type';
+import { CreateUserType } from '../server/types/user-type';
 import { Meta, Response, UserType } from '@/types/common';
-
-interface UseUserOptions {
-  search?: string;
-  page?: number;
-}
 
 export function useUser(options?: string) {
   const queryClient = useQueryClient();

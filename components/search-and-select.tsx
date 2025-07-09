@@ -4,7 +4,7 @@ import Select from 'react-select';
 export type SearchAndSelectOption = {
   label: string;
   value: string;
-  [key: string]: any;
+  [key: string]: unknown;
 };
 
 export type SearchAndSelectProps<T = SearchAndSelectOption> = {

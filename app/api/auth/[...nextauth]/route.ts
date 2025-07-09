@@ -1,7 +1,6 @@
-import { UserType } from '@/types/common';
 import { PrismaClient } from '@prisma/client';
 import bcrypt from 'bcryptjs';
-import NextAuth, { RequestInternal, SessionStrategy, User } from 'next-auth';
+import NextAuth, { SessionStrategy, User } from 'next-auth';
 import CredentialsProvider from 'next-auth/providers/credentials';
 
 // Extend NextAuth's User type to include additional fields
@@ -47,8 +46,7 @@ const authOptions = {
         password: { label: 'Password', type: 'password' },
       },
       async authorize(
-        credentials: Record<'email' | 'password', string> | undefined,
-        req: Pick<RequestInternal, 'body' | 'query' | 'headers' | 'method'>
+        credentials: Record<'email' | 'password', string> | undefined
       ): Promise<User | null> {
         if (!credentials) {
           throw new Error('Missing credentials');
@@ -95,7 +93,13 @@ const authOptions = {
   secret: process.env.NEXT_PUBLIC_AUTH_SECRET,
 
   callbacks: {
-    async jwt({ token, user }: { token: any; user: any }) {
+    async jwt({
+      token,
+      user,
+    }: {
+      token: import('next-auth/jwt').JWT;
+      user?: import('next-auth').User;
+    }) {
       if (user) {
         token.user = {
           id: user.id, // Already a string
@@ -116,9 +120,15 @@ const authOptions = {
       return token;
     },
 
-    async session({ session, token }: { session: any; token: any }) {
+    async session({
+      session,
+      token,
+    }: {
+      session: import('next-auth').Session;
+      token: import('next-auth/jwt').JWT;
+    }) {
       if (token?.user) {
-        session.user = token.user;
+        session.user = token.user as import('next-auth').User;
       }
       return session;
     },

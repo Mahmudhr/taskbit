@@ -29,7 +29,6 @@ import {
   X,
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import Modal from '@/components/modal';
 import AddUserForm from '@/components/forms/add-user-form';
 import AlertModal from '@/components/alert-modal';
 import { useRouter, useSearchParams } from 'next/navigation';
@@ -83,7 +82,7 @@ export default function UsersPage() {
     startTransition(() => {
       toast.promise(deleteUserAsync(userId), {
         loading: 'Creating user...',
-        success: (res) => {
+        success: () => {
           setConfirmModal(false);
           return 'Successfully User Deleted';
         },
