@@ -64,7 +64,7 @@ export default function AlertModal({
             </button>
           </div>
           <AlertDialogDescription>{description}</AlertDialogDescription>
-          <div>{children}</div>
+          <div className='max-h-[80vh] overflow-y-auto p-2'>{children}</div>
         </AlertDialogHeader>
       </AlertDialogContent>
     </AlertDialog>

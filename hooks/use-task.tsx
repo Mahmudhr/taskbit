@@ -1,4 +1,4 @@
-import { createTasks, fetchAllTasks } from '@/server/tasks/tasks';
+import { createTasks, fetchAllTasks, updateTask } from '@/server/tasks/tasks';
 import { CreateTaskType } from '@/server/types/tasks-type';
 import { Meta, Response, TaskType } from '@/types/common';
 import {
@@ -18,6 +18,14 @@ export function useTask(options?: string) {
     },
   });
 
+  const updateTaskMutation = useMutation({
+    mutationFn: ({ id, data }: { id: number; data: CreateTaskType }) =>
+      updateTask(id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['tasks'] });
+    },
+  });
+
   const fetchTasksMutation = useQuery<Response<TaskType[], Meta>>({
     queryKey: ['tasks', options],
     queryFn: async () => {
@@ -30,6 +38,8 @@ export function useTask(options?: string) {
   return {
     createTaskMutation,
     createTaskMutationAsync: createTaskMutation.mutateAsync,
+    updateTaskMutation,
+    updateTaskMutationAsync: updateTaskMutation.mutateAsync,
     fetchTasksMutation,
     fetchTasks: fetchTasksMutation.data,
   };

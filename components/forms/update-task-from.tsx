@@ -21,16 +21,15 @@ import {
   SelectValue,
 } from '../ui/select';
 import { toast } from 'sonner';
-import { useTransition } from 'react';
+import { useTransition, useState, useEffect } from 'react';
 import { useSearchUser, SearchUserOption } from '@/hooks/use-search-user';
 import ReactAsyncSelect from '../react-async-select';
 import { Card } from '../ui/card';
-import { useState } from 'react';
 import { getErrorMessage } from '@/lib/utils';
 import { useTask } from '@/hooks/use-task';
 import { Loader2Icon } from 'lucide-react';
 import { TaskStatus } from '@prisma/client';
-// import { useCreateTask } from '@/hooks/use-task';
+import { TaskType } from '@/types/common';
 
 const FormSchema = z.object({
   title: z.string().min(2, { message: 'Title must be at least 2 characters.' }),
@@ -50,43 +49,64 @@ const FormSchema = z.object({
   duration: z.string().optional(),
 });
 
-type CreateTaskFormProps = {
+type UpdateTaskFormProps = {
   setIsOpen: (open: boolean) => void;
+  data?: TaskType | null;
 };
 
-export default function CreateTaskForm({ setIsOpen }: CreateTaskFormProps) {
+export default function UpdateTaskForm({
+  setIsOpen,
+  data,
+}: UpdateTaskFormProps) {
   const [isPending, startTransition] = useTransition();
-  const { createTaskMutationAsync } = useTask();
+  const { updateTaskMutationAsync } = useTask();
   const [selectedUser, setSelectedUser] = useState<SearchUserOption | null>(
     null
   );
   const { search } = useSearchUser();
-  // const createTaskMutation = useCreateTask();
 
   const form = useForm<z.infer<typeof FormSchema>>({
     resolver: zodResolver(FormSchema),
     defaultValues: {
-      title: '',
-      description: '',
-      amount: 0,
-      status: TaskStatus.PENDING,
-      assignedToId: '',
-      duration: '',
+      title: data?.title || '',
+      description: data?.description || '',
+      link: data?.link || '',
+      amount: data?.amount || 0,
+      status: data?.status || TaskStatus.PENDING,
+      assignedToId: data?.assignedToId?.toString() || '',
+      duration: data?.duration
+        ? new Date(data.duration).toISOString().split('T')[0]
+        : '',
     },
   });
 
-  function onSubmit(data: z.infer<typeof FormSchema>) {
+  useEffect(() => {
+    if (data?.assignedTo) {
+      setSelectedUser({
+        label: `${data.assignedTo.name} (${data.assignedTo.email})`,
+        value: String(data.assignedTo.id),
+        user: data.assignedTo,
+      });
+    }
+  }, [data]);
+
+  function onSubmit(formData: z.infer<typeof FormSchema>) {
+    if (!data?.id) return;
+
     const payload = {
-      ...data,
-      duration: data.duration ? new Date(data.duration) : new Date(),
+      id: data.id,
+      data: {
+        ...formData,
+        duration: formData.duration ? new Date(formData.duration) : new Date(),
+      },
     };
 
     startTransition(() => {
-      toast.promise(createTaskMutationAsync(payload), {
-        loading: 'Creating user...',
+      toast.promise(updateTaskMutationAsync(payload), {
+        loading: 'Updating task...',
         success: (res) => {
           setIsOpen(false);
-          return res.message || 'Successfully created user';
+          return res.message || 'Successfully updated task';
         },
         error: (err) => getErrorMessage(err),
       });
@@ -155,11 +175,9 @@ export default function CreateTaskForm({ setIsOpen }: CreateTaskFormProps) {
               />
               <FormMessage />
               {selectedUser && (
-                <Card className='mt-4 p-4 break-words whitespace-pre-line w-full'>
-                  <div className='font-semibold break-words whitespace-pre-line text-left'>
-                    {selectedUser.user.name}
-                  </div>
-                  <div className='text-xs text-gray-600 break-all text-left'>
+                <Card className='mt-4 p-4 text-wrap w-full text-left'>
+                  <div className='font-semibold '>{selectedUser.user.name}</div>
+                  <div className='text-xs text-gray-600 break-all'>
                     {selectedUser.user.email}
                   </div>
                 </Card>
@@ -167,7 +185,6 @@ export default function CreateTaskForm({ setIsOpen }: CreateTaskFormProps) {
             </FormItem>
           )}
         />
-
         <FormField
           control={form.control}
           name='amount'
@@ -224,6 +241,7 @@ export default function CreateTaskForm({ setIsOpen }: CreateTaskFormProps) {
                   {...field}
                 />
               </FormControl>
+
               <FormMessage />
             </FormItem>
           )}
@@ -235,7 +253,7 @@ export default function CreateTaskForm({ setIsOpen }: CreateTaskFormProps) {
           className='flex justify-start'
         >
           {isPending && <Loader2Icon className='animate-spin' />}
-          Create Task
+          Update Task
         </Button>
       </form>
     </Form>

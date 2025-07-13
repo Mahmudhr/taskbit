@@ -16,6 +16,7 @@ export type ReactAsyncSelectProps<T = ReactAsyncSelectOption> = {
   isClearable?: boolean;
   placeholder?: string;
   isLoading?: boolean;
+  defaultValue?: T | null;
 };
 
 export default function ReactAsyncSelect<T = ReactAsyncSelectOption>({
@@ -27,6 +28,7 @@ export default function ReactAsyncSelect<T = ReactAsyncSelectOption>({
   isClearable = false,
   placeholder = '',
   isLoading,
+  defaultValue,
 }: ReactAsyncSelectProps<T>) {
   const combineOptions = async (inputValue: string): Promise<T[]> => {
     if (loadOptions) {
@@ -52,7 +54,7 @@ export default function ReactAsyncSelect<T = ReactAsyncSelectOption>({
       <div className='flex flex-col gap-1'>
         <label
           htmlFor={name}
-          className='block text-sm font-semibold text-gray-700 whitespace-nowrap'
+          className='block text-sm font-semibold text-left text-gray-700 whitespace-nowrap'
         >
           {label}
         </label>
@@ -67,6 +69,7 @@ export default function ReactAsyncSelect<T = ReactAsyncSelectOption>({
           isLoading={isLoading}
           className={clsx('my-custom-select')}
           cacheOptions
+          defaultValue={defaultValue}
           styles={{
             control: (provided, state) => ({
               ...provided,
@@ -84,7 +87,7 @@ export default function ReactAsyncSelect<T = ReactAsyncSelectOption>({
             input: (provided) => ({
               ...provided,
               minWidth: '100%',
-              width: '100%',
+              // width: '100%',
             }),
             placeholder: (provided) => ({
               ...provided,

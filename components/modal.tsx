@@ -42,7 +42,7 @@ export default function Modal({
           {title && <DialogTitle>{title}</DialogTitle>}
           {description && <DialogDescription>{description}</DialogDescription>}
         </DialogHeader>
-        <div>{children}</div>
+        <div className='max-h-[80vh] overflow-y-auto p-2'>{children}</div>
       </DialogContent>
     </Dialog>
   );

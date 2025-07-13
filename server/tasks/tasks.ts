@@ -25,6 +25,29 @@ export async function createTasks(data: CreateTaskType) {
   }
 }
 
+export async function updateTask(id: number, data: CreateTaskType) {
+  const { title, description, amount, status, duration } = data;
+  try {
+    await prisma.task.update({
+      where: { id },
+      data: {
+        title,
+        description,
+        amount,
+        status,
+        assignedToId: +data.assignedToId,
+        duration,
+        updatedAt: new Date(),
+      },
+    });
+    return {
+      message: 'Task Updated Successfully',
+    };
+  } catch (error) {
+    throw error;
+  }
+}
+
 export const fetchAllTasks = async (data?: string) => {
   const params = new URLSearchParams(data);
   const search = params.get('search') || '';

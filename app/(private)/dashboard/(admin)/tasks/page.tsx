@@ -19,7 +19,15 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { Plus, Search, Edit, ChevronLeft, ChevronRight, X } from 'lucide-react';
+import {
+  Plus,
+  Search,
+  Edit,
+  ChevronLeft,
+  ChevronRight,
+  X,
+  Eye,
+} from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import AlertModal from '@/components/alert-modal';
 import CreateTaskForm from '@/components/forms/create-task-form';
@@ -27,6 +35,10 @@ import { generateQueryString } from '@/lib/utils';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useTask } from '@/hooks/use-task';
 import { useDebouncedCallback } from 'use-debounce';
+import UpdateTaskForm from '@/components/forms/update-task-from';
+import { TaskType } from '@/types/common';
+import TaskTableSkeleton from '@/components/skeletons/task-table-skeleton';
+import TaskCardSkeleton from '@/components/skeletons/task-card-skeleton';
 
 // Mock data
 const mockTasks = [
@@ -63,12 +75,14 @@ export default function TasksPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const searchParams = useSearchParams();
   const [taskOpen, setTaskOpen] = useState(false);
+  const [updateTaskOpen, setUpdateTaskOpen] = useState(false);
+  const [selectedTask, setSelectedTask] = useState<TaskType | null>(null);
   const router = useRouter();
   const [params, setParams] = useState({
     search: searchParams.get('search') || '',
     page: searchParams.get('page') || '1',
-    status: searchParams.get('status') || 'ALL',
-    date: searchParams.get('date') || 'ALL',
+    status: searchParams.get('status') || '',
+    date: searchParams.get('date') || '',
   });
   const [searchQuery, setSearchQuery] = useState(
     searchParams.get('search') || ''
@@ -98,6 +112,11 @@ export default function TasksPage() {
       page: '1',
     }));
   }, 500);
+
+  const handleEditTask = (task: TaskType) => {
+    setSelectedTask(task);
+    setUpdateTaskOpen(true);
+  };
 
   useEffect(() => {
     router.push(queryString);
@@ -231,28 +250,103 @@ export default function TasksPage() {
         <CardContent>
           {/* Desktop Table View */}
           <div className='hidden md:block'>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Serial</TableHead>
-                  <TableHead>Task Title</TableHead>
-                  <TableHead>Due Date</TableHead>
-                  <TableHead>Link</TableHead>
-                  <TableHead>Amount</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Assignee</TableHead>
-                  <TableHead>Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {fetchTasks &&
-                  fetchTasks.data.map((task, index) => (
-                    <TableRow key={task.id}>
-                      <TableCell>{index + 1}</TableCell>
-                      <TableCell className='font-medium'>
-                        {task.title}
-                      </TableCell>
-                      <TableCell>
+            {fetchTasks && fetchTasks.data.length > 0 ? (
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Serial</TableHead>
+                    <TableHead>Task Title</TableHead>
+                    <TableHead>Due Date</TableHead>
+                    <TableHead>Amount</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Assignee</TableHead>
+                    <TableHead>Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {fetchTasks &&
+                    fetchTasks.data.map((task, index) => (
+                      <TableRow key={task.id}>
+                        <TableCell>{index + 1}</TableCell>
+                        <TableCell className='font-medium'>
+                          {task.title}
+                        </TableCell>
+                        <TableCell>
+                          {task?.duration
+                            ? typeof task.duration === 'string'
+                              ? task.duration
+                              : `${task.duration
+                                  .getDate()
+                                  .toString()
+                                  .padStart(2, '0')}-${(
+                                  task.duration.getMonth() + 1
+                                )
+                                  .toString()
+                                  .padStart(
+                                    2,
+                                    '0'
+                                  )}-${task.duration.getFullYear()}`
+                            : ''}
+                        </TableCell>
+                        <TableCell>BDT {task.amount}</TableCell>
+                        <TableCell>{getStatusBadge(task.status)}</TableCell>
+                        <TableCell>
+                          {task.assignedTo?.name
+                            ? task.assignedTo.name.length > 20
+                              ? task.assignedTo.name.slice(0, 20) + '...'
+                              : task.assignedTo.name
+                            : ''}
+                        </TableCell>
+                        <TableCell className='flex gap-2'>
+                          <Button variant='outline' size='sm'>
+                            <Eye className='h-4 w-4' />
+                          </Button>
+                          <Button
+                            variant='outline'
+                            size='sm'
+                            onClick={() => handleEditTask(task)}
+                          >
+                            <Edit className='h-4 w-4' />
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                </TableBody>
+              </Table>
+            ) : (
+              <TaskTableSkeleton />
+            )}
+          </div>
+
+          {/* Mobile Card View */}
+          <div className='md:hidden space-y-4'>
+            {fetchTasks && fetchTasks.data.length > 0 ? (
+              fetchTasks.data.map((task, index) => (
+                <Card key={task.id} className='p-4'>
+                  <div className='flex justify-between items-start mb-3'>
+                    <div className='flex items-center gap-2'>
+                      <span className='text-sm text-muted-foreground'>
+                        #{index + 1}
+                      </span>
+                      <h3 className='font-medium'>{task.title}</h3>
+                    </div>
+                    <div className='flex gap-2'>
+                      <Button variant='outline' size='sm'>
+                        <Eye className='h-4 w-4' />
+                      </Button>
+                      <Button
+                        variant='outline'
+                        size='sm'
+                        onClick={() => handleEditTask(task)}
+                      >
+                        <Edit className='h-4 w-4' />
+                      </Button>
+                    </div>
+                  </div>
+                  <div className='space-y-2 text-sm'>
+                    <div className='flex justify-between'>
+                      <span className='text-muted-foreground'>Due Date:</span>
+                      <span>
                         {task?.duration
                           ? typeof task.duration === 'string'
                             ? task.duration
@@ -268,78 +362,43 @@ export default function TasksPage() {
                                   '0'
                                 )}-${task.duration.getFullYear()}`
                           : ''}
-                      </TableCell>
-                      <TableCell>
-                        <a
-                          href={task.link || ''}
-                          className='text-blue-600 hover:underline'
-                          target='_blank'
-                          rel='noopener noreferrer'
-                        >
-                          View Link
-                        </a>
-                      </TableCell>
-                      <TableCell>${task.amount}</TableCell>
-                      <TableCell>{getStatusBadge(task.status)}</TableCell>
-                      <TableCell>{task.assignedTo?.name}</TableCell>
-                      <TableCell>
-                        <Button variant='outline' size='sm'>
-                          <Edit className='h-4 w-4' />
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-              </TableBody>
-            </Table>
-          </div>
-
-          {/* Mobile Card View */}
-          <div className='md:hidden space-y-4'>
-            {mockTasks.map((task, index) => (
-              <Card key={task.id} className='p-4'>
-                <div className='flex justify-between items-start mb-3'>
-                  <div className='flex items-center gap-2'>
-                    <span className='text-sm text-muted-foreground'>
-                      #{index + 1}
-                    </span>
-                    <h3 className='font-medium'>{task.title}</h3>
+                      </span>
+                    </div>
+                    <div className='flex justify-between'>
+                      <span className='text-muted-foreground'>Amount:</span>
+                      <span className='font-medium'>BDT {task.amount}</span>
+                    </div>
+                    <div className='flex justify-between'>
+                      <span className='text-muted-foreground'>Assignee:</span>
+                      <span>
+                        {task.assignedTo?.name
+                          ? task.assignedTo.name.length > 20
+                            ? task.assignedTo.name.slice(0, 20) + '...'
+                            : task.assignedTo.name
+                          : ''}
+                      </span>
+                    </div>
+                    <div className='flex justify-between items-center'>
+                      <span className='text-muted-foreground'>Status:</span>
+                      {getStatusBadge(task.status)}
+                    </div>
+                    <div className='flex justify-between'>
+                      <span className='text-muted-foreground'>Link:</span>
+                      <a
+                        href={task.link || ''}
+                        className='text-blue-600 hover:underline text-sm'
+                        target='_blank'
+                        rel='noopener noreferrer'
+                      >
+                        View Link
+                      </a>
+                    </div>
                   </div>
-                  <Button variant='outline' size='sm'>
-                    <Edit className='h-4 w-4' />
-                  </Button>
-                </div>
-
-                <div className='space-y-2 text-sm'>
-                  <div className='flex justify-between'>
-                    <span className='text-muted-foreground'>Due Date:</span>
-                    <span>{task.dueDate}</span>
-                  </div>
-                  <div className='flex justify-between'>
-                    <span className='text-muted-foreground'>Amount:</span>
-                    <span className='font-medium'>${task.amount}</span>
-                  </div>
-                  <div className='flex justify-between'>
-                    <span className='text-muted-foreground'>Assignee:</span>
-                    <span>{task.assignee}</span>
-                  </div>
-                  <div className='flex justify-between items-center'>
-                    <span className='text-muted-foreground'>Status:</span>
-                    {getStatusBadge(task.status)}
-                  </div>
-                  <div className='flex justify-between'>
-                    <span className='text-muted-foreground'>Link:</span>
-                    <a
-                      href={task.link}
-                      className='text-blue-600 hover:underline text-sm'
-                      target='_blank'
-                      rel='noopener noreferrer'
-                    >
-                      View Link
-                    </a>
-                  </div>
-                </div>
-              </Card>
-            ))}
+                </Card>
+              ))
+            ) : (
+              <TaskCardSkeleton />
+            )}
           </div>
 
           <div className='flex items-center justify-between space-x-2 py-4'>
@@ -375,6 +434,14 @@ export default function TasksPage() {
         description=' '
       >
         <CreateTaskForm setIsOpen={setTaskOpen} />
+      </AlertModal>
+      <AlertModal
+        isOpen={updateTaskOpen}
+        setIsOpen={setUpdateTaskOpen}
+        title='Update Task'
+        description=' '
+      >
+        <UpdateTaskForm setIsOpen={setUpdateTaskOpen} data={selectedTask} />
       </AlertModal>
     </div>
   );
