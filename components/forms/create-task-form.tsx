@@ -86,7 +86,7 @@ export default function CreateTaskForm({ setIsOpen }: CreateTaskFormProps) {
         loading: 'Creating user...',
         success: (res) => {
           setIsOpen(false);
-          return res.message || 'Successfully created user';
+          return res.message || 'Successfully Task Created';
         },
         error: (err) => getErrorMessage(err),
       });

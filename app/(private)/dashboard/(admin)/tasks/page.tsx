@@ -40,37 +40,6 @@ import { TaskType } from '@/types/common';
 import TaskTableSkeleton from '@/components/skeletons/task-table-skeleton';
 import TaskCardSkeleton from '@/components/skeletons/task-card-skeleton';
 
-// Mock data
-const mockTasks = [
-  {
-    id: 1,
-    title: 'Design Homepage',
-    dueDate: '2024-01-15',
-    link: 'https://example.com/task1',
-    amount: 500,
-    status: 'pending',
-    assignee: 'John Doe',
-  },
-  {
-    id: 2,
-    title: 'Develop API',
-    dueDate: '2024-01-20',
-    link: 'https://example.com/task2',
-    amount: 1200,
-    status: 'complete',
-    assignee: 'Jane Smith',
-  },
-  {
-    id: 3,
-    title: 'Write Documentation',
-    dueDate: '2024-01-10',
-    link: 'https://example.com/task3',
-    amount: 300,
-    status: 'time over',
-    assignee: 'Bob Johnson',
-  },
-];
-
 export default function TasksPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const searchParams = useSearchParams();
@@ -89,7 +58,7 @@ export default function TasksPage() {
   );
 
   const queryString = generateQueryString(params);
-  const { fetchTasks } = useTask(queryString);
+  const { fetchTasks, fetchTasksMutation } = useTask(queryString);
 
   const getStatusBadge = (status: string) => {
     const variants = {
@@ -121,6 +90,8 @@ export default function TasksPage() {
   useEffect(() => {
     router.push(queryString);
   }, [queryString, router]);
+
+  console.log({ fetchTasks, fetchTasksMutation: fetchTasksMutation.isLoading });
 
   return (
     <div className='space-y-6'>
@@ -250,7 +221,7 @@ export default function TasksPage() {
         <CardContent>
           {/* Desktop Table View */}
           <div className='hidden md:block'>
-            {fetchTasks && fetchTasks.data.length > 0 ? (
+            {!fetchTasksMutation.isLoading ? (
               <Table>
                 <TableHeader>
                   <TableRow>
@@ -260,6 +231,7 @@ export default function TasksPage() {
                     <TableHead>Amount</TableHead>
                     <TableHead>Status</TableHead>
                     <TableHead>Assignee</TableHead>
+                    <TableHead>Created At</TableHead>
                     <TableHead>Actions</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -297,6 +269,24 @@ export default function TasksPage() {
                               : task.assignedTo.name
                             : ''}
                         </TableCell>
+                        <TableCell>
+                          {task?.createdAt
+                            ? typeof task.duration === 'string'
+                              ? task.duration
+                              : `${task.createdAt
+
+                                  .getDate()
+                                  .toString()
+                                  .padStart(2, '0')}-${(
+                                  task.createdAt.getMonth() + 1
+                                )
+                                  .toString()
+                                  .padStart(
+                                    2,
+                                    '0'
+                                  )}-${task.createdAt.getFullYear()}`
+                            : ''}
+                        </TableCell>
                         <TableCell className='flex gap-2'>
                           <Button variant='outline' size='sm'>
                             <Eye className='h-4 w-4' />
@@ -320,7 +310,8 @@ export default function TasksPage() {
 
           {/* Mobile Card View */}
           <div className='md:hidden space-y-4'>
-            {fetchTasks && fetchTasks.data.length > 0 ? (
+            {!fetchTasksMutation.isLoading ? (
+              fetchTasks &&
               fetchTasks.data.map((task, index) => (
                 <Card key={task.id} className='p-4'>
                   <div className='flex justify-between items-start mb-3'>
@@ -400,31 +391,33 @@ export default function TasksPage() {
               <TaskCardSkeleton />
             )}
           </div>
-
-          <div className='flex items-center justify-between space-x-2 py-4'>
-            <div className='text-sm text-muted-foreground'>
-              Showing 1 to {mockTasks.length} of {mockTasks.length} results
+          {fetchTasks && fetchTasks?.meta.count > 0 && (
+            <div className='flex items-center justify-between space-x-2 py-4'>
+              <div className='text-sm text-muted-foreground'>
+                Showing 1 to {fetchTasks?.data.length} of{' '}
+                {fetchTasks?.meta.count} results
+              </div>
+              <div className='flex items-center space-x-2'>
+                <Button
+                  variant='outline'
+                  size='sm'
+                  onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+                  disabled={currentPage === 1}
+                >
+                  <ChevronLeft className='h-4 w-4' />
+                  Previous
+                </Button>
+                <Button
+                  variant='outline'
+                  size='sm'
+                  onClick={() => setCurrentPage(currentPage + 1)}
+                >
+                  Next
+                  <ChevronRight className='h-4 w-4' />
+                </Button>
+              </div>
             </div>
-            <div className='flex items-center space-x-2'>
-              <Button
-                variant='outline'
-                size='sm'
-                onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
-                disabled={currentPage === 1}
-              >
-                <ChevronLeft className='h-4 w-4' />
-                Previous
-              </Button>
-              <Button
-                variant='outline'
-                size='sm'
-                onClick={() => setCurrentPage(currentPage + 1)}
-              >
-                Next
-                <ChevronRight className='h-4 w-4' />
-              </Button>
-            </div>
-          </div>
+          )}
         </CardContent>
       </Card>
       <AlertModal

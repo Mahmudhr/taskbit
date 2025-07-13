@@ -106,7 +106,7 @@ export default function UpdateTaskForm({
         loading: 'Updating task...',
         success: (res) => {
           setIsOpen(false);
-          return res.message || 'Successfully updated task';
+          return res.message || 'Successfully Task Updated';
         },
         error: (err) => getErrorMessage(err),
       });
