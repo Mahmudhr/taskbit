@@ -21,6 +21,8 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { Plus, Search, Edit, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import AlertModal from '@/components/alert-modal';
+import CreatePaymentForm from '@/components/forms/create-payment-form';
 
 // Mock data
 const mockPayments: Payment[] = [
@@ -61,6 +63,7 @@ export default function PaymentsPage() {
   const [paymentFilter, setPaymentFilter] = useState('all');
   const [timeFilter, setTimeFilter] = useState('all');
   const [currentPage, setCurrentPage] = useState(1);
+  const [openPayment, setOpenPayment] = useState(false);
 
   const getStatusBadge = (status: PaymentStatus) => {
     const variants = {
@@ -75,7 +78,7 @@ export default function PaymentsPage() {
     <div className='space-y-6'>
       <div className='flex items-center justify-between'>
         <h1 className='text-xl md:text-3xl font-bold'>Payments Management</h1>
-        <Button>
+        <Button onClick={() => setOpenPayment(true)}>
           <Plus className='mr-2 h-4 w-4' />
           Add Payment
         </Button>
@@ -222,6 +225,14 @@ export default function PaymentsPage() {
           </div>
         </CardContent>
       </Card>
+      <AlertModal
+        isOpen={openPayment}
+        setIsOpen={setOpenPayment}
+        title='Create new payment'
+        description=' '
+      >
+        <CreatePaymentForm />
+      </AlertModal>
     </div>
   );
 }

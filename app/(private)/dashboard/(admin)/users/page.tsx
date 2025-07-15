@@ -81,7 +81,7 @@ export default function UsersPage() {
     if (userId === null) return;
     startTransition(() => {
       toast.promise(deleteUserAsync(userId), {
-        loading: 'Creating user...',
+        loading: 'Deleting user...',
         success: () => {
           setConfirmModal(false);
           return 'Successfully User Deleted';
@@ -384,7 +384,7 @@ export default function UsersPage() {
         isOpen={confirmModal}
         setIsOpen={setConfirmModal}
         loading={isPending}
-        title='his action cannot be undone. This will permanently delete your user '
+        title='This action cannot be undone. This will permanently delete your user '
         onClick={handleDeleUser}
       />
     </div>

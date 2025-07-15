@@ -127,3 +127,16 @@ export const fetchAllTasks = async (data?: string) => {
     throw new Error('Failed to load users');
   }
 };
+
+export async function deleteTask(id: number) {
+  try {
+    const updateUser = await prisma.task.update({
+      where: { id },
+      data: { isDeleted: true },
+    });
+
+    return updateUser;
+  } catch {
+    throw new Error('Failed to delete task');
+  }
+}

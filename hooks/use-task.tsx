@@ -1,4 +1,9 @@
-import { createTasks, fetchAllTasks, updateTask } from '@/server/tasks/tasks';
+import {
+  createTasks,
+  deleteTask,
+  fetchAllTasks,
+  updateTask,
+} from '@/server/tasks/tasks';
 import { CreateTaskType } from '@/server/types/tasks-type';
 import { Meta, Response, TaskType } from '@/types/common';
 import {
@@ -35,6 +40,13 @@ export function useTask(options?: string) {
     placeholderData: keepPreviousData,
   });
 
+  const deleteTaskMutation = useMutation({
+    mutationFn: (id: number) => deleteTask(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['tasks'] });
+    },
+  });
+
   return {
     createTaskMutation,
     createTaskMutationAsync: createTaskMutation.mutateAsync,
@@ -42,5 +54,7 @@ export function useTask(options?: string) {
     updateTaskMutationAsync: updateTaskMutation.mutateAsync,
     fetchTasksMutation,
     fetchTasks: fetchTasksMutation.data,
+    deleteTask: deleteTaskMutation.mutate,
+    deleteTaskAsync: deleteTaskMutation.mutateAsync,
   };
 }

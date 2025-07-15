@@ -151,7 +151,7 @@ export async function deleteUser(id: number) {
 
     return updateUser;
   } catch {
-    throw new Error('Failed to update commercial track position');
+    throw new Error('Failed to delete user');
   }
 }
 

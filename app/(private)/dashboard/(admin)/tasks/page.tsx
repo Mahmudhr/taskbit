@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useTransition } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -22,16 +22,15 @@ import { Badge } from '@/components/ui/badge';
 import {
   Plus,
   Search,
-  Edit,
   ChevronLeft,
   ChevronRight,
   X,
-  Eye,
+  EllipsisVertical,
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import AlertModal from '@/components/alert-modal';
 import CreateTaskForm from '@/components/forms/create-task-form';
-import { generateQueryString } from '@/lib/utils';
+import { generateQueryString, getErrorMessage } from '@/lib/utils';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useTask } from '@/hooks/use-task';
 import { useDebouncedCallback } from 'use-debounce';
@@ -39,6 +38,16 @@ import UpdateTaskForm from '@/components/forms/update-task-from';
 import { TaskType } from '@/types/common';
 import TaskTableSkeleton from '@/components/skeletons/task-table-skeleton';
 import TaskCardSkeleton from '@/components/skeletons/task-card-skeleton';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import ConfirmModal from '@/components/confirm-modal';
+import { toast } from 'sonner';
 
 export default function TasksPage() {
   const [currentPage, setCurrentPage] = useState(1);
@@ -46,6 +55,9 @@ export default function TasksPage() {
   const [taskOpen, setTaskOpen] = useState(false);
   const [updateTaskOpen, setUpdateTaskOpen] = useState(false);
   const [selectedTask, setSelectedTask] = useState<TaskType | null>(null);
+  const [confirmModal, setConfirmModal] = useState(false);
+  const [isPending, startTransition] = useTransition();
+  const [taskId, setTaskId] = useState<number | null>(null);
   const router = useRouter();
   const [params, setParams] = useState({
     search: searchParams.get('search') || '',
@@ -58,7 +70,8 @@ export default function TasksPage() {
   );
 
   const queryString = generateQueryString(params);
-  const { fetchTasks, fetchTasksMutation } = useTask(queryString);
+  const { fetchTasks, fetchTasksMutation, deleteTaskAsync } =
+    useTask(queryString);
 
   const getStatusBadge = (status: string) => {
     const variants = {
@@ -72,6 +85,20 @@ export default function TasksPage() {
         {status}
       </Badge>
     );
+  };
+
+  const handleDeleTask = () => {
+    if (taskId === null) return;
+    startTransition(() => {
+      toast.promise(deleteTaskAsync(taskId), {
+        loading: 'Deleting user...',
+        success: () => {
+          setConfirmModal(false);
+          return 'Successfully Task Deleted';
+        },
+        error: (err) => getErrorMessage(err) || 'Something went wrong!',
+      });
+    });
   };
 
   const debounced = useDebouncedCallback((value) => {
@@ -90,8 +117,6 @@ export default function TasksPage() {
   useEffect(() => {
     router.push(queryString);
   }, [queryString, router]);
-
-  console.log({ fetchTasks, fetchTasksMutation: fetchTasksMutation.isLoading });
 
   return (
     <div className='space-y-6'>
@@ -232,7 +257,7 @@ export default function TasksPage() {
                     <TableHead>Status</TableHead>
                     <TableHead>Assignee</TableHead>
                     <TableHead>Created At</TableHead>
-                    <TableHead>Actions</TableHead>
+                    <TableHead className='text-center'>Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -287,8 +312,35 @@ export default function TasksPage() {
                                   )}-${task.createdAt.getFullYear()}`
                             : ''}
                         </TableCell>
-                        <TableCell className='flex gap-2'>
-                          <Button variant='outline' size='sm'>
+                        <TableCell className='flex gap-2 justify-center'>
+                          <div>
+                            <DropdownMenu>
+                              <DropdownMenuTrigger>
+                                <EllipsisVertical className='w-5 h-5 text-gray-600' />
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align='end'>
+                                <DropdownMenuLabel>Options</DropdownMenuLabel>
+                                <DropdownMenuSeparator />
+                                <DropdownMenuItem>
+                                  Make Payment
+                                </DropdownMenuItem>
+                                <DropdownMenuItem
+                                  onClick={() => handleEditTask(task)}
+                                >
+                                  Edit
+                                </DropdownMenuItem>
+                                <DropdownMenuItem
+                                  onClick={() => {
+                                    setTaskId(task.id);
+                                    setConfirmModal(true);
+                                  }}
+                                >
+                                  Delete
+                                </DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          </div>
+                          {/* <Button variant='outline' size='sm'>
                             <Eye className='h-4 w-4' />
                           </Button>
                           <Button
@@ -297,7 +349,7 @@ export default function TasksPage() {
                             onClick={() => handleEditTask(task)}
                           >
                             <Edit className='h-4 w-4' />
-                          </Button>
+                          </Button> */}
                         </TableCell>
                       </TableRow>
                     ))}
@@ -322,16 +374,29 @@ export default function TasksPage() {
                       <h3 className='font-medium'>{task.title}</h3>
                     </div>
                     <div className='flex gap-2'>
-                      <Button variant='outline' size='sm'>
-                        <Eye className='h-4 w-4' />
-                      </Button>
-                      <Button
-                        variant='outline'
-                        size='sm'
-                        onClick={() => handleEditTask(task)}
-                      >
-                        <Edit className='h-4 w-4' />
-                      </Button>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger>
+                          <EllipsisVertical className='w-5 h-5 text-gray-600' />
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align='end'>
+                          <DropdownMenuLabel>Options</DropdownMenuLabel>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem>Make Payment</DropdownMenuItem>
+                          <DropdownMenuItem
+                            onClick={() => handleEditTask(task)}
+                          >
+                            Edit
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            onClick={() => {
+                              setTaskId(task.id);
+                              setConfirmModal(true);
+                            }}
+                          >
+                            Delete
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                     </div>
                   </div>
                   <div className='space-y-2 text-sm'>
@@ -436,6 +501,13 @@ export default function TasksPage() {
       >
         <UpdateTaskForm setIsOpen={setUpdateTaskOpen} data={selectedTask} />
       </AlertModal>
+      <ConfirmModal
+        isOpen={confirmModal}
+        setIsOpen={setConfirmModal}
+        loading={isPending}
+        title='This action cannot be undone. This will permanently delete your user '
+        onClick={handleDeleTask}
+      />
     </div>
   );
 }
