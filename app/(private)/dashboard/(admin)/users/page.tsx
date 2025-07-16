@@ -32,7 +32,12 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import AddUserForm from '@/components/forms/add-user-form';
 import AlertModal from '@/components/alert-modal';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { generateQueryString, getErrorMessage } from '@/lib/utils';
+import {
+  generateQueryString,
+  getErrorMessage,
+  roleConvert,
+  userStatusConvert,
+} from '@/lib/utils';
 import { useDebouncedCallback } from 'use-debounce';
 import { useUser } from '@/hooks/use-user';
 import ConfirmModal from '@/components/confirm-modal';
@@ -49,7 +54,7 @@ const getStatusBadge = (status: string) => {
   } as const;
   return (
     <Badge variant={variants[status as keyof typeof variants] || 'secondary'}>
-      {status}
+      {userStatusConvert[status as keyof typeof userStatusConvert] || status}
     </Badge>
   );
 };
@@ -219,7 +224,7 @@ export default function UsersPage() {
                           {user.email}
                         </TableCell>
                         <TableCell className='capitalize'>
-                          {user.role}
+                          {roleConvert[user.role]}
                         </TableCell>
                         <TableCell>{user.phone}</TableCell>
                         <TableCell>{getStatusBadge(user.status)}</TableCell>
@@ -296,7 +301,9 @@ export default function UsersPage() {
                     <div className='space-y-2 text-sm'>
                       <div className='flex justify-between'>
                         <span className='text-muted-foreground'>Role:</span>
-                        <span className='capitalize'>{user.role}</span>
+                        <span className='capitalize'>
+                          {roleConvert[user.role]}
+                        </span>
                       </div>
                       <div className='flex justify-between'>
                         <span className='text-muted-foreground'>Email:</span>

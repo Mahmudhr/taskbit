@@ -48,3 +48,32 @@ export function formatDateDMY(dateString: string) {
   const year = date.getFullYear();
   return `${day}/${month}/${year}`;
 }
+
+export const roleConvert = {
+  ADMIN: 'Admin',
+  USER: 'User',
+};
+
+export const userStatusConvert = {
+  ACTIVE: 'Active',
+  INACTIVE: 'Inactive',
+};
+
+export const taskStatusConvert = {
+  PENDING: 'Pending',
+  IN_PROGRESS: 'In Progress',
+  SUBMITTED: 'Submitted',
+  COMPLETED: 'Completed',
+};
+
+export const paymentStatusConvert = {
+  PENDING: 'Pending',
+  COMPLETED: 'Completed',
+  FAILED: 'Failed',
+};
+
+export const paymentTypeConvert = {
+  BKASH: 'BKash',
+  NAGAD: 'Nagad',
+  BANK_TRANSFER: 'Bank Transfer',
+};

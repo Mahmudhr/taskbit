@@ -30,7 +30,11 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import AlertModal from '@/components/alert-modal';
 import CreateTaskForm from '@/components/forms/create-task-form';
-import { generateQueryString, getErrorMessage } from '@/lib/utils';
+import {
+  generateQueryString,
+  getErrorMessage,
+  taskStatusConvert,
+} from '@/lib/utils';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useTask } from '@/hooks/use-task';
 import { useDebouncedCallback } from 'use-debounce';
@@ -60,7 +64,7 @@ const getStatusBadge = (status: string) => {
   } as const;
   return (
     <Badge variant={variants[status as keyof typeof variants] || 'secondary'}>
-      {status}
+      {taskStatusConvert[status as keyof typeof taskStatusConvert]}
     </Badge>
   );
 };
@@ -209,7 +213,11 @@ export default function TasksPage() {
             )}
             {params.status && (
               <div className='pl-3 pr-2 py-1 border flex gap-2 items-center rounded-full text-sm'>
-                {params.status}
+                {params.status !== 'ALL'
+                  ? taskStatusConvert[
+                      params.status as keyof typeof taskStatusConvert
+                    ]
+                  : params.status}
                 <span
                   onClick={() => {
                     setParams((prev) => ({
@@ -271,11 +279,7 @@ export default function TasksPage() {
                           {task.title}
                         </TableCell>
                         <TableCell>
-                          {task?.duration
-                            ? typeof task.duration === 'string'
-                              ? task.duration
-                              : dayjs(task.duration).format('DD-MM-YYYY')
-                            : ''}
+                          {dayjs(task.duration).format('DD-MM-YYYY')}
                         </TableCell>
                         <TableCell>BDT {task.amount}</TableCell>
                         <TableCell>{getStatusBadge(task.status)}</TableCell>
@@ -287,22 +291,7 @@ export default function TasksPage() {
                             : ''}
                         </TableCell>
                         <TableCell>
-                          {task?.createdAt
-                            ? typeof task.duration === 'string'
-                              ? task.duration
-                              : `${task.createdAt
-
-                                  .getDate()
-                                  .toString()
-                                  .padStart(2, '0')}-${(
-                                  task.createdAt.getMonth() + 1
-                                )
-                                  .toString()
-                                  .padStart(
-                                    2,
-                                    '0'
-                                  )}-${task.createdAt.getFullYear()}`
-                            : ''}
+                          {dayjs(task.createdAt).format('DD-MM-YYYY')}
                         </TableCell>
                         <TableCell className='flex gap-2 justify-center'>
                           <div>

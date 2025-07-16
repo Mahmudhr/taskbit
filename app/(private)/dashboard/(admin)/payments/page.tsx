@@ -40,7 +40,11 @@ import TaskTableSkeleton from '@/components/skeletons/task-table-skeleton';
 import TaskCardSkeleton from '@/components/skeletons/task-card-skeleton';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useDebouncedCallback } from 'use-debounce';
-import { generateQueryString } from '@/lib/utils';
+import {
+  generateQueryString,
+  paymentStatusConvert,
+  paymentTypeConvert,
+} from '@/lib/utils';
 import dayjs from 'dayjs';
 
 const getStatusBadge = (status: $Enums.PaymentStatus) => {
@@ -49,7 +53,9 @@ const getStatusBadge = (status: $Enums.PaymentStatus) => {
     PENDING: 'secondary',
     FAILED: 'destructive',
   } as const;
-  return <Badge variant={variants[status]}>{status}</Badge>;
+  return (
+    <Badge variant={variants[status]}>{paymentStatusConvert[status]}</Badge>
+  );
 };
 
 export default function PaymentsPage() {
@@ -120,7 +126,7 @@ export default function PaymentsPage() {
                 <SelectValue placeholder='Filter payments' />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value='all'>All Payments</SelectItem>
+                <SelectItem value='ALL'>All Payments</SelectItem>
                 <SelectItem value='PENDING'>Pending</SelectItem>
                 <SelectItem value='COMPLETED'>Completed</SelectItem>
                 <SelectItem value='FAILED'>Failed</SelectItem>
@@ -178,7 +184,11 @@ export default function PaymentsPage() {
             )}
             {params.status && (
               <div className='pl-3 pr-2 py-1 border flex gap-2 items-center rounded-full text-sm'>
-                {params.status}
+                {params.status !== 'ALL'
+                  ? paymentStatusConvert[
+                      params.status as keyof typeof paymentStatusConvert
+                    ]
+                  : params.status}
                 <span
                   onClick={() => {
                     setParams((prev) => ({
@@ -223,6 +233,7 @@ export default function PaymentsPage() {
                   <TableRow>
                     <TableHead>Serial</TableHead>
                     <TableHead>Transaction ID</TableHead>
+                    <TableHead>Payment Type</TableHead>
                     <TableHead>Amount</TableHead>
                     <TableHead>Task Title</TableHead>
                     <TableHead>Status</TableHead>
@@ -238,7 +249,10 @@ export default function PaymentsPage() {
                         <TableCell className='font-medium'>
                           {payment.referenceNumber}
                         </TableCell>
-                        <TableCell>${payment.amount}</TableCell>
+                        <TableCell>
+                          {paymentTypeConvert[payment.paymentType]}
+                        </TableCell>
+                        <TableCell>৳ {payment.amount}</TableCell>
                         <TableCell>{payment.task.title}</TableCell>
                         <TableCell>{getStatusBadge(payment.status)}</TableCell>
                         <TableCell>
