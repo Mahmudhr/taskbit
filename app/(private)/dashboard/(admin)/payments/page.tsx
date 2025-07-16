@@ -41,6 +41,7 @@ import TaskCardSkeleton from '@/components/skeletons/task-card-skeleton';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useDebouncedCallback } from 'use-debounce';
 import {
+  cn,
   generateQueryString,
   paymentStatusConvert,
   paymentTypeConvert,
@@ -49,12 +50,14 @@ import dayjs from 'dayjs';
 
 const getStatusBadge = (status: $Enums.PaymentStatus) => {
   const variants = {
-    COMPLETED: 'default',
-    PENDING: 'secondary',
-    FAILED: 'destructive',
+    PENDING: 'bg-gray-100 text-gray-800 hover:bg-gray-200',
+    COMPLETED: 'bg-green-100 text-green-800 hover:bg-green-200',
+    FAILED: 'bg-red-100 text-red-800 hover:bg-red-200',
   } as const;
   return (
-    <Badge variant={variants[status]}>{paymentStatusConvert[status]}</Badge>
+    <Badge className={cn(variants[status])}>
+      {paymentStatusConvert[status]}
+    </Badge>
   );
 };
 
