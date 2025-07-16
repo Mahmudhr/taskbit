@@ -219,3 +219,138 @@ export const searchUsers = async (query: string) => {
     throw new Error('Failed to search users');
   }
 };
+
+/**
+ * Fetch a single user by ID with all profile information
+ * @param userId the user ID to fetch
+ * @returns user object with all profile fields
+ */
+export const fetchUserById = async (userId: number) => {
+  try {
+    const user = await prisma.user.findUnique({
+      where: {
+        id: userId,
+        isDeleted: false,
+      },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        phone: true,
+        whatsapp: true,
+        bkashNumber: true,
+        nagadNumber: true,
+        bankAccountNumber: true,
+        branchName: true,
+        bankName: true,
+        swiftCode: true,
+        role: true,
+        status: true,
+        createdAt: true,
+        updatedAt: true,
+        isDeleted: true,
+      },
+    });
+
+    if (!user) {
+      throw new Error('User not found');
+    }
+
+    return user;
+  } catch {
+    throw new Error('Failed to fetch user profile');
+  }
+};
+
+/**
+ * Update user profile information
+ * @param userId the user ID to update
+ * @param data the profile data to update
+ * @returns updated user object
+ */
+export const updateUserProfile = async (
+  userId: number,
+  data: {
+    name?: string;
+    phone?: string;
+    whatsapp?: string;
+    bkashNumber?: string;
+    nagadNumber?: string;
+    bankAccountNumber?: string;
+    branchName?: string;
+    bankName?: string;
+    swiftCode?: string;
+    password?: string;
+  }
+) => {
+  try {
+    const updateData: {
+      updatedAt: Date;
+      name?: string;
+      phone?: string;
+      whatsapp?: string;
+      bkashNumber?: string;
+      nagadNumber?: string;
+      bankAccountNumber?: string;
+      branchName?: string;
+      bankName?: string;
+      swiftCode?: string;
+      password?: string;
+    } = {
+      updatedAt: new Date(),
+    };
+
+    // Add fields to update data if they exist
+    if (data.name !== undefined) updateData.name = data.name;
+    if (data.phone !== undefined) updateData.phone = data.phone;
+    if (data.whatsapp !== undefined) updateData.whatsapp = data.whatsapp;
+    if (data.bkashNumber !== undefined)
+      updateData.bkashNumber = data.bkashNumber;
+    if (data.nagadNumber !== undefined)
+      updateData.nagadNumber = data.nagadNumber;
+    if (data.bankAccountNumber !== undefined)
+      updateData.bankAccountNumber = data.bankAccountNumber;
+    if (data.branchName !== undefined) updateData.branchName = data.branchName;
+    if (data.bankName !== undefined) updateData.bankName = data.bankName;
+    if (data.swiftCode !== undefined) updateData.swiftCode = data.swiftCode;
+
+    // Handle password update separately (hash it)
+    if (data.password && data.password !== '********') {
+      const hashedPassword = await bcrypt.hash(data.password, 10);
+      updateData.password = hashedPassword;
+    }
+
+    const updatedUser = await prisma.user.update({
+      where: {
+        id: userId,
+        isDeleted: false,
+      },
+      data: updateData,
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        phone: true,
+        whatsapp: true,
+        bkashNumber: true,
+        nagadNumber: true,
+        bankAccountNumber: true,
+        branchName: true,
+        bankName: true,
+        swiftCode: true,
+        role: true,
+        status: true,
+        createdAt: true,
+        updatedAt: true,
+        isDeleted: true,
+      },
+    });
+
+    return {
+      ...updatedUser,
+      message: 'Profile updated successfully',
+    };
+  } catch {
+    throw new Error('Failed to update user profile');
+  }
+};

@@ -9,6 +9,8 @@ import {
   createUser,
   deleteUser,
   UpdateUser,
+  fetchUserById,
+  updateUserProfile,
 } from '../server/user/user';
 import { CreateUserType } from '../server/types/user-type';
 import { Meta, Response, UserType } from '@/types/common';
@@ -61,5 +63,47 @@ export function useUser(options?: string) {
     updateUser: updateUserMutation.mutate,
     updateUserAsync: updateUserMutation.mutateAsync,
     updateUserMutation,
+  };
+}
+
+export function useUserProfile(userId: number) {
+  const queryClient = useQueryClient();
+
+  // Fetch single user profile
+  const fetchUserProfileQuery = useQuery({
+    queryKey: ['user-profile', userId],
+    queryFn: async () => {
+      const user = await fetchUserById(userId);
+      return user;
+    },
+    enabled: !!userId,
+  });
+
+  // Update user profile
+  const updateProfileMutation = useMutation({
+    mutationFn: (data: {
+      name?: string;
+      phone?: string;
+      whatsapp?: string;
+      bkashNumber?: string;
+      nagadNumber?: string;
+      bankAccountNumber?: string;
+      branchName?: string;
+      bankName?: string;
+      swiftCode?: string;
+      password?: string;
+    }) => updateUserProfile(userId, data),
+    onSuccess: () => {
+      // Invalidate and refetch user profile
+      queryClient.invalidateQueries({ queryKey: ['user-profile', userId] });
+    },
+  });
+
+  return {
+    userProfile: fetchUserProfileQuery.data,
+    fetchUserProfileQuery,
+    updateProfile: updateProfileMutation.mutate,
+    updateProfileAsync: updateProfileMutation.mutateAsync,
+    updateProfileMutation,
   };
 }
