@@ -70,6 +70,14 @@ const getStatusBadge = (status: string) => {
   );
 };
 
+const getPaymentStatusBadge = (amount: number) => {
+  if (amount > 0) {
+    return <Badge variant='destructive'>Due</Badge>;
+  } else {
+    return <Badge variant='default'>Paid</Badge>;
+  }
+};
+
 export default function TasksPage() {
   const searchParams = useSearchParams();
   const [taskOpen, setTaskOpen] = useState(false);
@@ -265,6 +273,7 @@ export default function TasksPage() {
                     <TableHead>Task Title</TableHead>
                     <TableHead>Due Date</TableHead>
                     <TableHead>Amount</TableHead>
+                    <TableHead>Payment Status</TableHead>
                     <TableHead>Status</TableHead>
                     <TableHead>Assignee</TableHead>
                     <TableHead>Created At</TableHead>
@@ -282,7 +291,16 @@ export default function TasksPage() {
                         <TableCell>
                           {dayjs(task.duration).format('DD-MM-YYYY')}
                         </TableCell>
-                        <TableCell>BDT {task.amount}</TableCell>
+                        <TableCell>
+                          <div className='flex items-center gap-2'>
+                            <span>৳ {task.amount}</span>
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <div className='flex items-center gap-2'>
+                            {getPaymentStatusBadge(task.amount)}
+                          </div>
+                        </TableCell>
                         <TableCell>{getStatusBadge(task.status)}</TableCell>
                         <TableCell>
                           {task.assignedTo?.name
@@ -308,6 +326,7 @@ export default function TasksPage() {
                                     setOpenPayment(true);
                                     setTaskId(task.id);
                                   }}
+                                  disabled={task.amount === 0}
                                 >
                                   Make Payment
                                 </DropdownMenuItem>
@@ -407,9 +426,12 @@ export default function TasksPage() {
                           : ''}
                       </span>
                     </div>
-                    <div className='flex justify-between'>
+                    <div className='flex justify-between items-center'>
                       <span className='text-muted-foreground'>Amount:</span>
-                      <span className='font-medium'>BDT {task.amount}</span>
+                      <div className='flex items-center gap-2'>
+                        <span className='font-medium'>৳ {task.amount}</span>
+                        {getPaymentStatusBadge(task.amount)}
+                      </div>
                     </div>
                     <div className='flex justify-between'>
                       <span className='text-muted-foreground'>Assignee:</span>

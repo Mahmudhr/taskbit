@@ -18,17 +18,49 @@ export async function createPayment({
   userId: string;
   taskId: number;
 }) {
-  const payment = await prisma.payment.create({
-    data: {
-      paymentType,
-      referenceNumber,
-      amount,
-      status,
-      userId: +userId,
-      taskId: +taskId,
-    },
+  // First, get the current task to check its amount
+  const task = await prisma.task.findUnique({
+    where: { id: +taskId },
+    select: { amount: true },
   });
-  return { message: 'Payment created successfully', payment };
+
+  if (!task) {
+    throw new Error('Task not found');
+  }
+
+  if (task.amount < amount) {
+    throw new Error('Payment amount cannot exceed task amount');
+  }
+
+  const result = await prisma.$transaction(async (tx) => {
+    // Create the payment
+    const payment = await tx.payment.create({
+      data: {
+        paymentType,
+        referenceNumber,
+        amount,
+        status,
+        userId: +userId,
+        taskId: +taskId,
+      },
+    });
+
+    const updatedTask = await tx.task.update({
+      where: { id: +taskId },
+      data: {
+        amount: {
+          decrement: amount,
+        },
+      },
+    });
+
+    return { payment, updatedTask };
+  });
+
+  return {
+    message: 'Payment created successfully',
+    payment: result.payment,
+  };
 }
 
 export const fetchAllPayments = async (data?: string) => {

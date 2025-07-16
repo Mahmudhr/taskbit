@@ -31,6 +31,7 @@ export function usePayment(options?: string) {
       }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['payments'] });
+      queryClient.invalidateQueries({ queryKey: ['tasks'] });
     },
   });
 
