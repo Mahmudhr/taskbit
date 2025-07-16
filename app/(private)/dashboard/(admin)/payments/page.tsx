@@ -41,6 +41,7 @@ import TaskCardSkeleton from '@/components/skeletons/task-card-skeleton';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useDebouncedCallback } from 'use-debounce';
 import { generateQueryString } from '@/lib/utils';
+import dayjs from 'dayjs';
 
 const getStatusBadge = (status: $Enums.PaymentStatus) => {
   const variants = {
@@ -53,8 +54,6 @@ const getStatusBadge = (status: $Enums.PaymentStatus) => {
 
 export default function PaymentsPage() {
   const searchParams = useSearchParams();
-  // const [timeFilter, setTimeFilter] = useState('all');
-  const [currentPage, setCurrentPage] = useState(1);
   const [openDate, setDateOpen] = useState(false);
   const [date, setDate] = useState<Date | undefined>(undefined);
 
@@ -83,8 +82,6 @@ export default function PaymentsPage() {
   useEffect(() => {
     router.push(queryString);
   }, [queryString, router]);
-
-  console.log({ date, fetchPayments });
 
   return (
     <div className='space-y-6'>
@@ -151,6 +148,10 @@ export default function PaymentsPage() {
                     captionLayout='dropdown'
                     onSelect={(date) => {
                       setDate(date);
+                      setParams((prev) => ({
+                        ...prev,
+                        date: date ? dayjs(date).format('YYYY-MM-DD') : '',
+                      }));
                       setDateOpen(false);
                     }}
                   />
@@ -225,6 +226,7 @@ export default function PaymentsPage() {
                     <TableHead>Amount</TableHead>
                     <TableHead>Task Title</TableHead>
                     <TableHead>Status</TableHead>
+                    <TableHead>Created At</TableHead>
                     <TableHead>Actions</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -239,6 +241,9 @@ export default function PaymentsPage() {
                         <TableCell>${payment.amount}</TableCell>
                         <TableCell>{payment.task.title}</TableCell>
                         <TableCell>{getStatusBadge(payment.status)}</TableCell>
+                        <TableCell>
+                          {dayjs(payment.createdAt).format('DD-MM-YYYY')}
+                        </TableCell>
                         <TableCell>
                           <Button variant='outline' size='sm'>
                             <Edit className='h-4 w-4' />
@@ -283,6 +288,10 @@ export default function PaymentsPage() {
                       <span>{payment.task.title}</span>
                     </div>
                     <div className='flex justify-between items-center'>
+                      <span className='text-muted-foreground'>Created At:</span>
+                      {dayjs(payment.createdAt).format('DD-MM-YYYY')}
+                    </div>
+                    <div className='flex justify-between items-center'>
                       <span className='text-muted-foreground'>Status:</span>
                       {getStatusBadge(payment.status)}
                     </div>
@@ -293,34 +302,49 @@ export default function PaymentsPage() {
               <TaskCardSkeleton />
             )}
           </div>
-
-          <div className='flex items-center justify-between space-x-2 py-4'>
-            {fetchPayments && (
-              <div className='text-sm text-muted-foreground'>
-                Showing 1 to {fetchPayments.data.length} of{' '}
-                {fetchPayments.meta.count} results
+          {fetchPayments && fetchPayments?.meta.count > 0 && (
+            <div className='flex items-center justify-between space-x-2 py-4'>
+              {
+                <div className='text-sm text-muted-foreground'>
+                  Showing 1 to {fetchPayments.data.length} of{' '}
+                  {fetchPayments.meta.count} results
+                </div>
+              }
+              <div className='flex items-center space-x-2'>
+                <Button
+                  variant='outline'
+                  size='sm'
+                  onClick={() =>
+                    setParams((prev) => ({
+                      ...prev,
+                      page: (+params.page - 1).toString(),
+                    }))
+                  }
+                  disabled={+params.page === 1}
+                >
+                  <ChevronLeft className='h-4 w-4' />
+                  Previous
+                </Button>
+                <Button
+                  variant='outline'
+                  size='sm'
+                  onClick={() =>
+                    setParams((prev) => ({
+                      ...prev,
+                      page: (+params.page + 1).toString(),
+                    }))
+                  }
+                  disabled={
+                    +params.page ===
+                    (fetchPayments && fetchPayments.meta.totalPages)
+                  }
+                >
+                  Next
+                  <ChevronRight className='h-4 w-4' />
+                </Button>
               </div>
-            )}
-            <div className='flex items-center space-x-2'>
-              <Button
-                variant='outline'
-                size='sm'
-                onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
-                disabled={currentPage === 1}
-              >
-                <ChevronLeft className='h-4 w-4' />
-                Previous
-              </Button>
-              <Button
-                variant='outline'
-                size='sm'
-                onClick={() => setCurrentPage(currentPage + 1)}
-              >
-                Next
-                <ChevronRight className='h-4 w-4' />
-              </Button>
             </div>
-          </div>
+          )}
         </CardContent>
       </Card>
     </div>

@@ -2,7 +2,7 @@ import { $Enums } from '@prisma/client';
 
 // Types
 export type UserType = {
-  id: string;
+  id: number;
   name: string;
   email: string;
   password?: string;
@@ -20,7 +20,7 @@ export type UserType = {
   updatedAt?: Date;
   tasks?: TaskType[];
   createdTasks?: TaskType[];
-  payments?: PaymentTypes[];
+  payments?: FlatPaymentType[]; // Use the flat payment type
 };
 
 export type TaskType = {
@@ -55,7 +55,24 @@ export type PaymentTypes = {
     name: string;
     email: string;
   };
-  task: TaskType;
+  task: {
+    title: string;
+    assignedTo: {
+      email: string;
+      name: string;
+    } | null;
+  };
+};
+
+export type FlatPaymentType = {
+  id: number;
+  referenceNumber: string;
+  paymentType: $Enums.PaymentType;
+  amount: number;
+  status: $Enums.PaymentStatus;
+  createdAt: Date;
+  taskId: number;
+  userId: number;
 };
 
 export interface Response<X, Y> {

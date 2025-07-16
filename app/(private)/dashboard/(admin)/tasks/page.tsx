@@ -49,6 +49,7 @@ import {
 import ConfirmModal from '@/components/confirm-modal';
 import { toast } from 'sonner';
 import CreatePaymentForm from '@/components/forms/create-payment-form';
+import dayjs from 'dayjs';
 
 const getStatusBadge = (status: string) => {
   const variants = {
@@ -65,7 +66,6 @@ const getStatusBadge = (status: string) => {
 };
 
 export default function TasksPage() {
-  const [currentPage, setCurrentPage] = useState(1);
   const searchParams = useSearchParams();
   const [taskOpen, setTaskOpen] = useState(false);
   const [updateTaskOpen, setUpdateTaskOpen] = useState(false);
@@ -274,17 +274,7 @@ export default function TasksPage() {
                           {task?.duration
                             ? typeof task.duration === 'string'
                               ? task.duration
-                              : `${task.duration
-                                  .getDate()
-                                  .toString()
-                                  .padStart(2, '0')}-${(
-                                  task.duration.getMonth() + 1
-                                )
-                                  .toString()
-                                  .padStart(
-                                    2,
-                                    '0'
-                                  )}-${task.duration.getFullYear()}`
+                              : dayjs(task.duration).format('DD-MM-YYYY')
                             : ''}
                         </TableCell>
                         <TableCell>BDT {task.amount}</TableCell>
@@ -473,8 +463,13 @@ export default function TasksPage() {
                 <Button
                   variant='outline'
                   size='sm'
-                  onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
-                  disabled={currentPage === 1}
+                  onClick={() =>
+                    setParams((prev) => ({
+                      ...prev,
+                      page: (+params.page - 1).toString(),
+                    }))
+                  }
+                  disabled={+params.page === 1}
                 >
                   <ChevronLeft className='h-4 w-4' />
                   Previous
@@ -482,7 +477,15 @@ export default function TasksPage() {
                 <Button
                   variant='outline'
                   size='sm'
-                  onClick={() => setCurrentPage(currentPage + 1)}
+                  onClick={() =>
+                    setParams((prev) => ({
+                      ...prev,
+                      page: (+params.page + 1).toString(),
+                    }))
+                  }
+                  disabled={
+                    +params.page === (fetchTasks && fetchTasks.meta.totalPages)
+                  }
                 >
                   Next
                   <ChevronRight className='h-4 w-4' />

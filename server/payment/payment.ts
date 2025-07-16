@@ -39,7 +39,6 @@ export const fetchAllPayments = async (data?: string) => {
   const status = params.get('status') || '';
   const dateString = params.get('date') || '';
 
-  // Date filter (exact day)
   let createdAtFilter: { gte?: Date; lte?: Date } = {};
   if (dateString) {
     const filterDate = new Date(dateString);
@@ -111,7 +110,17 @@ export const fetchAllPayments = async (data?: string) => {
             email: true,
           },
         },
-        task: true,
+        task: {
+          select: {
+            title: true,
+            assignedTo: {
+              select: {
+                name: true,
+                email: true,
+              },
+            },
+          },
+        },
       },
     });
 

@@ -321,47 +321,48 @@ export default function UsersPage() {
           ) : (
             <UserCardSkeleton />
           )}
-
-          <div className='flex items-center justify-between space-x-2 py-4'>
-            <div className='text-sm text-muted-foreground'>
-              {fetchUsers &&
-                ` Showing ${params.page} to ${
-                  fetchUsers.meta.page * fetchUsers.data.length
-                } of ${fetchUsers.meta.count} results`}
+          {fetchUsers && fetchUsers?.meta.count > 0 && (
+            <div className='flex items-center justify-between space-x-2 py-4'>
+              <div className='text-sm text-muted-foreground'>
+                {fetchUsers &&
+                  ` Showing ${params.page} to ${
+                    fetchUsers.meta.page * fetchUsers.data.length
+                  } of ${fetchUsers.meta.count} results`}
+              </div>
+              <div className='flex items-center space-x-2'>
+                <Button
+                  variant='outline'
+                  size='sm'
+                  onClick={() =>
+                    setParams((prev) => ({
+                      ...prev,
+                      page: (+params.page - 1).toString(),
+                    }))
+                  }
+                  disabled={+params.page === 1}
+                >
+                  <ChevronLeft className='h-4 w-4' />
+                  Previous
+                </Button>
+                <Button
+                  variant='outline'
+                  size='sm'
+                  onClick={() =>
+                    setParams((prev) => ({
+                      ...prev,
+                      page: (+params.page + 1).toString(),
+                    }))
+                  }
+                  disabled={
+                    +params.page === (fetchUsers && fetchUsers.meta.totalPages)
+                  }
+                >
+                  Next
+                  <ChevronRight className='h-4 w-4' />
+                </Button>
+              </div>
             </div>
-            <div className='flex items-center space-x-2'>
-              <Button
-                variant='outline'
-                size='sm'
-                onClick={() =>
-                  setParams((prev) => ({
-                    ...prev,
-                    page: (+params.page - 1).toString(),
-                  }))
-                }
-                disabled={+params.page === 1}
-              >
-                <ChevronLeft className='h-4 w-4' />
-                Previous
-              </Button>
-              <Button
-                variant='outline'
-                size='sm'
-                onClick={() =>
-                  setParams((prev) => ({
-                    ...prev,
-                    page: (+params.page + 1).toString(),
-                  }))
-                }
-                disabled={
-                  +params.page === (fetchUsers && fetchUsers.meta.totalPages)
-                }
-              >
-                Next
-                <ChevronRight className='h-4 w-4' />
-              </Button>
-            </div>
-          </div>
+          )}
         </CardContent>
       </Card>
       <AlertModal
