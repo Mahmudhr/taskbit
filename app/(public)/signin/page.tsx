@@ -78,8 +78,7 @@ export default function SignInPage() {
   }
   useEffect(() => {
     if (status === 'authenticated') {
-      const callbackUrl =
-        searchParams.get('callbackUrl') || '/dashboard/commercial/top';
+      const callbackUrl = searchParams.get('callbackUrl') || '/dashboard';
       router.replace(callbackUrl);
     }
   }, [status, router, searchParams]);
@@ -120,7 +119,7 @@ export default function SignInPage() {
                   <FormItem>
                     <FormLabel>Password</FormLabel>
                     <FormControl>
-                      <Input placeholder='shadcn' {...field} />
+                      <Input placeholder='shadcn' type='password' {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
