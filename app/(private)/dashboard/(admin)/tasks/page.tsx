@@ -48,6 +48,21 @@ import {
 } from '@/components/ui/dropdown-menu';
 import ConfirmModal from '@/components/confirm-modal';
 import { toast } from 'sonner';
+import CreatePaymentForm from '@/components/forms/create-payment-form';
+
+const getStatusBadge = (status: string) => {
+  const variants = {
+    pending: 'secondary',
+    incomplete: 'destructive',
+    complete: 'default',
+    'time over': 'destructive',
+  } as const;
+  return (
+    <Badge variant={variants[status as keyof typeof variants] || 'secondary'}>
+      {status}
+    </Badge>
+  );
+};
 
 export default function TasksPage() {
   const [currentPage, setCurrentPage] = useState(1);
@@ -58,6 +73,7 @@ export default function TasksPage() {
   const [confirmModal, setConfirmModal] = useState(false);
   const [isPending, startTransition] = useTransition();
   const [taskId, setTaskId] = useState<number | null>(null);
+  const [openPayment, setOpenPayment] = useState(false);
   const router = useRouter();
   const [params, setParams] = useState({
     search: searchParams.get('search') || '',
@@ -72,20 +88,6 @@ export default function TasksPage() {
   const queryString = generateQueryString(params);
   const { fetchTasks, fetchTasksMutation, deleteTaskAsync } =
     useTask(queryString);
-
-  const getStatusBadge = (status: string) => {
-    const variants = {
-      pending: 'secondary',
-      incomplete: 'destructive',
-      complete: 'default',
-      'time over': 'destructive',
-    } as const;
-    return (
-      <Badge variant={variants[status as keyof typeof variants] || 'secondary'}>
-        {status}
-      </Badge>
-    );
-  };
 
   const handleDeleTask = () => {
     if (taskId === null) return;
@@ -321,7 +323,12 @@ export default function TasksPage() {
                               <DropdownMenuContent align='end'>
                                 <DropdownMenuLabel>Options</DropdownMenuLabel>
                                 <DropdownMenuSeparator />
-                                <DropdownMenuItem>
+                                <DropdownMenuItem
+                                  onClick={() => {
+                                    setOpenPayment(true);
+                                    setTaskId(task.id);
+                                  }}
+                                >
                                   Make Payment
                                 </DropdownMenuItem>
                                 <DropdownMenuItem
@@ -508,6 +515,14 @@ export default function TasksPage() {
         title='This action cannot be undone. This will permanently delete your user '
         onClick={handleDeleTask}
       />
+      <AlertModal
+        isOpen={openPayment}
+        setIsOpen={setOpenPayment}
+        title='Create new payment'
+        description=' '
+      >
+        <CreatePaymentForm setIsOpen={setOpenPayment} taskId={taskId} />
+      </AlertModal>
     </div>
   );
 }

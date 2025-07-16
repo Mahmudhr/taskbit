@@ -2,7 +2,7 @@ import { $Enums } from '@prisma/client';
 
 // Types
 export type UserType = {
-  id: number;
+  id: string;
   name: string;
   email: string;
   password?: string;
@@ -34,10 +34,12 @@ export type TaskType = {
   createdAt: Date;
   updatedAt: Date;
   assignedToId?: number | null;
-  assignedTo?: UserType | null;
   duration: Date | null;
   createdById?: number | null;
-  // payments: PaymentTypes[];
+  assignedTo?: {
+    name: string;
+    email: string;
+  } | null;
 };
 
 export type PaymentTypes = {
@@ -49,6 +51,11 @@ export type PaymentTypes = {
   createdAt: Date;
   taskId: number;
   userId: number;
+  user: {
+    name: string;
+    email: string;
+  };
+  task: TaskType;
 };
 
 export interface Response<X, Y> {

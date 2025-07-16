@@ -110,21 +110,26 @@ export const fetchAllTasks = async (data?: string) => {
   try {
     const count = await prisma.task.count({ where });
     const totalPages = Math.ceil(count / limit);
-    const users = await prisma.task.findMany({
+    const tasks = await prisma.task.findMany({
       where,
       skip: (page - 1) * limit,
       take: limit,
       orderBy: { createdAt: 'desc' },
       include: {
-        assignedTo: true,
+        assignedTo: {
+          select: {
+            name: true,
+            email: true,
+          },
+        },
       },
     });
     return {
       meta: { count, page, limit, totalPages },
-      data: users,
+      data: tasks,
     };
   } catch {
-    throw new Error('Failed to load users');
+    throw new Error('Failed to load tasks');
   }
 };
 
