@@ -29,8 +29,6 @@ import {
   X,
   EllipsisVertical,
   Eye,
-  Copy,
-  Check,
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import AddUserForm from '@/components/forms/add-user-form';
@@ -59,7 +57,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import dayjs from 'dayjs';
-import { Separator } from '@/components/ui/separator';
+import UserDetailsView from '@/components/user-details-view';
 
 const getStatusBadge = (status: string) => {
   const variants = {
@@ -85,7 +83,6 @@ export default function UsersPage() {
   const [updateUser, setUpdateUser] = useState<UserType | null>(null);
   const [viewUserModal, setViewUserModal] = useState(false);
   const [viewUser, setViewUser] = useState<UserType | null>(null);
-  const [copiedField, setCopiedField] = useState<string | null>(null);
 
   const [params, setParams] = useState({
     search: searchParams.get('search') || '',
@@ -130,50 +127,6 @@ export default function UsersPage() {
     setViewUser(user);
     setViewUserModal(true);
   };
-
-  const handleCopy = async (text: string, fieldName: string) => {
-    try {
-      await navigator.clipboard.writeText(text);
-      setCopiedField(fieldName);
-      toast.success(`${fieldName} copied to clipboard`);
-      setTimeout(() => setCopiedField(null), 2000);
-    } catch {
-      toast.error('Failed to copy to clipboard');
-    }
-  };
-
-  const DetailItem = ({
-    label,
-    value,
-    fieldName,
-    displayValue,
-  }: {
-    label: string;
-    value: string;
-    fieldName: string;
-    displayValue?: string;
-  }) => (
-    <div className='p-3 border rounded-lg'>
-      <div className='flex items-center gap-2 mb-1'>
-        <label className='text-sm font-medium text-muted-foreground'>
-          {label}
-        </label>
-        <Button
-          variant='ghost'
-          size='sm'
-          onClick={() => handleCopy(value, fieldName)}
-          className='h-6 w-6 p-0'
-        >
-          {copiedField === fieldName ? (
-            <Check className='h-3 w-3 text-green-600' />
-          ) : (
-            <Copy className='h-3 w-3' />
-          )}
-        </Button>
-      </div>
-      <p className='text-sm'>{displayValue || value}</p>
-    </div>
-  );
 
   useEffect(() => {
     router.push(queryString);
@@ -497,104 +450,7 @@ export default function UsersPage() {
         title='User Details'
         description=' '
       >
-        <div className='space-y-4'>
-          {viewUser && (
-            <>
-              <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
-                <DetailItem
-                  label='Name'
-                  value={viewUser.name}
-                  fieldName='Name'
-                />
-                <DetailItem
-                  label='Email'
-                  value={viewUser.email}
-                  displayValue={
-                    viewUser.email.length > 20
-                      ? viewUser.email.slice(0, 20) + '...'
-                      : viewUser.email
-                  }
-                  fieldName='Email'
-                />
-                <DetailItem
-                  label='Role'
-                  value={roleConvert[viewUser.role]}
-                  fieldName='Role'
-                />
-                <div className='flex items-center justify-between p-3 border rounded-lg'>
-                  <div className='flex-1'>
-                    <label className='text-sm font-medium text-muted-foreground'>
-                      Status
-                    </label>
-                    <div className='mt-1'>
-                      {getStatusBadge(viewUser.status)}
-                    </div>
-                  </div>
-                </div>
-                <DetailItem
-                  label='Phone'
-                  value={viewUser.phone || 'Not provided'}
-                  fieldName='Phone'
-                />
-                <DetailItem
-                  label='WhatsApp'
-                  value={viewUser.whatsapp || 'Not provided'}
-                  fieldName='WhatsApp'
-                />
-                <DetailItem
-                  label='Created At'
-                  value={dayjs(viewUser.createdAt).format('DD-MM-YYYY HH:mm')}
-                  fieldName='Created At'
-                />
-                <DetailItem
-                  label='Updated At'
-                  value={dayjs(viewUser.updatedAt).format('DD-MM-YYYY HH:mm')}
-                  fieldName='Updated At'
-                />
-              </div>
-
-              <Separator />
-
-              <div>
-                <h4 className='text-sm font-medium mb-4'>
-                  Payment Information
-                </h4>
-                <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
-                  <DetailItem
-                    label='Bkash Number'
-                    value={viewUser.bkashNumber || 'Not provided'}
-                    fieldName='Bkash Number'
-                  />
-                  <DetailItem
-                    label='Nagad Number'
-                    value={viewUser.nagadNumber || 'Not provided'}
-                    fieldName='Nagad Number'
-                  />
-                  <DetailItem
-                    label='Bank Account'
-                    value={viewUser.bankAccountNumber || 'Not provided'}
-                    fieldName='Bank Account'
-                  />
-                  <DetailItem
-                    label='Bank Name'
-                    value={viewUser.bankName || 'Not provided'}
-                    fieldName='Bank Name'
-                  />
-                  <DetailItem
-                    label='Branch Name'
-                    value={viewUser.branchName || 'Not provided'}
-                    fieldName='Branch Name'
-                  />
-                  <DetailItem
-                    label='Swift Code'
-                    value={viewUser.swiftCode || 'Not provided'}
-                    fieldName='Swift Code'
-                  />
-                </div>
-              </div>
-            </>
-          )}
-        </div>
+        {viewUser && <UserDetailsView user={viewUser} />}
       </AlertModal>
       <ConfirmModal
         isOpen={confirmModal}
