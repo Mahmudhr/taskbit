@@ -27,6 +27,10 @@ import {
   ChevronLeft,
   ChevronRight,
   X,
+  EllipsisVertical,
+  Eye,
+  Copy,
+  Check,
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import AddUserForm from '@/components/forms/add-user-form';
@@ -46,6 +50,16 @@ import UpdateUserForm from '@/components/forms/update-user-form';
 import { UserType } from '@/types/common';
 import UserTableSkeleton from '@/components/skeletons/user-table-skeleton';
 import UserCardSkeleton from '@/components/skeletons/user-card-skeleton';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import dayjs from 'dayjs';
+import { Separator } from '@/components/ui/separator';
 
 const getStatusBadge = (status: string) => {
   const variants = {
@@ -69,6 +83,9 @@ export default function UsersPage() {
   const searchParams = useSearchParams();
   const [updateUserModal, setUpdateUserModal] = useState(false);
   const [updateUser, setUpdateUser] = useState<UserType | null>(null);
+  const [viewUserModal, setViewUserModal] = useState(false);
+  const [viewUser, setViewUser] = useState<UserType | null>(null);
+  const [copiedField, setCopiedField] = useState<string | null>(null);
 
   const [params, setParams] = useState({
     search: searchParams.get('search') || '',
@@ -103,6 +120,60 @@ export default function UsersPage() {
       page: '1',
     }));
   }, 500);
+
+  const handleEditUser = (user: UserType) => {
+    setUpdateUser(user);
+    setUpdateUserModal(true);
+  };
+
+  const handleViewUser = (user: UserType) => {
+    setViewUser(user);
+    setViewUserModal(true);
+  };
+
+  const handleCopy = async (text: string, fieldName: string) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopiedField(fieldName);
+      toast.success(`${fieldName} copied to clipboard`);
+      setTimeout(() => setCopiedField(null), 2000);
+    } catch {
+      toast.error('Failed to copy to clipboard');
+    }
+  };
+
+  const DetailItem = ({
+    label,
+    value,
+    fieldName,
+    displayValue,
+  }: {
+    label: string;
+    value: string;
+    fieldName: string;
+    displayValue?: string;
+  }) => (
+    <div className='p-3 border rounded-lg'>
+      <div className='flex items-center gap-2 mb-1'>
+        <label className='text-sm font-medium text-muted-foreground'>
+          {label}
+        </label>
+        <Button
+          variant='ghost'
+          size='sm'
+          onClick={() => handleCopy(value, fieldName)}
+          className='h-6 w-6 p-0'
+        >
+          {copiedField === fieldName ? (
+            <Check className='h-3 w-3 text-green-600' />
+          ) : (
+            <Copy className='h-3 w-3' />
+          )}
+        </Button>
+      </div>
+      <p className='text-sm'>{displayValue || value}</p>
+    </div>
+  );
 
   useEffect(() => {
     router.push(queryString);
@@ -209,7 +280,8 @@ export default function UsersPage() {
                     <TableHead>Role</TableHead>
                     <TableHead>Phone</TableHead>
                     <TableHead>Status</TableHead>
-                    <TableHead>Actions</TableHead>
+                    <TableHead>Created At</TableHead>
+                    <TableHead className='text-center'>Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -229,27 +301,41 @@ export default function UsersPage() {
                         <TableCell>{user.phone}</TableCell>
                         <TableCell>{getStatusBadge(user.status)}</TableCell>
                         <TableCell>
-                          <div className='flex items-center gap-2'>
-                            <Button
-                              variant='outline'
-                              size='sm'
-                              onClick={() => {
-                                setUpdateUserModal(true);
-                                setUpdateUser(user);
-                              }}
-                            >
-                              <Edit className='h-4 w-4' />
-                            </Button>
-                            <Button
-                              variant='outline'
-                              size='sm'
-                              onClick={() => {
-                                setConfirmModal(true);
-                                setUserId(user.id);
-                              }}
-                            >
-                              <UserX className='h-4 w-4' />
-                            </Button>
+                          {dayjs(user.createdAt).format('DD-MM-YYYY')}
+                        </TableCell>
+                        <TableCell className='flex gap-2 justify-center'>
+                          <div>
+                            <DropdownMenu>
+                              <DropdownMenuTrigger>
+                                <EllipsisVertical className='w-5 h-5 text-gray-600' />
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align='end'>
+                                <DropdownMenuLabel>Options</DropdownMenuLabel>
+                                <DropdownMenuSeparator />
+                                <DropdownMenuItem
+                                  onClick={() => handleViewUser(user)}
+                                >
+                                  <Eye className='mr-2 h-4 w-4' />
+                                  Details
+                                </DropdownMenuItem>
+                                <DropdownMenuItem
+                                  onClick={() => handleEditUser(user)}
+                                >
+                                  <Edit className='mr-2 h-4 w-4' />
+                                  Edit
+                                </DropdownMenuItem>
+                                <DropdownMenuItem
+                                  onClick={() => {
+                                    setConfirmModal(true);
+                                    setUserId(user.id);
+                                  }}
+                                  className='text-red-600'
+                                >
+                                  <UserX className='mr-2 h-4 w-4' />
+                                  Delete
+                                </DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
                           </div>
                         </TableCell>
                       </TableRow>
@@ -274,27 +360,38 @@ export default function UsersPage() {
                         </span>
                         <h3 className='font-medium'>{user.name}</h3>
                       </div>
-                      <div className='flex items-center gap-2'>
-                        <Button
-                          variant='outline'
-                          size='sm'
-                          onClick={() => {
-                            setUpdateUserModal(true);
-                            setUpdateUser(user);
-                          }}
-                        >
-                          <Edit className='h-4 w-4' />
-                        </Button>
-                        <Button
-                          variant='outline'
-                          size='sm'
-                          onClick={() => {
-                            setConfirmModal(true);
-                            setUserId(user.id);
-                          }}
-                        >
-                          <UserX className='h-4 w-4' />
-                        </Button>
+                      <div className='flex gap-2'>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger>
+                            <EllipsisVertical className='w-5 h-5 text-gray-600' />
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align='end'>
+                            <DropdownMenuLabel>Options</DropdownMenuLabel>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem
+                              onClick={() => handleViewUser(user)}
+                            >
+                              <Eye className='mr-2 h-4 w-4' />
+                              Details
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                              onClick={() => handleEditUser(user)}
+                            >
+                              <Edit className='mr-2 h-4 w-4' />
+                              Edit
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                              onClick={() => {
+                                setConfirmModal(true);
+                                setUserId(user.id);
+                              }}
+                              className='text-red-600'
+                            >
+                              <UserX className='mr-2 h-4 w-4' />
+                              Delete
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
                       </div>
                     </div>
 
@@ -320,6 +417,12 @@ export default function UsersPage() {
                       <div className='flex justify-between items-center'>
                         <span className='text-muted-foreground'>Status:</span>
                         <span>{getStatusBadge(user.status)}</span>
+                      </div>
+                      <div className='flex justify-between'>
+                        <span className='text-muted-foreground'>Created:</span>
+                        <span>
+                          {dayjs(user.createdAt).format('DD-MM-YYYY')}
+                        </span>
                       </div>
                     </div>
                   </Card>
@@ -387,6 +490,111 @@ export default function UsersPage() {
         description=' '
       >
         <UpdateUserForm setIsOpen={setUpdateUserModal} data={updateUser} />
+      </AlertModal>
+      <AlertModal
+        isOpen={viewUserModal}
+        setIsOpen={setViewUserModal}
+        title='User Details'
+        description=' '
+      >
+        <div className='space-y-4'>
+          {viewUser && (
+            <>
+              <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
+                <DetailItem
+                  label='Name'
+                  value={viewUser.name}
+                  fieldName='Name'
+                />
+                <DetailItem
+                  label='Email'
+                  value={viewUser.email}
+                  displayValue={
+                    viewUser.email.length > 20
+                      ? viewUser.email.slice(0, 20) + '...'
+                      : viewUser.email
+                  }
+                  fieldName='Email'
+                />
+                <DetailItem
+                  label='Role'
+                  value={roleConvert[viewUser.role]}
+                  fieldName='Role'
+                />
+                <div className='flex items-center justify-between p-3 border rounded-lg'>
+                  <div className='flex-1'>
+                    <label className='text-sm font-medium text-muted-foreground'>
+                      Status
+                    </label>
+                    <div className='mt-1'>
+                      {getStatusBadge(viewUser.status)}
+                    </div>
+                  </div>
+                </div>
+                <DetailItem
+                  label='Phone'
+                  value={viewUser.phone || 'Not provided'}
+                  fieldName='Phone'
+                />
+                <DetailItem
+                  label='WhatsApp'
+                  value={viewUser.whatsapp || 'Not provided'}
+                  fieldName='WhatsApp'
+                />
+                <DetailItem
+                  label='Created At'
+                  value={dayjs(viewUser.createdAt).format('DD-MM-YYYY HH:mm')}
+                  fieldName='Created At'
+                />
+                <DetailItem
+                  label='Updated At'
+                  value={dayjs(viewUser.updatedAt).format('DD-MM-YYYY HH:mm')}
+                  fieldName='Updated At'
+                />
+              </div>
+
+              <Separator />
+
+              <div>
+                <h4 className='text-sm font-medium mb-4'>
+                  Payment Information
+                </h4>
+                <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
+                  <DetailItem
+                    label='Bkash Number'
+                    value={viewUser.bkashNumber || 'Not provided'}
+                    fieldName='Bkash Number'
+                  />
+                  <DetailItem
+                    label='Nagad Number'
+                    value={viewUser.nagadNumber || 'Not provided'}
+                    fieldName='Nagad Number'
+                  />
+                  <DetailItem
+                    label='Bank Account'
+                    value={viewUser.bankAccountNumber || 'Not provided'}
+                    fieldName='Bank Account'
+                  />
+                  <DetailItem
+                    label='Bank Name'
+                    value={viewUser.bankName || 'Not provided'}
+                    fieldName='Bank Name'
+                  />
+                  <DetailItem
+                    label='Branch Name'
+                    value={viewUser.branchName || 'Not provided'}
+                    fieldName='Branch Name'
+                  />
+                  <DetailItem
+                    label='Swift Code'
+                    value={viewUser.swiftCode || 'Not provided'}
+                    fieldName='Swift Code'
+                  />
+                </div>
+              </div>
+            </>
+          )}
+        </div>
       </AlertModal>
       <ConfirmModal
         isOpen={confirmModal}
