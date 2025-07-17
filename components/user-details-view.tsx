@@ -53,7 +53,7 @@ const DetailItem = ({
   return (
     <div className='p-3 border rounded-lg'>
       <div className='flex items-center gap-2 mb-1'>
-        <label className='text-sm font-medium text-muted-foreground'>
+        <label className='text-sm font-medium text-muted-foreground text-start'>
           {label}
         </label>
         <Button
@@ -69,7 +69,7 @@ const DetailItem = ({
           )}
         </Button>
       </div>
-      <p className='text-sm'>{displayValue || value}</p>
+      <p className='text-sm text-start'>{displayValue || value}</p>
     </div>
   );
 };
@@ -95,7 +95,7 @@ export default function UserDetailsView({ user }: UserDetailsViewProps) {
           fieldName='Role'
         />
         <div className='flex items-center justify-between p-3 border rounded-lg'>
-          <div className='flex-1'>
+          <div className=''>
             <label className='text-sm font-medium text-muted-foreground'>
               Status
             </label>

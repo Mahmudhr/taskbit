@@ -121,7 +121,7 @@ export default function PaymentsPage() {
               onValueChange={(value) => {
                 setParams((prev) => ({
                   ...prev,
-                  status: value,
+                  status: value === 'ALL' ? '' : value,
                 }));
               }}
             >

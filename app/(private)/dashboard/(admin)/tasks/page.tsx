@@ -166,7 +166,7 @@ export default function TasksPage() {
               onValueChange={(value) => {
                 setParams((prev) => ({
                   ...prev,
-                  status: value,
+                  status: value === 'ALL' ? '' : value,
                 }));
               }}
             >
@@ -186,7 +186,7 @@ export default function TasksPage() {
               onValueChange={(value) => {
                 setParams((prev) => ({
                   ...prev,
-                  date: value,
+                  date: value === 'ALL' ? '' : value,
                 }));
               }}
             >

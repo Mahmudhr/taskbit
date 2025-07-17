@@ -72,13 +72,20 @@ const getStatusBadge = (status: string) => {
 };
 
 export default function UsersPage() {
-  const [statusFilter, setStatusFilter] = useState('all');
+  const searchParams = useSearchParams();
+  const [statusFilter, setStatusFilter] = useState(
+    searchParams.get('status') || 'all'
+  );
+  const [roleFilter, setRoleFilter] = useState(
+    searchParams.get('role') || 'all'
+  );
+
   const [addUserOpen, setAddUserOpen] = useState(false);
   const [confirmModal, setConfirmModal] = useState(false);
   const [isPending, startTransition] = useTransition();
   const [userId, setUserId] = useState<number | null>(null);
   const router = useRouter();
-  const searchParams = useSearchParams();
+
   const [updateUserModal, setUpdateUserModal] = useState(false);
   const [updateUser, setUpdateUser] = useState<UserType | null>(null);
   const [viewUserModal, setViewUserModal] = useState(false);
@@ -88,6 +95,7 @@ export default function UsersPage() {
     search: searchParams.get('search') || '',
     page: searchParams.get('page') || '1',
     status: searchParams.get('status') || '',
+    role: searchParams.get('role') || '',
   });
   const [searchQuery, setSearchQuery] = useState(
     searchParams.get('search') || ''
@@ -151,7 +159,7 @@ export default function UsersPage() {
             <div className='relative flex-1'>
               <Search className='absolute left-2 top-2.5 h-4 w-4 text-muted-foreground' />
               <Input
-                placeholder='Search users...'
+                placeholder='Search by name, email, or phone...'
                 value={searchQuery}
                 onChange={(e) => {
                   debounced(e.target.value);
@@ -165,18 +173,37 @@ export default function UsersPage() {
               onValueChange={(value) => {
                 setParams((prev) => ({
                   ...prev,
-                  status: value,
+                  status: value === 'all' ? '' : value,
                 }));
-                setStatusFilter(statusFilter);
+                setStatusFilter(value);
               }}
             >
               <SelectTrigger className='w-[180px]'>
                 <SelectValue placeholder='Filter by status' />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value='all'>All Users</SelectItem>
-                <SelectItem value='active'>Active</SelectItem>
-                <SelectItem value='inactive'>Inactive</SelectItem>
+                <SelectItem value='all'>All Status</SelectItem>
+                <SelectItem value='ACTIVE'>Active</SelectItem>
+                <SelectItem value='INACTIVE'>Inactive</SelectItem>
+              </SelectContent>
+            </Select>
+            <Select
+              value={roleFilter}
+              onValueChange={(value) => {
+                setParams((prev) => ({
+                  ...prev,
+                  role: value === 'all' ? '' : value,
+                }));
+                setRoleFilter(value);
+              }}
+            >
+              <SelectTrigger className='w-[180px]'>
+                <SelectValue placeholder='Filter by role' />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value='all'>All Roles</SelectItem>
+                <SelectItem value='ADMIN'>Admin</SelectItem>
+                <SelectItem value='USER'>User</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -206,6 +233,23 @@ export default function UsersPage() {
                       ...prev,
                       status: '',
                     }));
+                    setStatusFilter('all');
+                  }}
+                >
+                  <X className='w-5 h-5' />
+                </span>
+              </div>
+            )}
+            {params.role && (
+              <div className='pl-3 pr-2 py-1 border flex gap-2 items-center rounded-full text-sm capitalize'>
+                {roleConvert[params.role as keyof typeof roleConvert]}
+                <span
+                  onClick={() => {
+                    setParams((prev) => ({
+                      ...prev,
+                      role: '',
+                    }));
+                    setRoleFilter('all');
                   }}
                 >
                   <X className='w-5 h-5' />

@@ -37,62 +37,64 @@ export const fetchAllUser = async (data?: string) => {
   const params = new URLSearchParams(data);
   const search = params.get('search') || '';
   const page = parseInt(params.get('page') ?? '1') || 1;
-  // const status = params.get('status');
+  const status = params.get('status');
+  const role = params.get('role');
   const limit = 10;
 
   try {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const whereClause: any = {
+      AND: [
+        {
+          OR: [{ status: 'ACTIVE' }, { isDeleted: false }],
+        },
+        {
+          OR: [
+            {
+              name: {
+                contains: search,
+                mode: 'insensitive',
+              },
+            },
+            {
+              email: {
+                contains: search,
+                mode: 'insensitive',
+              },
+            },
+            {
+              phone: {
+                contains: search,
+                mode: 'insensitive',
+              },
+            },
+          ],
+        },
+      ],
+    };
+
+    // Add status filter if provided
+    if (status && status !== 'all') {
+      whereClause.AND.push({
+        status: status.toUpperCase(),
+      });
+    }
+
+    // Add role filter if provided
+    if (role && role !== 'all') {
+      whereClause.AND.push({
+        role: role.toUpperCase(),
+      });
+    }
+
     const count = await prisma.user.count({
-      where: {
-        AND: [
-          {
-            OR: [{ status: 'ACTIVE' }, { isDeleted: false }],
-          },
-          {
-            OR: [
-              {
-                name: {
-                  contains: search,
-                  mode: 'insensitive',
-                },
-              },
-              {
-                email: {
-                  contains: search,
-                  mode: 'insensitive',
-                },
-              },
-            ],
-          },
-        ],
-      },
+      where: whereClause,
     });
 
     const totalPages = Math.ceil(count / limit);
 
     const users = await prisma.user.findMany({
-      where: {
-        AND: [
-          {
-            OR: [{ status: 'ACTIVE' }, { isDeleted: false }],
-          },
-          {
-            OR: [
-              {
-                name: {
-                  contains: search,
-                  mode: 'insensitive',
-                },
-              },
-              {
-                email: {
-                  contains: search,
-                  mode: 'insensitive',
-                },
-              },
-            ],
-          },
-        ],
-      },
+      where: whereClause,
       skip: (page - 1) * limit,
       take: limit,
       orderBy: {
