@@ -30,7 +30,7 @@ import { getErrorMessage } from '@/lib/utils';
 import { useTask } from '@/hooks/use-task';
 import { Loader2Icon } from 'lucide-react';
 import { TaskStatus } from '@prisma/client';
-// import { useCreateTask } from '@/hooks/use-task';
+import { useSession } from 'next-auth/react';
 
 const FormSchema = z.object({
   title: z.string().min(2, { message: 'Title must be at least 2 characters.' }),
@@ -61,6 +61,7 @@ export default function CreateTaskForm({ setIsOpen }: CreateTaskFormProps) {
     null
   );
   const { search } = useSearchUser();
+  const { data: session } = useSession();
   // const createTaskMutation = useCreateTask();
 
   const form = useForm<z.infer<typeof FormSchema>>({
@@ -139,12 +140,11 @@ export default function CreateTaskForm({ setIsOpen }: CreateTaskFormProps) {
                 label='Assign To'
                 name='assignedToId'
                 loadOptions={async (inputValue: string) => {
-                  const users = await search(inputValue);
-                  return users.map((user: SearchUserOption['user']) => ({
-                    label: `${user.name} (${user.email})`,
-                    value: String(user.id),
-                    user,
-                  }));
+                  const options = await search(inputValue);
+                  const currentUserEmail = session?.user?.email;
+                  return options.filter(
+                    (option) => option.user.email !== currentUserEmail
+                  );
                 }}
                 onChange={(option) => {
                   field.onChange(option ? option.value : '');

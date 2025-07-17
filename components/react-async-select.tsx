@@ -102,6 +102,7 @@ export default function ReactAsyncSelect<T = ReactAsyncSelectOption>({
               fontSize: '0.85rem',
               backgroundColor: state.isSelected ? '#6B7280' : 'transparent',
               color: state.isSelected ? '#FFFFFF' : '#1F2937',
+              textAlign: 'start',
               '&:hover': {
                 backgroundColor: '#6B7280',
                 color: '#FFFFFF',
