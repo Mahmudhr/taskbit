@@ -26,6 +26,7 @@ import {
   ChevronRight,
   X,
   EllipsisVertical,
+  ChevronDownIcon,
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import AlertModal from '@/components/alert-modal';
@@ -55,6 +56,12 @@ import ConfirmModal from '@/components/confirm-modal';
 import { toast } from 'sonner';
 import CreatePaymentForm from '@/components/forms/create-payment-form';
 import dayjs from 'dayjs';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover';
+import { Calendar } from '@/components/ui/calendar';
 
 const getStatusBadge = (status: string) => {
   const variants = {
@@ -87,12 +94,17 @@ export default function TasksPage() {
   const [isPending, startTransition] = useTransition();
   const [taskId, setTaskId] = useState<number | null>(null);
   const [openPayment, setOpenPayment] = useState(false);
+  const [createdDateOpen, setCreatedDateOpen] = useState(false);
+  const [createdDate, setCreatedDate] = useState<Date | undefined>(undefined);
+  const [taskDateOpen, setTaskDateOpen] = useState(false);
+  const [taskDate, setTaskDate] = useState<Date | undefined>(undefined);
   const router = useRouter();
   const [params, setParams] = useState({
     search: searchParams.get('search') || '',
     page: searchParams.get('page') || '1',
     status: searchParams.get('status') || '',
-    date: searchParams.get('date') || '',
+    due_date: searchParams.get('due_date') || '',
+    task_create: searchParams.get('task_create') || '',
   });
   const [searchQuery, setSearchQuery] = useState(
     searchParams.get('search') || ''
@@ -181,27 +193,75 @@ export default function TasksPage() {
                 <SelectItem value='COMPLETED'>Completed</SelectItem>
               </SelectContent>
             </Select>
-            <Select
-              value={params.date}
-              onValueChange={(value) => {
-                setParams((prev) => ({
-                  ...prev,
-                  date: value === 'ALL' ? '' : value,
-                }));
-              }}
-            >
-              <SelectTrigger className='w-[180px]'>
-                <SelectValue placeholder='Filter by time' />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value='ALL'>All Time</SelectItem>
-                <SelectItem value='last-day'>Last Day</SelectItem>
-                <SelectItem value='last-week'>Last Week</SelectItem>
-                <SelectItem value='last-month'>Last Month</SelectItem>
-                <SelectItem value='last-6months'>Last 6 Months</SelectItem>
-                <SelectItem value='last-year'>Last Year</SelectItem>
-              </SelectContent>
-            </Select>
+            <div className='flex flex-col gap-3'>
+              <Popover open={taskDateOpen} onOpenChange={setTaskDateOpen}>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant='outline'
+                    id='date'
+                    className='w-48 justify-between font-normal'
+                  >
+                    {taskDate ? taskDate.toLocaleDateString() : 'Due date'}
+                    <ChevronDownIcon />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent
+                  className='w-auto overflow-hidden p-0'
+                  align='start'
+                >
+                  <Calendar
+                    mode='single'
+                    selected={taskDate}
+                    captionLayout='dropdown'
+                    onSelect={(date) => {
+                      setTaskDate(date);
+                      setParams((prev) => ({
+                        ...prev,
+                        due_date: date ? dayjs(date).format('YYYY-MM-DD') : '',
+                      }));
+                      setTaskDateOpen(false);
+                    }}
+                  />
+                </PopoverContent>
+              </Popover>
+            </div>
+            <div className='flex flex-col gap-3'>
+              <Popover open={createdDateOpen} onOpenChange={setCreatedDateOpen}>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant='outline'
+                    id='date'
+                    className='w-48 justify-between font-normal'
+                  >
+                    {createdDate
+                      ? createdDate.toLocaleDateString()
+                      : 'Task Create date'}
+                    <ChevronDownIcon />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent
+                  className='w-auto overflow-hidden p-0'
+                  align='start'
+                >
+                  <Calendar
+                    mode='single'
+                    selected={createdDate}
+                    captionLayout='dropdown'
+                    onSelect={(date) => {
+                      setCreatedDate(date);
+                      setParams((prev) => ({
+                        ...prev,
+                        task_create: date
+                          ? dayjs(date).format('YYYY-MM-DD')
+                          : '',
+                      }));
+
+                      setCreatedDateOpen(false);
+                    }}
+                  />
+                </PopoverContent>
+              </Popover>
+            </div>
           </div>
           <div className='flex flex-wrap gap-2'>
             {params.search && (
@@ -239,15 +299,35 @@ export default function TasksPage() {
                 </span>
               </div>
             )}
-            {params.date && (
+            {params.task_create && (
               <div className='pl-3 pr-2 py-1 border flex gap-2 items-center rounded-full text-sm'>
-                {params.date}
+                Task Create: {dayjs(params.task_create).format('DD-MM-YYYY')}
                 <span
                   onClick={() => {
                     setParams((prev) => ({
                       ...prev,
-                      date: '',
+                      task_create: '',
+                      page: '1',
                     }));
+                    setTaskDate(undefined);
+                    setCreatedDate(undefined);
+                  }}
+                >
+                  <X className='w-5 h-5' />
+                </span>
+              </div>
+            )}
+            {params.due_date && (
+              <div className='pl-3 pr-2 py-1 border flex gap-2 items-center rounded-full text-sm'>
+                Due Date: {dayjs(params.due_date).format('DD-MM-YYYY')}
+                <span
+                  onClick={() => {
+                    setParams((prev) => ({
+                      ...prev,
+                      due_date: '',
+                      page: '1',
+                    }));
+                    setTaskDate(undefined);
                   }}
                 >
                   <X className='w-5 h-5' />

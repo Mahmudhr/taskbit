@@ -54,32 +54,62 @@ export const fetchAllTasks = async (data?: string) => {
   const page = parseInt(params.get('page') ?? '1') || 1;
   const limit = 10;
   const status = params.get('status') || '';
-  const dateRange = params.get('date') || 'all';
 
-  // Calculate date filter
-  const createdAtFilter: { gte?: Date } = {};
-  const now = new Date();
-  switch (dateRange) {
-    case 'last-day':
-      createdAtFilter.gte = new Date(now.getTime() - 24 * 60 * 60 * 1000);
-      break;
-    case 'last-week':
-      createdAtFilter.gte = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+  const dueDate = params.get('due_date') || '';
+  const taskCreate = params.get('task_create') || '';
 
-      break;
-    case 'last-month':
-      createdAtFilter.gte = new Date(now.setMonth(now.getMonth() - 1));
-      break;
-    case 'last-6months':
-      createdAtFilter.gte = new Date(now.setMonth(now.getMonth() - 6));
-      break;
-    case 'last-year':
-      createdAtFilter.gte = new Date(now.setFullYear(now.getFullYear() - 1));
-      break;
-    case 'all':
-    default:
-      // No filter
-      break;
+  let dueDateFilter: { gte?: Date; lte?: Date } = {};
+  if (dueDate) {
+    const filterDate = new Date(dueDate);
+    if (!isNaN(filterDate.getTime())) {
+      const start = new Date(
+        filterDate.getFullYear(),
+        filterDate.getMonth(),
+        filterDate.getDate(),
+        0,
+        0,
+        0,
+        0
+      );
+      const end = new Date(
+        filterDate.getFullYear(),
+        filterDate.getMonth(),
+        filterDate.getDate(),
+        23,
+        59,
+        59,
+        999
+      );
+      dueDateFilter = { gte: start, lte: end };
+    }
+  }
+
+  console.log({ dueDate, dueDateFilter });
+
+  let taskCreateFilter: { gte?: Date; lte?: Date } = {};
+  if (taskCreate) {
+    const filterDate = new Date(taskCreate);
+    if (!isNaN(filterDate.getTime())) {
+      const start = new Date(
+        filterDate.getFullYear(),
+        filterDate.getMonth(),
+        filterDate.getDate(),
+        0,
+        0,
+        0,
+        0
+      );
+      const end = new Date(
+        filterDate.getFullYear(),
+        filterDate.getMonth(),
+        filterDate.getDate(),
+        23,
+        59,
+        59,
+        999
+      );
+      taskCreateFilter = { gte: start, lte: end };
+    }
   }
 
   // Build where clause
@@ -103,8 +133,16 @@ export const fetchAllTasks = async (data?: string) => {
       status: status as TaskStatus,
     });
   }
-  if (createdAtFilter.gte) {
-    (where.AND as Prisma.TaskWhereInput[]).push({ createdAt: createdAtFilter });
+  if (dueDateFilter.gte && dueDateFilter.lte) {
+    (where.AND as Prisma.TaskWhereInput[]).push({
+      duration: dueDateFilter,
+    });
+  }
+
+  if (taskCreateFilter.gte && taskCreateFilter.lte) {
+    (where.AND as Prisma.TaskWhereInput[]).push({
+      createdAt: taskCreateFilter,
+    });
   }
 
   try {
