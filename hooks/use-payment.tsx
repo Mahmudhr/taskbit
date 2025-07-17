@@ -1,7 +1,12 @@
 'use client';
 
-import { createPayment, fetchAllPayments } from '@/server/payment/payment';
+import {
+  createPayment,
+  fetchAllPayments,
+  updatePaymentByUser,
+} from '@/server/payment/payment';
 import { CreatePayment } from '@/server/types/payment-type';
+import { $Enums } from '@prisma/client';
 import { Meta, PaymentTypes, Response } from '@/types/common';
 import {
   keepPreviousData,
@@ -44,10 +49,30 @@ export function usePayment(options?: string) {
     placeholderData: keepPreviousData,
   });
 
+  const updatePaymentMutation = useMutation({
+    mutationFn: ({
+      paymentId,
+      status,
+      paymentType,
+      referenceNumber,
+    }: {
+      paymentId: number;
+      status: $Enums.PaymentStatus;
+      paymentType: $Enums.PaymentType;
+      referenceNumber: string;
+    }) =>
+      updatePaymentByUser({ paymentId, status, paymentType, referenceNumber }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['payments'] });
+    },
+  });
+
   return {
     createPaymentMutation,
     createPaymentMutationAsync: createPaymentMutation.mutateAsync,
     fetchPaymentsMutation,
     fetchPayments: fetchPaymentsMutation.data,
+    updatePaymentMutation,
+    updatePaymentMutationAsync: updatePaymentMutation.mutateAsync,
   };
 }

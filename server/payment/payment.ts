@@ -63,6 +63,38 @@ export async function createPayment({
   };
 }
 
+/**
+ * Update payment status and type (user cannot update amount)
+ */
+export async function updatePaymentByUser({
+  paymentId,
+  status,
+  paymentType,
+  referenceNumber,
+}: {
+  paymentId: number;
+  status: PaymentStatus;
+  paymentType: PaymentType;
+  referenceNumber: string;
+}) {
+  try {
+    const updatedPayment = await prisma.payment.update({
+      where: { id: paymentId },
+      data: {
+        status,
+        paymentType,
+        referenceNumber,
+      },
+    });
+    return {
+      message: 'Payment updated successfully',
+      payment: updatedPayment,
+    };
+  } catch {
+    throw new Error('Failed to update payment');
+  }
+}
+
 export const fetchAllPayments = async (data?: string) => {
   const params = new URLSearchParams(data || '');
   const search = params.get('search') || '';

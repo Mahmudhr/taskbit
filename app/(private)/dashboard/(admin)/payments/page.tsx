@@ -47,6 +47,9 @@ import {
   paymentTypeConvert,
 } from '@/lib/utils';
 import dayjs from 'dayjs';
+import Modal from '@/components/modal';
+import UpdatePaymentForm from '@/components/forms/update-payment-form';
+import { PaymentTypes } from '@/types/common';
 
 const getStatusBadge = (status: $Enums.PaymentStatus) => {
   const variants = {
@@ -65,6 +68,9 @@ export default function PaymentsPage() {
   const searchParams = useSearchParams();
   const [openDate, setDateOpen] = useState(false);
   const [date, setDate] = useState<Date | undefined>(undefined);
+  const [taskId, setTaskId] = useState<number | null>(null);
+  const [paymentData, setPaymentData] = useState<PaymentTypes | null>(null);
+  const [updatePaymentOpen, setUpdatePaymentOpen] = useState(false);
 
   const router = useRouter();
 
@@ -262,7 +268,15 @@ export default function PaymentsPage() {
                           {dayjs(payment.createdAt).format('DD-MM-YYYY')}
                         </TableCell>
                         <TableCell>
-                          <Button variant='outline' size='sm'>
+                          <Button
+                            variant='outline'
+                            size='sm'
+                            onClick={() => {
+                              setUpdatePaymentOpen(true);
+                              setTaskId(payment.id);
+                              setPaymentData(payment);
+                            }}
+                          >
                             <Edit className='h-4 w-4' />
                           </Button>
                         </TableCell>
@@ -290,7 +304,11 @@ export default function PaymentsPage() {
                         {payment.referenceNumber}
                       </span>
                     </div>
-                    <Button variant='outline' size='sm'>
+                    <Button
+                      variant='outline'
+                      size='sm'
+                      onClick={() => setUpdatePaymentOpen(true)}
+                    >
                       <Edit className='h-4 w-4' />
                     </Button>
                   </div>
@@ -364,6 +382,20 @@ export default function PaymentsPage() {
           )}
         </CardContent>
       </Card>
+      <Modal
+        isOpen={updatePaymentOpen}
+        setIsOpen={setUpdatePaymentOpen}
+        title='Update Payment'
+        description=' '
+      >
+        {paymentData && (
+          <UpdatePaymentForm
+            setIsOpen={setUpdatePaymentOpen}
+            taskId={taskId}
+            data={paymentData}
+          />
+        )}
+      </Modal>
     </div>
   );
 }

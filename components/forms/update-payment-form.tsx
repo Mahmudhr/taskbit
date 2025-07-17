@@ -1,6 +1,6 @@
 'use client';
 
-import { useForm } from 'react-hook-form';
+import { z } from 'zod';
 import { Button } from '../ui/button';
 import {
   Form,
@@ -10,9 +10,6 @@ import {
   FormLabel,
   FormMessage,
 } from '../ui/form';
-import { Input } from '../ui/input';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { z } from 'zod';
 import {
   Select,
   SelectContent,
@@ -20,11 +17,15 @@ import {
   SelectTrigger,
   SelectValue,
 } from '../ui/select';
-import { useTransition } from 'react';
-import { toast } from 'sonner';
-import { usePayment } from '@/hooks/use-payment';
-import { useSession } from 'next-auth/react';
 import { getErrorMessage } from '@/lib/utils';
+import { toast } from 'sonner';
+import { useTransition } from 'react';
+import { usePayment } from '@/hooks/use-payment';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { Input } from '../ui/input';
+import { PaymentTypes } from '@/types/common';
+import { $Enums } from '@prisma/client';
 import { Loader2Icon } from 'lucide-react';
 
 const paymentTypes = [
@@ -57,44 +58,44 @@ const FormSchema = z.object({
 type CreatePaymentFormProps = {
   setIsOpen: (open: boolean) => void;
   taskId: number | null;
+  data: PaymentTypes | null;
 };
 
-export default function CreatePaymentForm({
+export default function UpdatePaymentForm({
   setIsOpen,
   taskId,
+  data,
 }: CreatePaymentFormProps) {
   const [isPending, startTransition] = useTransition();
-  const { createPaymentMutationAsync } = usePayment();
-  const { data: session } = useSession();
+  const { updatePaymentMutationAsync } = usePayment();
   const form = useForm<z.infer<typeof FormSchema>>({
     resolver: zodResolver(FormSchema),
     defaultValues: {
-      paymentType: undefined,
-      referenceNumber: '',
-      amount: 0,
-      status: 'PENDING',
+      paymentType: data?.paymentType as $Enums.PaymentType,
+      referenceNumber: data?.referenceNumber || '',
+      amount: data?.amount || 0,
+      status: (data?.status as $Enums.PaymentStatus) || 'PENDING',
     },
   });
+  if (!data) return null;
 
-  function onSubmit(data: z.infer<typeof FormSchema>) {
-    if (!session?.user.id || !taskId) {
-      toast.error('User or Task is missing');
+  function onSubmit(formData: z.infer<typeof FormSchema>) {
+    if (!taskId) {
+      toast.error('Task is missing');
       return;
     }
     const payload = {
-      paymentType: data.paymentType,
-      referenceNumber: data.referenceNumber,
-      amount: data.amount,
-      status: data.status,
-      userId: session.user.id,
-      taskId: taskId,
+      paymentId: taskId,
+      status: formData.status as $Enums.PaymentStatus,
+      paymentType: formData.paymentType as $Enums.PaymentType,
+      referenceNumber: formData.referenceNumber,
     };
     startTransition(() => {
-      toast.promise(createPaymentMutationAsync(payload), {
-        loading: 'Creating Payment...',
+      toast.promise(updatePaymentMutationAsync(payload), {
+        loading: 'Updating payment...',
         success: (res) => {
           setIsOpen(false);
-          return res.message || 'Successfully Created Payment';
+          return res.message || 'Successfully Updated Payment';
         },
         error: (err) => getErrorMessage(err),
       });
@@ -158,6 +159,7 @@ export default function CreatePaymentForm({
                   placeholder='Enter amount'
                   min={1}
                   {...field}
+                  disabled
                 />
               </FormControl>
               <FormMessage />
@@ -194,7 +196,7 @@ export default function CreatePaymentForm({
           className='flex justify-start'
         >
           {isPending && <Loader2Icon className='animate-spin' />}
-          Create Payment
+          Update Payment
         </Button>
       </form>
     </Form>

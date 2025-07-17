@@ -58,6 +58,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import dayjs from 'dayjs';
 import UserDetailsView from '@/components/user-details-view';
+import Modal from '@/components/modal';
 
 const getStatusBadge = (status: string) => {
   const variants = {
@@ -488,14 +489,14 @@ export default function UsersPage() {
       >
         <UpdateUserForm setIsOpen={setUpdateUserModal} data={updateUser} />
       </AlertModal>
-      <AlertModal
+      <Modal
         isOpen={viewUserModal}
         setIsOpen={setViewUserModal}
         title='User Details'
         description=' '
       >
         {viewUser && <UserDetailsView user={viewUser} />}
-      </AlertModal>
+      </Modal>
       <ConfirmModal
         isOpen={confirmModal}
         setIsOpen={setConfirmModal}
