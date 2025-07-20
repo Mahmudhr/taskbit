@@ -467,7 +467,15 @@ export default function TasksPage() {
                         <DropdownMenuContent align='end'>
                           <DropdownMenuLabel>Options</DropdownMenuLabel>
                           <DropdownMenuSeparator />
-                          <DropdownMenuItem>Make Payment</DropdownMenuItem>
+                          <DropdownMenuItem
+                            onClick={() => {
+                              setOpenPayment(true);
+                              setTaskId(task.id);
+                            }}
+                            disabled={task.amount === 0}
+                          >
+                            Make Payment
+                          </DropdownMenuItem>
                           <DropdownMenuItem
                             onClick={() => handleEditTask(task)}
                           >

@@ -19,48 +19,52 @@ export async function createPayment({
   taskId: number;
 }) {
   // First, get the current task to check its amount
-  const task = await prisma.task.findUnique({
-    where: { id: +taskId },
-    select: { amount: true },
-  });
-
-  if (!task) {
-    throw new Error('Task not found');
-  }
-
-  if (task.amount < amount) {
-    throw new Error('Payment amount cannot exceed task amount');
-  }
-
-  const result = await prisma.$transaction(async (tx) => {
-    // Create the payment
-    const payment = await tx.payment.create({
-      data: {
-        paymentType,
-        referenceNumber,
-        amount,
-        status,
-        userId: +userId,
-        taskId: +taskId,
-      },
-    });
-
-    const updatedTask = await tx.task.update({
+  try {
+    const task = await prisma.task.findUnique({
       where: { id: +taskId },
-      data: {
-        amount: {
-          decrement: amount,
-        },
-      },
+      select: { amount: true },
     });
 
-    return { payment, updatedTask };
-  });
+    if (!task) {
+      throw new Error('Task not found');
+    }
 
-  return {
-    message: 'Payment created successfully',
-    payment: result.payment,
-  };
+    if (task.amount < amount) {
+      throw new Error('Payment amount cannot exceed task amount');
+    }
+
+    const result = await prisma.$transaction(async (tx) => {
+      // Create the payment
+      const payment = await tx.payment.create({
+        data: {
+          paymentType,
+          referenceNumber,
+          amount,
+          status,
+          userId: +userId,
+          taskId: +taskId,
+        },
+      });
+
+      const updatedTask = await tx.task.update({
+        where: { id: +taskId },
+        data: {
+          amount: {
+            decrement: amount,
+          },
+        },
+      });
+
+      return { payment, updatedTask };
+    });
+
+    return {
+      message: 'Payment created successfully',
+      payment: result.payment,
+    };
+  } catch (e) {
+    throw new Error((e as Error)?.message || 'Failed to create payment');
+  }
 }
 
 /**
