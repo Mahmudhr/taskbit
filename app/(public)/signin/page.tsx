@@ -3,7 +3,7 @@
 import type React from 'react';
 
 import { signIn, SignInResponse, useSession } from 'next-auth/react';
-import { useEffect, useTransition } from 'react';
+import { useEffect, useState, useTransition } from 'react';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -27,7 +27,7 @@ import {
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { toast } from 'sonner';
-import { Loader2Icon } from 'lucide-react';
+import { Eye, EyeOff, Loader2Icon } from 'lucide-react';
 
 const FormSchema = z.object({
   email: z
@@ -43,6 +43,7 @@ export default function SignInPage() {
   const searchParams = useSearchParams();
   const [isPending, startTransition] = useTransition();
   const previousURL = searchParams.get('callbackUrl');
+  const [showPass, setShowPass] = useState(false);
 
   const { status } = useSession();
   const router = useRouter();
@@ -116,15 +117,32 @@ export default function SignInPage() {
                 control={form.control}
                 name='password'
                 render={({ field }) => (
-                  <FormItem>
+                  <FormItem className='relative'>
                     <FormLabel>Password</FormLabel>
                     <FormControl>
-                      <Input placeholder='shadcn' type='password' {...field} />
+                      <Input
+                        placeholder='shadcn'
+                        type={!showPass ? 'password' : 'text'}
+                        {...field}
+                      />
                     </FormControl>
+                    {!showPass ? (
+                      <Eye
+                        className='w-5 h-5 absolute right-2 top-8'
+                        onClick={() => setShowPass(true)}
+                      />
+                    ) : (
+                      <EyeOff
+                        className='w-5 h-5 absolute right-2 top-8'
+                        onClick={() => setShowPass(false)}
+                      />
+                    )}
+
                     <FormMessage />
                   </FormItem>
                 )}
               />
+
               <Button type='submit' disabled={isPending}>
                 {isPending && <Loader2Icon className='animate-spin' />} Sign in
               </Button>
