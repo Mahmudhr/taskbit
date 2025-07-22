@@ -35,6 +35,7 @@ import {
   cn,
   generateQueryString,
   getErrorMessage,
+  paperTypeConvert,
   taskStatusConvert,
 } from '@/lib/utils';
 import { useRouter, useSearchParams } from 'next/navigation';
@@ -144,6 +145,8 @@ export default function TasksPage() {
   useEffect(() => {
     router.push(queryString);
   }, [queryString, router]);
+
+  console.log({ fetchTasks });
 
   return (
     <div className='space-y-6'>
@@ -357,6 +360,7 @@ export default function TasksPage() {
                     <TableHead>Status</TableHead>
                     <TableHead>Assignee</TableHead>
                     <TableHead>Client</TableHead>
+                    <TableHead>Paper Type</TableHead>
                     <TableHead>Created At</TableHead>
                     <TableHead className='text-center'>Actions</TableHead>
                   </TableRow>
@@ -400,6 +404,13 @@ export default function TasksPage() {
                           ) : (
                             <div>-</div>
                           )}
+                        </TableCell>
+                        <TableCell>
+                          {
+                            paperTypeConvert[
+                              task.paper_type as keyof typeof paperTypeConvert
+                            ]
+                          }
                         </TableCell>
                         <TableCell>
                           {dayjs(task.createdAt).format('DD-MM-YYYY')}

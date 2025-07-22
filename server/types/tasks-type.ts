@@ -8,4 +8,5 @@ export type CreateTaskType = {
   assignedToId: string;
   clientId: string;
   duration: Date;
+  paper_type: $Enums.PaperType;
 };

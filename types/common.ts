@@ -37,6 +37,7 @@ export type TaskType = {
   duration: Date | null;
   createdById?: number | null;
   clientId?: number | null;
+  paper_type: $Enums.PaperType;
   client?: {
     id: number;
     name: string;

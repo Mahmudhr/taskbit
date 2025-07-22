@@ -77,3 +77,9 @@ export const paymentTypeConvert = {
   NAGAD: 'Nagad',
   BANK_TRANSFER: 'Bank Transfer',
 };
+
+export const paperTypeConvert = {
+  CONFERENCE: 'Conference',
+  SURVEY: 'Survey',
+  JOURNAL: 'Journal',
+};

@@ -26,10 +26,14 @@ import { useSearchUser, SearchUserOption } from '@/hooks/use-search-user';
 import ReactAsyncSelect from '../react-async-select';
 import { Card } from '../ui/card';
 import { useState } from 'react';
-import { getErrorMessage, taskStatusConvert } from '@/lib/utils';
+import {
+  getErrorMessage,
+  paperTypeConvert,
+  taskStatusConvert,
+} from '@/lib/utils';
 import { useTask } from '@/hooks/use-task';
 import { Loader2Icon } from 'lucide-react';
-import { TaskStatus } from '@prisma/client';
+import { PaperType, TaskStatus } from '@prisma/client';
 import { useSession } from 'next-auth/react';
 import { SearchClientOption, useClient } from '@/hooks/use-client';
 
@@ -45,6 +49,7 @@ const FormSchema = z.object({
     .number()
     .min(1, { message: 'Amount must be greater than 0' }),
   status: z.nativeEnum(TaskStatus),
+  paper_type: z.nativeEnum(PaperType),
   assignedToId: z
     .string()
     .min(1, { message: 'Please select a user to assign' }),
@@ -243,6 +248,34 @@ export default function CreateTaskForm({ setIsOpen }: CreateTaskFormProps) {
                       {
                         taskStatusConvert[
                           status as keyof typeof taskStatusConvert
+                        ]
+                      }
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name='paper_type'
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Paper Type</FormLabel>
+              <Select onValueChange={field.onChange} defaultValue={field.value}>
+                <FormControl>
+                  <SelectTrigger>
+                    <SelectValue placeholder='Select paper type' />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent className='z-[9999]'>
+                  {Object.values(PaperType).map((status) => (
+                    <SelectItem key={status} value={status}>
+                      {
+                        paperTypeConvert[
+                          status as keyof typeof paperTypeConvert
                         ]
                       }
                     </SelectItem>
