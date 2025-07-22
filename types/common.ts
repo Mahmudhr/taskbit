@@ -36,7 +36,14 @@ export type TaskType = {
   assignedToId?: number | null;
   duration: Date | null;
   createdById?: number | null;
+  clientId?: number | null;
+  client?: {
+    id: number;
+    name: string;
+    email: string | null;
+  } | null;
   assignedTo?: {
+    id: number;
     name: string;
     email: string;
   } | null;

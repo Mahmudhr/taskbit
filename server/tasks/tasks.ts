@@ -5,7 +5,7 @@ import { Prisma, TaskStatus } from '@prisma/client';
 import { CreateTaskType } from '../types/tasks-type';
 
 export async function createTasks(data: CreateTaskType) {
-  const { title, description, amount, status, duration } = data;
+  const { title, description, amount, status, duration, clientId } = data;
   try {
     await prisma.task.create({
       data: {
@@ -14,6 +14,7 @@ export async function createTasks(data: CreateTaskType) {
         amount,
         status,
         assignedToId: +data.assignedToId,
+        clientId: +clientId,
         duration,
       },
     });
@@ -36,6 +37,7 @@ export async function updateTask(id: number, data: CreateTaskType) {
         amount,
         status,
         assignedToId: +data.assignedToId,
+        clientId: +data.clientId,
         duration,
         updatedAt: new Date(),
       },
@@ -154,6 +156,14 @@ export const fetchAllTasks = async (data?: string) => {
       include: {
         assignedTo: {
           select: {
+            id: true,
+            name: true,
+            email: true,
+          },
+        },
+        client: {
+          select: {
+            id: true,
             name: true,
             email: true,
           },

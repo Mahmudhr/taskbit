@@ -32,6 +32,21 @@ model User {
   @@map("users")
 }
 
+model Client {
+  id        Int          @id @default(autoincrement())
+  name      String
+  email     String?      @unique
+  phone     String?
+  company   String?
+  status    ClientStatus @default(ACTIVE)
+  isDeleted Boolean      @default(false) @map("is_deleted")
+  createdAt DateTime     @default(now()) @map("created_at")
+  updatedAt DateTime     @updatedAt @map("updated_at")
+  tasks     Task[]       @relation("ClientTasks")
+
+  @@map("clients")
+}
+
 model Task {
   id              Int       @id @default(autoincrement())
   title           String
@@ -39,6 +54,7 @@ model Task {
   link            String?
   amount          Float
   status          TaskStatus @default(PENDING)
+  paper_type      PaperType @default(CONFERENCE)
   isDeleted       Boolean   @default(false) @map("is_deleted")
   createdAt       DateTime  @default(now()) @map("created_at")
   updatedAt       DateTime  @updatedAt @map("updated_at")
@@ -48,6 +64,8 @@ model Task {
   payments        Payment[] @relation("TaskPayments")
   createdBy       User?     @relation("CreatedTasks", fields: [createdById], references: [id])
   createdById     Int?      @map("created_by_id")
+  client          Client?   @relation("ClientTasks", fields: [clientId], references: [id])
+  clientId        Int?      @map("client_id")
 
   @@map("tasks")
 }
@@ -94,4 +112,15 @@ enum PaymentType {
   BKASH
   NAGAD
   BANK_TRANSFER
+}
+
+enum PaperType {
+  CONFERENCE
+  SURVEY
+  JOURNAL
+}
+
+enum ClientStatus {
+  ACTIVE
+  INACTIVE
 }

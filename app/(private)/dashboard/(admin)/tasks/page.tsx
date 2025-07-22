@@ -356,6 +356,7 @@ export default function TasksPage() {
                     <TableHead>Payment Status</TableHead>
                     <TableHead>Status</TableHead>
                     <TableHead>Assignee</TableHead>
+                    <TableHead>Client</TableHead>
                     <TableHead>Created At</TableHead>
                     <TableHead className='text-center'>Actions</TableHead>
                   </TableRow>
@@ -388,6 +389,17 @@ export default function TasksPage() {
                               ? task.assignedTo.name.slice(0, 20) + '...'
                               : task.assignedTo.name
                             : ''}
+                        </TableCell>
+                        <TableCell>
+                          {task.client?.name ? (
+                            task.client.name.length > 20 ? (
+                              task.client.name.slice(0, 20) + '...'
+                            ) : (
+                              task.client.name
+                            )
+                          ) : (
+                            <div>-</div>
+                          )}
                         </TableCell>
                         <TableCell>
                           {dayjs(task.createdAt).format('DD-MM-YYYY')}

@@ -25,11 +25,13 @@ import { useTransition, useState, useEffect } from 'react';
 import { useSearchUser, SearchUserOption } from '@/hooks/use-search-user';
 import ReactAsyncSelect from '../react-async-select';
 import { Card } from '../ui/card';
-import { getErrorMessage } from '@/lib/utils';
+import { getErrorMessage, taskStatusConvert } from '@/lib/utils';
 import { useTask } from '@/hooks/use-task';
 import { Loader2Icon } from 'lucide-react';
 import { TaskStatus } from '@prisma/client';
 import { TaskType } from '@/types/common';
+import { useSession } from 'next-auth/react';
+import { SearchClientOption, useClient } from '@/hooks/use-client';
 
 const FormSchema = z.object({
   title: z.string().min(2, { message: 'Title must be at least 2 characters.' }),
@@ -46,6 +48,7 @@ const FormSchema = z.object({
   assignedToId: z
     .string()
     .min(1, { message: 'Please select a user to assign' }),
+  clientId: z.string().min(1, { message: 'Please select a user to assign' }),
   duration: z.string().optional(),
 });
 
@@ -63,7 +66,11 @@ export default function UpdateTaskForm({
   const [selectedUser, setSelectedUser] = useState<SearchUserOption | null>(
     null
   );
+  const [selectedClient, setSelectedClient] =
+    useState<SearchClientOption | null>(null);
+  const { data: session } = useSession();
   const { search } = useSearchUser();
+  const { searchClients } = useClient();
 
   const form = useForm<z.infer<typeof FormSchema>>({
     resolver: zodResolver(FormSchema),
@@ -74,12 +81,31 @@ export default function UpdateTaskForm({
       amount: data?.amount || 0,
       status: data?.status || TaskStatus.PENDING,
       assignedToId: data?.assignedToId?.toString() || '',
+      clientId: data?.clientId?.toString() || '',
       duration: data?.duration
         ? new Date(data.duration).toISOString().split('T')[0]
         : '',
     },
   });
 
+  useEffect(() => {
+    if (data?.assignedTo) {
+      setSelectedUser({
+        label: `${data.assignedTo.name} (${data.assignedTo.email})`,
+        value: String(data.assignedTo.id),
+        user: data.assignedTo,
+      });
+    }
+  }, [data]);
+  useEffect(() => {
+    if (data?.client) {
+      setSelectedClient({
+        label: `${data.client.name} (${data.client.email})`,
+        value: String(data.client.id),
+        user: data.client,
+      });
+    }
+  }, [data]);
   useEffect(() => {
     if (data?.assignedTo) {
       setSelectedUser({
@@ -159,12 +185,11 @@ export default function UpdateTaskForm({
                 label='Assign To'
                 name='assignedToId'
                 loadOptions={async (inputValue: string) => {
-                  const users = await search(inputValue);
-                  return users.map((user: SearchUserOption['user']) => ({
-                    label: `${user.name} (${user.email})`,
-                    value: String(user.id),
-                    user,
-                  }));
+                  const options = await search(inputValue);
+                  const currentUserEmail = session?.user?.email;
+                  return options.filter(
+                    (option) => option.user.email !== currentUserEmail
+                  );
                 }}
                 onChange={(option) => {
                   field.onChange(option ? option.value : '');
@@ -179,6 +204,39 @@ export default function UpdateTaskForm({
                   <div className='font-semibold '>{selectedUser.user.name}</div>
                   <div className='text-xs text-gray-600 break-all'>
                     {selectedUser.user.email}
+                  </div>
+                </Card>
+              )}
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name='clientId'
+          render={({ field }) => (
+            <FormItem>
+              <ReactAsyncSelect<SearchClientOption>
+                label='Client'
+                name='clientId'
+                loadOptions={async (inputValue: string) => {
+                  const options = await searchClients(inputValue);
+                  return options;
+                }}
+                onChange={(option) => {
+                  field.onChange(option ? option.value : '');
+                  setSelectedClient(option);
+                }}
+                isClearable
+                placeholder='Search client by name or email...'
+              />
+              <FormMessage />
+              {selectedClient && (
+                <Card className='mt-4 p-4 break-words whitespace-pre-line w-full'>
+                  <div className='font-semibold break-words whitespace-pre-line text-left'>
+                    {selectedClient.user.name}
+                  </div>
+                  <div className='text-xs text-gray-600 break-all text-left'>
+                    {selectedClient.user.email}
                   </div>
                 </Card>
               )}
@@ -218,7 +276,11 @@ export default function UpdateTaskForm({
                 <SelectContent className='z-[9999]'>
                   {Object.values(TaskStatus).map((status) => (
                     <SelectItem key={status} value={status}>
-                      {status.replace('_', ' ')}
+                      {
+                        taskStatusConvert[
+                          status as keyof typeof taskStatusConvert
+                        ]
+                      }
                     </SelectItem>
                   ))}
                 </SelectContent>

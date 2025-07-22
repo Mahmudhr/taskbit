@@ -6,5 +6,6 @@ export type CreateTaskType = {
   amount: number;
   status: $Enums.TaskStatus;
   assignedToId: string;
+  clientId: string;
   duration: Date;
 };
