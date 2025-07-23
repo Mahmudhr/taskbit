@@ -187,12 +187,13 @@ export default function PaymentsPage() {
                     setSearchQuery('');
                   }}
                 >
-                  <X className='w-5 h-5' />
+                  <X className='w-5 h-5 cursor-pointer' />
                 </span>
               </div>
             )}
             {params.status && (
               <div className='pl-3 pr-2 py-1 border flex gap-2 items-center rounded-full text-sm'>
+                Status:{' '}
                 {params.status !== 'ALL'
                   ? paymentStatusConvert[
                       params.status as keyof typeof paymentStatusConvert
@@ -206,13 +207,13 @@ export default function PaymentsPage() {
                     }));
                   }}
                 >
-                  <X className='w-5 h-5' />
+                  <X className='w-5 h-5 cursor-pointer' />
                 </span>
               </div>
             )}
             {params.date && (
               <div className='pl-3 pr-2 py-1 border flex gap-2 items-center rounded-full text-sm'>
-                {params.date}
+                Created At: {params.date}
                 <span
                   onClick={() => {
                     setParams((prev) => ({
@@ -221,7 +222,7 @@ export default function PaymentsPage() {
                     }));
                   }}
                 >
-                  <X className='w-5 h-5' />
+                  <X className='w-5 h-5 cursor-pointer' />
                 </span>
               </div>
             )}

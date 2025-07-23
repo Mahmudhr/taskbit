@@ -221,13 +221,18 @@ export default function UsersPage() {
                     setSearchQuery('');
                   }}
                 >
-                  <X className='w-5 h-5' />
+                  <X className='w-5 h-5 cursor-pointer' />
                 </span>
               </div>
             )}
             {params.status && (
               <div className='pl-3 pr-2 py-1 border flex gap-2 items-center rounded-full text-sm capitalize'>
-                {params.status}
+                Status:{' '}
+                {
+                  userStatusConvert[
+                    params.status as keyof typeof userStatusConvert
+                  ]
+                }
                 <span
                   onClick={() => {
                     setParams((prev) => ({
@@ -237,13 +242,13 @@ export default function UsersPage() {
                     setStatusFilter('all');
                   }}
                 >
-                  <X className='w-5 h-5' />
+                  <X className='w-5 h-5 cursor-pointer' />
                 </span>
               </div>
             )}
             {params.role && (
               <div className='pl-3 pr-2 py-1 border flex gap-2 items-center rounded-full text-sm capitalize'>
-                {roleConvert[params.role as keyof typeof roleConvert]}
+                Role: {roleConvert[params.role as keyof typeof roleConvert]}
                 <span
                   onClick={() => {
                     setParams((prev) => ({
@@ -253,7 +258,7 @@ export default function UsersPage() {
                     setRoleFilter('all');
                   }}
                 >
-                  <X className='w-5 h-5' />
+                  <X className='w-5 h-5 cursor-pointer' />
                 </span>
               </div>
             )}

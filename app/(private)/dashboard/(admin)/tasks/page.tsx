@@ -297,12 +297,13 @@ export default function TasksPage() {
                     setSearchQuery('');
                   }}
                 >
-                  <X className='w-5 h-5' />
+                  <X className='w-5 h-5 cursor-pointer' />
                 </span>
               </div>
             )}
             {params.status && (
               <div className='pl-3 pr-2 py-1 border flex gap-2 items-center rounded-full text-sm'>
+                Status:{' '}
                 {params.status !== 'ALL'
                   ? taskStatusConvert[
                       params.status as keyof typeof taskStatusConvert
@@ -316,25 +317,7 @@ export default function TasksPage() {
                     }));
                   }}
                 >
-                  <X className='w-5 h-5' />
-                </span>
-              </div>
-            )}
-            {params.task_create && (
-              <div className='pl-3 pr-2 py-1 border flex gap-2 items-center rounded-full text-sm'>
-                Task Create: {dayjs(params.task_create).format('DD-MM-YYYY')}
-                <span
-                  onClick={() => {
-                    setParams((prev) => ({
-                      ...prev,
-                      task_create: '',
-                      page: '1',
-                    }));
-                    setTaskDate(undefined);
-                    setCreatedDate(undefined);
-                  }}
-                >
-                  <X className='w-5 h-5' />
+                  <X className='w-5 h-5 cursor-pointer' />
                 </span>
               </div>
             )}
@@ -355,10 +338,29 @@ export default function TasksPage() {
                     }));
                   }}
                 >
-                  <X className='w-5 h-5' />
+                  <X className='w-5 h-5 cursor-pointer' />
                 </span>
               </div>
             )}
+            {params.task_create && (
+              <div className='pl-3 pr-2 py-1 border flex gap-2 items-center rounded-full text-sm'>
+                Task Create: {dayjs(params.task_create).format('DD-MM-YYYY')}
+                <span
+                  onClick={() => {
+                    setParams((prev) => ({
+                      ...prev,
+                      task_create: '',
+                      page: '1',
+                    }));
+                    setTaskDate(undefined);
+                    setCreatedDate(undefined);
+                  }}
+                >
+                  <X className='w-5 h-5 cursor-pointer' />
+                </span>
+              </div>
+            )}
+
             {params.due_date && (
               <div className='pl-3 pr-2 py-1 border flex gap-2 items-center rounded-full text-sm'>
                 Due Date: {dayjs(params.due_date).format('DD-MM-YYYY')}
@@ -372,7 +374,7 @@ export default function TasksPage() {
                     setTaskDate(undefined);
                   }}
                 >
-                  <X className='w-5 h-5' />
+                  <X className='w-5 h-5 cursor-pointer' />
                 </span>
               </div>
             )}

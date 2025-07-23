@@ -188,12 +188,13 @@ export default function ClientsPage() {
                     setSearchQuery('');
                   }}
                 >
-                  <X className='w-5 h-5' />
+                  <X className='w-5 h-5 cursor-pointer' />
                 </span>
               </div>
             )}
             {params.status && (
               <div className='pl-3 pr-2 py-1 border flex gap-2 items-center rounded-full text-sm capitalize'>
+                Status:{' '}
                 {
                   userStatusConvert[
                     params.status as keyof typeof userStatusConvert
@@ -208,7 +209,7 @@ export default function ClientsPage() {
                     setStatusFilter('all');
                   }}
                 >
-                  <X className='w-5 h-5' />
+                  <X className='w-5 h-5 cursor-pointer' />
                 </span>
               </div>
             )}
