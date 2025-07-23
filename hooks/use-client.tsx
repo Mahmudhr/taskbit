@@ -1,6 +1,20 @@
 'use client';
 
-import { searchClients } from '@/server/client/client';
+import {
+  searchClients,
+  createClient,
+  fetchAllClients,
+  updateClient,
+  deleteClient,
+} from '@/server/client/client';
+import { CreateClientType } from '@/server/types/client-type';
+import { ClientType, Meta, Response } from '@/types/common';
+import {
+  keepPreviousData,
+  useMutation,
+  useQuery,
+  useQueryClient,
+} from '@tanstack/react-query';
 import { useCallback, useRef } from 'react';
 
 export type SearchClientOption = {
@@ -13,7 +27,8 @@ export type SearchClientOption = {
   };
 };
 
-export function useClient() {
+export function useClient(options?: string) {
+  const queryClient = useQueryClient();
   // Debounced search function
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
   const pendingPromiseRef = useRef<{
@@ -50,5 +65,53 @@ export function useClient() {
     });
   }, []);
 
-  return { searchClients: search };
+  // const createClientAsync = useCallback(async (data: CreateClientType) => {
+  //   return await createClient(data);
+  // }, []);
+
+  const fetchClientsQuery = useQuery<Response<ClientType[], Meta>>({
+    queryKey: ['clients', options],
+    queryFn: async () => {
+      const res = await fetchAllClients(options);
+      return res;
+    },
+    placeholderData: keepPreviousData,
+  });
+
+  const createUserMutation = useMutation({
+    mutationFn: (data: CreateClientType) => createClient(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['clients'] });
+    },
+  });
+
+  const updateClientMutation = useMutation({
+    mutationFn: ({ id, data }: { id: number; data: CreateClientType }) =>
+      updateClient({ id, data }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['clients'] });
+    },
+  });
+
+  const deleteClientMutation = useMutation({
+    mutationFn: (id: number) => deleteClient(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['clients'] });
+    },
+  });
+
+  return {
+    searchClients: search,
+    createUserMutation,
+    createClient: createUserMutation.mutate,
+    createClientAsync: createUserMutation.mutateAsync,
+    fetchClientsQuery,
+    fetchAllClients: fetchClientsQuery.data,
+    updateClientMutation,
+    updateClient: updateClientMutation.mutate,
+    updateClientAsync: updateClientMutation.mutateAsync,
+    deleteClientMutation,
+    deleteClient: deleteClientMutation.mutate,
+    deleteClientAsync: deleteClientMutation.mutateAsync,
+  };
 }

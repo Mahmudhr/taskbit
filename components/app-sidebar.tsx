@@ -35,6 +35,11 @@ const adminMenuItems = [
     url: '/dashboard/users',
     icon: Users,
   },
+  {
+    title: 'Clients',
+    url: '/dashboard/clients',
+    icon: Users,
+  },
 ];
 
 const userMenuItems = [

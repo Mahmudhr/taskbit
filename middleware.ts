@@ -6,6 +6,7 @@ const ADMIN_PATHS = [
   '/dashboard/payments',
   '/dashboard/tasks',
   '/dashboard/users',
+  '/dashboard/clients',
 ];
 
 export default withAuth(

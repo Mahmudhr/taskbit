@@ -95,4 +95,15 @@ export interface Meta {
   totalPages: number;
 }
 
+export interface ClientType {
+  name: string;
+  email?: string | null;
+  phone?: string | null;
+  company?: string | null;
+  status: $Enums.ClientStatus;
+  createdAt?: Date;
+  updatedAt?: Date;
+  id: number;
+  tasks?: TaskType[];
+}
 // export interface UsersTasks {}

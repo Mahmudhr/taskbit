@@ -45,9 +45,7 @@ export const fetchAllUser = async (data?: string) => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const whereClause: any = {
       AND: [
-        {
-          OR: [{ status: 'ACTIVE' }, { isDeleted: false }],
-        },
+        { OR: [{ isDeleted: false }] },
         {
           OR: [
             {
