@@ -106,6 +106,7 @@ export default function TasksPage() {
     status: searchParams.get('status') || '',
     due_date: searchParams.get('due_date') || '',
     task_create: searchParams.get('task_create') || '',
+    paper_type: searchParams.get('paper_type') || '',
   });
   const [searchQuery, setSearchQuery] = useState(
     searchParams.get('search') || ''
@@ -192,6 +193,25 @@ export default function TasksPage() {
                 <SelectItem value='IN_PROGRESS'>In Progress</SelectItem>
                 <SelectItem value='SUBMITTED'>Submitted</SelectItem>
                 <SelectItem value='COMPLETED'>Completed</SelectItem>
+              </SelectContent>
+            </Select>
+            <Select
+              value={params.paper_type}
+              onValueChange={(value) => {
+                setParams((prev) => ({
+                  ...prev,
+                  paper_type: value === 'ALL' ? '' : value,
+                }));
+              }}
+            >
+              <SelectTrigger className='w-[180px]'>
+                <SelectValue placeholder='Filter by paper type' />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value='ALL'>All Type</SelectItem>
+                <SelectItem value='CONFERENCE'>Conference</SelectItem>
+                <SelectItem value='SURVEY'>Survey</SelectItem>
+                <SelectItem value='JOURNAL'>Journal</SelectItem>
               </SelectContent>
             </Select>
             <div className='flex flex-col gap-3'>
@@ -312,6 +332,27 @@ export default function TasksPage() {
                     }));
                     setTaskDate(undefined);
                     setCreatedDate(undefined);
+                  }}
+                >
+                  <X className='w-5 h-5' />
+                </span>
+              </div>
+            )}
+            {params.paper_type && (
+              <div className='pl-3 pr-2 py-1 border flex gap-2 items-center rounded-full text-sm'>
+                Paper Type:{' '}
+                {
+                  paperTypeConvert[
+                    params.paper_type as keyof typeof paperTypeConvert
+                  ]
+                }
+                <span
+                  onClick={() => {
+                    setParams((prev) => ({
+                      ...prev,
+                      paper_type: '',
+                      page: '1',
+                    }));
                   }}
                 >
                   <X className='w-5 h-5' />

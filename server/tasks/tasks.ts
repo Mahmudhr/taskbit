@@ -1,7 +1,7 @@
 'use server';
 
 import { prisma } from '@/prisma/db';
-import { Prisma, TaskStatus } from '@prisma/client';
+import { PaperType, Prisma, TaskStatus } from '@prisma/client';
 import { CreateTaskType } from '../types/tasks-type';
 
 export async function createTasks(data: CreateTaskType) {
@@ -59,6 +59,7 @@ export const fetchAllTasks = async (data?: string) => {
   const page = parseInt(params.get('page') ?? '1') || 1;
   const limit = 10;
   const status = params.get('status') || '';
+  const paper_type = params.get('paper_type') || '';
 
   const dueDate = params.get('due_date') || '';
   const taskCreate = params.get('task_create') || '';
@@ -136,6 +137,13 @@ export const fetchAllTasks = async (data?: string) => {
       status: status as TaskStatus,
     });
   }
+
+  if (paper_type && paper_type !== 'ALL') {
+    (where.AND as Prisma.TaskWhereInput[]).push({
+      paper_type: paper_type as PaperType,
+    });
+  }
+
   if (dueDateFilter.gte && dueDateFilter.lte) {
     (where.AND as Prisma.TaskWhereInput[]).push({
       duration: dueDateFilter,
