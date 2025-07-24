@@ -221,7 +221,7 @@ export default function UsersPage() {
                     setSearchQuery('');
                   }}
                 >
-                  <X className='w-5 h-5 cursor-pointer' />
+                  <X className='w-4 h-4 cursor-pointer' />
                 </span>
               </div>
             )}
@@ -242,7 +242,7 @@ export default function UsersPage() {
                     setStatusFilter('all');
                   }}
                 >
-                  <X className='w-5 h-5 cursor-pointer' />
+                  <X className='w-4 h-4 cursor-pointer' />
                 </span>
               </div>
             )}
@@ -258,7 +258,7 @@ export default function UsersPage() {
                     setRoleFilter('all');
                   }}
                 >
-                  <X className='w-5 h-5 cursor-pointer' />
+                  <X className='w-4 h-4 cursor-pointer' />
                 </span>
               </div>
             )}

@@ -8,17 +8,21 @@ export async function createTasks(data: CreateTaskType) {
   const { title, description, amount, status, duration, clientId, paper_type } =
     data;
   try {
+    const payload: CreateTaskType = {
+      title,
+      description,
+      amount,
+      status,
+      assignedToId: +data.assignedToId,
+      paper_type,
+      duration,
+    };
+
+    if (clientId) {
+      payload.clientId = clientId;
+    }
     await prisma.task.create({
-      data: {
-        title,
-        description,
-        amount,
-        status,
-        assignedToId: +data.assignedToId,
-        clientId: +clientId,
-        paper_type,
-        duration,
-      },
+      data: payload,
     });
     return {
       message: 'Task Created Successfully',
@@ -29,21 +33,34 @@ export async function createTasks(data: CreateTaskType) {
 }
 
 export async function updateTask(id: number, data: CreateTaskType) {
-  const { title, description, amount, status, duration, paper_type } = data;
+  const { title, description, amount, status, duration, paper_type, clientId } =
+    data;
   try {
+    const payload: {
+      title: string;
+      description?: string;
+      amount: number;
+      status: TaskStatus;
+      assignedToId: number;
+      paper_type: PaperType;
+      duration?: Date;
+      updatedAt: Date;
+      clientId: number | null;
+    } = {
+      title,
+      description,
+      amount,
+      status,
+      assignedToId: +data.assignedToId,
+      paper_type,
+      duration,
+      updatedAt: new Date(),
+      clientId: clientId || null,
+    };
+
     await prisma.task.update({
       where: { id },
-      data: {
-        title,
-        description,
-        amount,
-        status,
-        assignedToId: +data.assignedToId,
-        clientId: +data.clientId,
-        paper_type,
-        duration,
-        updatedAt: new Date(),
-      },
+      data: payload,
     });
     return {
       message: 'Task Updated Successfully',
@@ -60,7 +77,7 @@ export const fetchAllTasks = async (data?: string) => {
   const limit = 10;
   const status = params.get('status') || '';
   const paper_type = params.get('paper_type') || '';
-
+  const client = params.get('client') || '';
   const dueDate = params.get('due_date') || '';
   const taskCreate = params.get('task_create') || '';
 
@@ -153,6 +170,17 @@ export const fetchAllTasks = async (data?: string) => {
   if (taskCreateFilter.gte && taskCreateFilter.lte) {
     (where.AND as Prisma.TaskWhereInput[]).push({
       createdAt: taskCreateFilter,
+    });
+  }
+
+  if (client && client !== 'ALL') {
+    (where.AND as Prisma.TaskWhereInput[]).push({
+      client: {
+        name: {
+          contains: client,
+          mode: 'insensitive',
+        },
+      },
     });
   }
 

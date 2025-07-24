@@ -187,7 +187,7 @@ export default function PaymentsPage() {
                     setSearchQuery('');
                   }}
                 >
-                  <X className='w-5 h-5 cursor-pointer' />
+                  <X className='w-4 h-4 cursor-pointer' />
                 </span>
               </div>
             )}
@@ -207,7 +207,7 @@ export default function PaymentsPage() {
                     }));
                   }}
                 >
-                  <X className='w-5 h-5 cursor-pointer' />
+                  <X className='w-4 h-4 cursor-pointer' />
                 </span>
               </div>
             )}
@@ -222,7 +222,7 @@ export default function PaymentsPage() {
                     }));
                   }}
                 >
-                  <X className='w-5 h-5 cursor-pointer' />
+                  <X className='w-4 h-4 cursor-pointer' />
                 </span>
               </div>
             )}

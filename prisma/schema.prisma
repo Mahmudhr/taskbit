@@ -34,7 +34,7 @@ model User {
 
 model Client {
   id        Int          @id @default(autoincrement())
-  name      String
+  name      String       @unique
   email     String?      @unique
   phone     String?
   company   String?
@@ -52,6 +52,7 @@ model Task {
   title           String
   description     String?
   link            String?
+  total_amount    Float
   amount          Float
   status          TaskStatus @default(PENDING)
   paper_type      PaperType @default(CONFERENCE)

@@ -107,3 +107,9 @@ export interface ClientType {
   tasks?: TaskType[];
 }
 // export interface UsersTasks {}
+
+export interface ClientSelectOption {
+  id: number;
+  name: string;
+  email?: string | null;
+}

@@ -6,9 +6,10 @@ import {
   fetchAllClients,
   updateClient,
   deleteClient,
+  fetchClientsSelectOptions,
 } from '@/server/client/client';
 import { CreateClientType } from '@/server/types/client-type';
-import { ClientType, Meta, Response } from '@/types/common';
+import { ClientSelectOption, ClientType, Meta, Response } from '@/types/common';
 import {
   keepPreviousData,
   useMutation,
@@ -19,7 +20,7 @@ import { useCallback, useRef } from 'react';
 
 export type SearchClientOption = {
   label: string;
-  value: string;
+  value: number;
   user: {
     id: number;
     email?: string | null;
@@ -50,7 +51,7 @@ export function useClient(options?: string) {
           const users = await searchClients(inputValue);
           const options: SearchClientOption[] = users.map((user) => ({
             label: user.name,
-            value: String(user.id),
+            value: user.id,
             user: {
               id: user.id,
               email: user.email,
@@ -73,6 +74,15 @@ export function useClient(options?: string) {
     queryKey: ['clients', options],
     queryFn: async () => {
       const res = await fetchAllClients(options);
+      return res;
+    },
+    placeholderData: keepPreviousData,
+  });
+
+  const fetchClientsSelectOptionQuery = useQuery<ClientSelectOption[]>({
+    queryKey: ['clients-select-field', options],
+    queryFn: async () => {
+      const res = await fetchClientsSelectOptions();
       return res;
     },
     placeholderData: keepPreviousData,
@@ -113,5 +123,7 @@ export function useClient(options?: string) {
     deleteClientMutation,
     deleteClient: deleteClientMutation.mutate,
     deleteClientAsync: deleteClientMutation.mutateAsync,
+    fetchClientsSelectOptionQuery,
+    fetchClientsSelectOptions: fetchClientsSelectOptionQuery.data,
   };
 }

@@ -63,6 +63,7 @@ import {
   PopoverTrigger,
 } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
+import { useClient } from '@/hooks/use-client';
 
 const getStatusBadge = (status: string) => {
   const variants = {
@@ -99,6 +100,7 @@ export default function TasksPage() {
   const [createdDate, setCreatedDate] = useState<Date | undefined>(undefined);
   const [taskDateOpen, setTaskDateOpen] = useState(false);
   const [taskDate, setTaskDate] = useState<Date | undefined>(undefined);
+
   const router = useRouter();
   const [params, setParams] = useState({
     search: searchParams.get('search') || '',
@@ -107,6 +109,7 @@ export default function TasksPage() {
     due_date: searchParams.get('due_date') || '',
     task_create: searchParams.get('task_create') || '',
     paper_type: searchParams.get('paper_type') || '',
+    client: searchParams.get('client') || '',
   });
   const [searchQuery, setSearchQuery] = useState(
     searchParams.get('search') || ''
@@ -115,6 +118,8 @@ export default function TasksPage() {
   const queryString = generateQueryString(params);
   const { fetchTasks, fetchTasksMutation, deleteTaskAsync } =
     useTask(queryString);
+
+  const { fetchClientsSelectOptions } = useClient();
 
   const handleDeleTask = () => {
     if (taskId === null) return;
@@ -175,6 +180,27 @@ export default function TasksPage() {
                 className='pl-8'
               />
             </div>
+            <Select
+              value={params.client}
+              onValueChange={(value) => {
+                setParams((prev) => ({
+                  ...prev,
+                  client: value === 'ALL' ? '' : value,
+                }));
+              }}
+            >
+              <SelectTrigger className='w-[180px]'>
+                <SelectValue placeholder='Filter by client' />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value='ALL'>All Status</SelectItem>
+                {fetchClientsSelectOptions?.map((client) => (
+                  <SelectItem key={client.id} value={String(client.name)}>
+                    {client.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
             <Select
               value={params.status}
               onValueChange={(value) => {
@@ -297,7 +323,22 @@ export default function TasksPage() {
                     setSearchQuery('');
                   }}
                 >
-                  <X className='w-5 h-5 cursor-pointer' />
+                  <X className='w-4 h-4 cursor-pointer' />
+                </span>
+              </div>
+            )}
+            {params.client && (
+              <div className='pl-3 pr-2 py-1 border flex gap-2 items-center rounded-full text-sm'>
+                Client: {params.client}
+                <span
+                  onClick={() => {
+                    setParams((prev) => ({
+                      ...prev,
+                      client: '',
+                    }));
+                  }}
+                >
+                  <X className='w-4 h-4 cursor-pointer' />
                 </span>
               </div>
             )}
@@ -317,7 +358,7 @@ export default function TasksPage() {
                     }));
                   }}
                 >
-                  <X className='w-5 h-5 cursor-pointer' />
+                  <X className='w-4 h-4 cursor-pointer' />
                 </span>
               </div>
             )}
@@ -338,7 +379,7 @@ export default function TasksPage() {
                     }));
                   }}
                 >
-                  <X className='w-5 h-5 cursor-pointer' />
+                  <X className='w-4 h-4 cursor-pointer' />
                 </span>
               </div>
             )}
@@ -356,7 +397,7 @@ export default function TasksPage() {
                     setCreatedDate(undefined);
                   }}
                 >
-                  <X className='w-5 h-5 cursor-pointer' />
+                  <X className='w-4 h-4 cursor-pointer' />
                 </span>
               </div>
             )}
@@ -374,7 +415,7 @@ export default function TasksPage() {
                     setTaskDate(undefined);
                   }}
                 >
-                  <X className='w-5 h-5 cursor-pointer' />
+                  <X className='w-4 h-4 cursor-pointer' />
                 </span>
               </div>
             )}

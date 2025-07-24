@@ -50,10 +50,10 @@ const FormSchema = z.object({
     .min(1, { message: 'Amount must be greater than 0' }),
   status: z.nativeEnum(TaskStatus),
   paper_type: z.nativeEnum(PaperType),
-  assignedToId: z
-    .string()
+  assignedToId: z.coerce
+    .number()
     .min(1, { message: 'Please select a user to assign' }),
-  clientId: z.string().min(1, { message: 'Please select a user to assign' }),
+  clientId: z.coerce.number().optional(),
   duration: z.string().optional(),
 });
 
@@ -81,8 +81,8 @@ export default function CreateTaskForm({ setIsOpen }: CreateTaskFormProps) {
       description: '',
       amount: 0,
       status: TaskStatus.PENDING,
-      assignedToId: '',
-      clientId: '',
+      assignedToId: 0,
+      clientId: 0,
       duration: '',
     },
   });
@@ -90,12 +90,13 @@ export default function CreateTaskForm({ setIsOpen }: CreateTaskFormProps) {
   function onSubmit(data: z.infer<typeof FormSchema>) {
     const payload = {
       ...data,
+      clientId: data.clientId === 0 ? undefined : data.clientId,
       duration: data.duration ? new Date(data.duration) : new Date(),
     };
 
     startTransition(() => {
       toast.promise(createTaskMutationAsync(payload), {
-        loading: 'Creating Payment...',
+        loading: 'Creating Task...',
         success: (res) => {
           setIsOpen(false);
           return res.message || 'Successfully Task Created';
@@ -158,7 +159,7 @@ export default function CreateTaskForm({ setIsOpen }: CreateTaskFormProps) {
                   );
                 }}
                 onChange={(option) => {
-                  field.onChange(option ? option.value : '');
+                  field.onChange(option ? option.value : 0);
                   setSelectedUser(option);
                 }}
                 isClearable
@@ -191,7 +192,7 @@ export default function CreateTaskForm({ setIsOpen }: CreateTaskFormProps) {
                   return options;
                 }}
                 onChange={(option) => {
-                  field.onChange(option ? option.value : '');
+                  field.onChange(option ? option.value : 0);
                   setSelectedClient(option);
                 }}
                 isClearable

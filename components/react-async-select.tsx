@@ -17,6 +17,7 @@ export type ReactAsyncSelectProps<T = ReactAsyncSelectOption> = {
   placeholder?: string;
   isLoading?: boolean;
   defaultValue?: T | null;
+  value?: T | null;
 };
 
 export default function ReactAsyncSelect<T = ReactAsyncSelectOption>({
@@ -29,6 +30,7 @@ export default function ReactAsyncSelect<T = ReactAsyncSelectOption>({
   placeholder = '',
   isLoading,
   defaultValue,
+  value,
 }: ReactAsyncSelectProps<T>) {
   const combineOptions = async (inputValue: string): Promise<T[]> => {
     if (loadOptions) {
@@ -69,7 +71,8 @@ export default function ReactAsyncSelect<T = ReactAsyncSelectOption>({
           isLoading={isLoading}
           className={clsx('my-custom-select')}
           cacheOptions
-          defaultValue={defaultValue}
+          value={value}
+          defaultValue={!value ? defaultValue : undefined}
           styles={{
             control: (provided, state) => ({
               ...provided,

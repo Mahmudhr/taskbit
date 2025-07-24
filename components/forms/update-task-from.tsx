@@ -31,7 +31,7 @@ import {
   taskStatusConvert,
 } from '@/lib/utils';
 import { useTask } from '@/hooks/use-task';
-import { Loader2Icon } from 'lucide-react';
+import { Loader2Icon, X } from 'lucide-react';
 import { PaperType, TaskStatus } from '@prisma/client';
 import { TaskType } from '@/types/common';
 import { useSession } from 'next-auth/react';
@@ -50,10 +50,10 @@ const FormSchema = z.object({
     .min(1, { message: 'Amount must be greater than 0' }),
   status: z.nativeEnum(TaskStatus),
   paper_type: z.nativeEnum(PaperType),
-  assignedToId: z
-    .string()
+  assignedToId: z.coerce
+    .number()
     .min(1, { message: 'Please select a user to assign' }),
-  clientId: z.string().min(1, { message: 'Please select a user to assign' }),
+  clientId: z.coerce.number().optional(),
   duration: z.string().optional(),
 });
 
@@ -85,8 +85,8 @@ export default function UpdateTaskForm({
       link: data?.link || '',
       amount: data?.amount || 0,
       status: data?.status || TaskStatus.PENDING,
-      assignedToId: data?.assignedToId?.toString() || '',
-      clientId: data?.clientId?.toString() || '',
+      assignedToId: data?.assignedToId || 0,
+      clientId: data?.clientId || 0,
       duration: data?.duration
         ? new Date(data.duration).toISOString().split('T')[0]
         : '',
@@ -98,7 +98,7 @@ export default function UpdateTaskForm({
     if (data?.assignedTo) {
       setSelectedUser({
         label: `${data.assignedTo.name} (${data.assignedTo.email})`,
-        value: String(data.assignedTo.id),
+        value: data.assignedTo.id,
         user: data.assignedTo,
       });
     }
@@ -107,7 +107,7 @@ export default function UpdateTaskForm({
     if (data?.client) {
       setSelectedClient({
         label: `${data.client.name} (${data.client.email})`,
-        value: String(data.client.id),
+        value: data.client.id,
         user: data.client,
       });
     }
@@ -116,7 +116,7 @@ export default function UpdateTaskForm({
     if (data?.assignedTo) {
       setSelectedUser({
         label: `${data.assignedTo.name} (${data.assignedTo.email})`,
-        value: String(data.assignedTo.id),
+        value: data.assignedTo.id,
         user: data.assignedTo,
       });
     }
@@ -129,6 +129,7 @@ export default function UpdateTaskForm({
       id: data.id,
       data: {
         ...formData,
+        clientId: formData.clientId === 0 ? undefined : formData.clientId,
         duration: formData.duration ? new Date(formData.duration) : new Date(),
       },
     };
@@ -224,12 +225,13 @@ export default function UpdateTaskForm({
               <ReactAsyncSelect<SearchClientOption>
                 label='Client'
                 name='clientId'
+                value={selectedClient}
                 loadOptions={async (inputValue: string) => {
                   const options = await searchClients(inputValue);
                   return options;
                 }}
                 onChange={(option) => {
-                  field.onChange(option ? option.value : '');
+                  field.onChange(option ? option.value : 0);
                   setSelectedClient(option);
                 }}
                 isClearable
@@ -237,12 +239,23 @@ export default function UpdateTaskForm({
               />
               <FormMessage />
               {selectedClient && (
-                <Card className='mt-4 p-4 break-words whitespace-pre-line w-full'>
-                  <div className='font-semibold break-words whitespace-pre-line text-left'>
-                    {selectedClient.user.name}
+                <Card className='mt-4 p-4 break-words whitespace-pre-line w-full flex justify-between'>
+                  <div>
+                    <div className='font-semibold break-words whitespace-pre-line text-left'>
+                      {selectedClient.user.name}
+                    </div>
+                    <div className='text-xs text-gray-600 break-all text-left'>
+                      {selectedClient.user.email}
+                    </div>
                   </div>
-                  <div className='text-xs text-gray-600 break-all text-left'>
-                    {selectedClient.user.email}
+                  <div
+                    onClick={() => {
+                      setSelectedClient(null);
+                      field.onChange(0); // Set to 0 to match the default value
+                      form.setValue('clientId', 0); // Also update the form value
+                    }}
+                  >
+                    <X className='w-4 h-4 cursor-pointer' />
                   </div>
                 </Card>
               )}

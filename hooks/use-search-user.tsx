@@ -5,7 +5,7 @@ import { searchUsers } from '../server/user/user';
 
 export type SearchUserOption = {
   label: string;
-  value: string;
+  value: number;
   user: {
     id: number;
     email: string;
@@ -35,7 +35,7 @@ export function useSearchUser() {
           const users = await searchUsers(inputValue);
           const options: SearchUserOption[] = users.map((user) => ({
             label: user.name,
-            value: String(user.id),
+            value: user.id,
             user: {
               id: user.id,
               email: user.email,

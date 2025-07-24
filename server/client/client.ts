@@ -63,6 +63,27 @@ export const searchClients = async (query: string) => {
   }
 };
 
+export const fetchClientsSelectOptions = async () => {
+  try {
+    const clients = await prisma.client.findMany({
+      where: {
+        isDeleted: false,
+      },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+      },
+      orderBy: {
+        createdAt: 'desc',
+      },
+    });
+    return clients;
+  } catch {
+    throw new Error('Failed to fetch clients');
+  }
+};
+
 export const fetchAllClients = async (data?: string) => {
   const params = new URLSearchParams(data);
   const search = params.get('search') || '';
