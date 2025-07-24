@@ -11,3 +11,10 @@ export type CreateTaskType = {
   paper_type: $Enums.PaperType;
   updatedAt?: Date;
 };
+
+export type UpdateUserTaskDeliveryType = {
+  title?: string;
+  note?: string | null;
+  link?: string | null;
+  status: $Enums.TaskStatus;
+};

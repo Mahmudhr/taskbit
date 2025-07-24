@@ -36,6 +36,7 @@ import { Loader2Icon } from 'lucide-react';
 import { PaperType, TaskStatus } from '@prisma/client';
 import { useSession } from 'next-auth/react';
 import { SearchClientOption, useClient } from '@/hooks/use-client';
+import { Textarea } from '../ui/textarea';
 
 const FormSchema = z.object({
   title: z.string().min(2, { message: 'Title must be at least 2 characters.' }),
@@ -133,9 +134,9 @@ export default function CreateTaskForm({ setIsOpen }: CreateTaskFormProps) {
             <FormItem>
               <FormLabel>Description</FormLabel>
               <FormControl>
-                <Input
-                  className='w-full'
-                  placeholder='Enter description (optional)'
+                <Textarea
+                  placeholder='Tell us a little bit about yourself'
+                  className='resize-none'
                   {...field}
                 />
               </FormControl>

@@ -24,9 +24,9 @@ import {
   Search,
   ChevronLeft,
   ChevronRight,
-  Upload,
   ChevronDownIcon,
   X,
+  EllipsisVertical,
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useUserTask } from '@/hooks/use-user-task';
@@ -50,6 +50,16 @@ import { Calendar } from '@/components/ui/calendar';
 import dayjs from 'dayjs';
 import { getPaymentStatusBadge } from '../../(admin)/tasks/page';
 import Link from 'next/link';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import AlertModal from '@/components/alert-modal';
+import CreateTaskDeliveryForm from '@/components/forms/create-task-delivery-form';
 
 const getStatusBadge = (status: string) => {
   const variants = {
@@ -73,6 +83,9 @@ export default function MyTasksPage() {
   const [taskDate, setTaskDate] = useState<Date | undefined>(undefined);
   const [createdDateOpen, setCreatedDateOpen] = useState(false);
   const [createdDate, setCreatedDate] = useState<Date | undefined>(undefined);
+  // const [taskId, setTaskId] = useState<number | null>(null);
+  const [selectedTask, setSelectedTask] = useState<UserTaskType | null>(null);
+  const [openTask, setOpenTask] = useState(false);
 
   const router = useRouter();
   const [params, setParams] = useState({
@@ -455,10 +468,26 @@ export default function MyTasksPage() {
                           : '-'}
                       </TableCell>
                       <TableCell>
-                        <Button variant='outline' size='sm'>
-                          <Upload className='h-4 w-4 mr-1' />
-                          Deliver
-                        </Button>
+                        <div>
+                          <DropdownMenu>
+                            <DropdownMenuTrigger>
+                              <EllipsisVertical className='w-5 h-5 text-gray-600' />
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align='end'>
+                              <DropdownMenuLabel>Options</DropdownMenuLabel>
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem
+                                onClick={() => {
+                                  setOpenTask(true);
+                                  setSelectedTask(task);
+                                }}
+                                disabled={task.status === 'COMPLETED'}
+                              >
+                                Task Delivery
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </div>
                       </TableCell>
                     </TableRow>
                   ))
@@ -483,10 +512,26 @@ export default function MyTasksPage() {
                       </span>
                       <h3 className='font-medium'>{task.title}</h3>
                     </div>
-                    <Button variant='outline' size='sm'>
-                      <Upload className='h-4 w-4 mr-1' />
-                      Deliver
-                    </Button>
+                    <div>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger>
+                          <EllipsisVertical className='w-5 h-5 text-gray-600' />
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align='end'>
+                          <DropdownMenuLabel>Options</DropdownMenuLabel>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem
+                            onClick={() => {
+                              setOpenTask(true);
+                              setSelectedTask(task);
+                            }}
+                            disabled={task.status === 'COMPLETED'}
+                          >
+                            Task Delivery
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </div>
                   </div>
                   <div className='space-y-3 text-sm'>
                     <div className='flex justify-between text-xs'>
@@ -594,6 +639,14 @@ export default function MyTasksPage() {
           )}
         </CardContent>
       </Card>
+      <AlertModal
+        isOpen={openTask}
+        setIsOpen={setOpenTask}
+        title='Delivered your task'
+        description=' '
+      >
+        <CreateTaskDeliveryForm setIsOpen={setOpenTask} data={selectedTask} />
+      </AlertModal>
     </div>
   );
 }

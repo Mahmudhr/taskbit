@@ -51,6 +51,7 @@ model Task {
   id              Int       @id @default(autoincrement())
   title           String
   description     String?
+  note            String?
   link            String?
   amount          Float
   status          TaskStatus @default(PENDING)
@@ -66,6 +67,7 @@ model Task {
   createdById     Int?      @map("created_by_id")
   client          Client?   @relation("ClientTasks", fields: [clientId], references: [id])
   clientId        Int?      @map("client_id")
+
 
   @@map("tasks")
 }

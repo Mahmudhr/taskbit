@@ -2,7 +2,10 @@
 
 import { prisma } from '@/prisma/db';
 import { PaperType, Prisma, TaskStatus } from '@prisma/client';
-import { CreateTaskType } from '../types/tasks-type';
+import {
+  CreateTaskType,
+  UpdateUserTaskDeliveryType,
+} from '../types/tasks-type';
 
 export async function createTasks(data: CreateTaskType) {
   const { title, description, amount, status, duration, clientId, paper_type } =
@@ -64,6 +67,36 @@ export async function updateTask(id: number, data: CreateTaskType) {
     });
     return {
       message: 'Task Updated Successfully',
+    };
+  } catch (error) {
+    throw error;
+  }
+}
+
+export async function updateUserTaskDelivery(
+  id: number,
+  data: UpdateUserTaskDeliveryType
+) {
+  const { note, link, status } = data;
+  try {
+    const payload: {
+      note?: string | null;
+      link?: string | null;
+      status?: TaskStatus;
+      updatedAt: Date;
+    } = {
+      note,
+      link,
+      status,
+      updatedAt: new Date(),
+    };
+
+    await prisma.task.update({
+      where: { id },
+      data: payload,
+    });
+    return {
+      message: 'Task Delivery Updated Successfully',
     };
   } catch (error) {
     throw error;
@@ -391,7 +424,6 @@ export const fetchTasksByUserEmail = async (email: string, option?: string) => {
       orderBy: { createdAt: 'desc' },
       include: {
         assignedTo: { select: { name: true, email: true } },
-
         payments: {
           where: {
             status: 'COMPLETED',
@@ -416,7 +448,6 @@ export const fetchTasksByUserEmail = async (email: string, option?: string) => {
         amount: task.amount,
         status: task.status,
         paper_type: task.paper_type,
-        isDeleted: task.isDeleted,
         createdAt: task.createdAt,
         updatedAt: task.updatedAt,
         duration: task.duration,
@@ -425,6 +456,7 @@ export const fetchTasksByUserEmail = async (email: string, option?: string) => {
         createdById: task.createdById,
         assignedTo: task.assignedTo,
         paid,
+        note: task.note,
       };
     });
 

@@ -27,6 +27,7 @@ export type TaskType = {
   id: number;
   title: string;
   description?: string | null;
+  note?: string | null;
   link?: string | null;
   amount: number;
   status: $Enums.TaskStatus;
@@ -55,6 +56,7 @@ export type UserTaskType = {
   id: number;
   title: string;
   description?: string | null;
+  note?: string | null;
   link?: string | null;
   amount: number;
   status: $Enums.TaskStatus;
