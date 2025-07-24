@@ -29,6 +29,7 @@ export type TaskType = {
   description?: string | null;
   link?: string | null;
   amount: number;
+  total_amount: number;
   status: $Enums.TaskStatus;
   isDeleted: boolean;
   createdAt: Date;

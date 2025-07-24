@@ -69,7 +69,7 @@ const getStatusBadge = (status: string) => {
   const variants = {
     PENDING: 'bg-gray-100 text-gray-800 hover:bg-gray-200',
     IN_PROGRESS: 'bg-blue-100 text-blue-800 hover:bg-blue-200',
-    SUBMITTED: 'bg-amber-100 text-amber-800 hover:bg-amber-200 ',
+    SUBMITTED: 'bg-amber-100 text-amber-800 hover:bg-amber-200',
     COMPLETED: 'bg-green-100 text-green-800 hover:bg-green-200',
   } as const;
   return (
@@ -83,7 +83,11 @@ const getPaymentStatusBadge = (amount: number) => {
   if (amount > 0) {
     return <Badge variant='destructive'>Due</Badge>;
   } else {
-    return <Badge variant='default'>Paid</Badge>;
+    return (
+      <Badge className='bg-green-100 text-green-800 hover:bg-green-200'>
+        Paid
+      </Badge>
+    );
   }
 };
 
@@ -110,6 +114,7 @@ export default function TasksPage() {
     task_create: searchParams.get('task_create') || '',
     paper_type: searchParams.get('paper_type') || '',
     client: searchParams.get('client') || '',
+    payment_status: searchParams.get('payment_status') || '',
   });
   const [searchQuery, setSearchQuery] = useState(
     searchParams.get('search') || ''
@@ -206,6 +211,24 @@ export default function TasksPage() {
               onValueChange={(value) => {
                 setParams((prev) => ({
                   ...prev,
+                  payment_status: value === 'ALL' ? '' : value,
+                }));
+              }}
+            >
+              <SelectTrigger className='w-[180px]'>
+                <SelectValue placeholder='Filter by payment status' />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value='ALL'>All Status</SelectItem>
+                <SelectItem value='paid'>Paid</SelectItem>
+                <SelectItem value='due'>Due</SelectItem>
+              </SelectContent>
+            </Select>
+            <Select
+              value={params.status}
+              onValueChange={(value) => {
+                setParams((prev) => ({
+                  ...prev,
                   status: value === 'ALL' ? '' : value,
                 }));
               }}
@@ -214,7 +237,7 @@ export default function TasksPage() {
                 <SelectValue placeholder='Filter by status' />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value='ALL'>All Status</SelectItem>
+                <SelectItem value='ALL'>All payment Status</SelectItem>
                 <SelectItem value='PENDING'>Pending</SelectItem>
                 <SelectItem value='IN_PROGRESS'>In Progress</SelectItem>
                 <SelectItem value='SUBMITTED'>Submitted</SelectItem>
@@ -419,6 +442,23 @@ export default function TasksPage() {
                 </span>
               </div>
             )}
+            {params.payment_status && (
+              <div className='pl-3 pr-2 py-1 border flex gap-2 items-center rounded-full text-sm capitalize'>
+                Payment Status: {params.payment_status}
+                <span
+                  onClick={() => {
+                    setParams((prev) => ({
+                      ...prev,
+                      payment_status: '',
+                      page: '1',
+                    }));
+                    setTaskDate(undefined);
+                  }}
+                >
+                  <X className='w-4 h-4 cursor-pointer' />
+                </span>
+              </div>
+            )}
           </div>
         </CardContent>
       </Card>
@@ -437,8 +477,10 @@ export default function TasksPage() {
                     <TableHead>Serial</TableHead>
                     <TableHead>Task Title</TableHead>
                     <TableHead>Due Date</TableHead>
-                    <TableHead>Amount</TableHead>
-                    <TableHead>Payment Status</TableHead>
+                    <TableHead>Total Amount</TableHead>
+                    <TableHead>Due Amount</TableHead>
+                    {/* <TableHead>Due Amount</TableHead> */}
+                    <TableHead>Paid Amount</TableHead>
                     <TableHead>Status</TableHead>
                     <TableHead>Assignee</TableHead>
                     <TableHead>Client</TableHead>
@@ -460,12 +502,18 @@ export default function TasksPage() {
                         </TableCell>
                         <TableCell>
                           <div className='flex items-center gap-2'>
-                            <span>৳ {task.amount}</span>
+                            <span>৳ {task.total_amount}</span>
                           </div>
                         </TableCell>
                         <TableCell>
                           <div className='flex items-center gap-2'>
+                            ৳ {task.amount}
                             {getPaymentStatusBadge(task.amount)}
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <div className='flex items-center gap-2'>
+                            ৳ {task.total_amount - task.amount}
                           </div>
                         </TableCell>
                         <TableCell>{getStatusBadge(task.status)}</TableCell>

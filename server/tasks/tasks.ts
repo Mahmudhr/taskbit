@@ -12,6 +12,7 @@ export async function createTasks(data: CreateTaskType) {
       title,
       description,
       amount,
+      total_amount: amount,
       status,
       assignedToId: +data.assignedToId,
       paper_type,
@@ -40,6 +41,7 @@ export async function updateTask(id: number, data: CreateTaskType) {
       title: string;
       description?: string;
       amount: number;
+      total_amount: number;
       status: TaskStatus;
       assignedToId: number;
       paper_type: PaperType;
@@ -50,6 +52,7 @@ export async function updateTask(id: number, data: CreateTaskType) {
       title,
       description,
       amount,
+      total_amount: amount,
       status,
       assignedToId: +data.assignedToId,
       paper_type,
@@ -80,6 +83,7 @@ export const fetchAllTasks = async (data?: string) => {
   const client = params.get('client') || '';
   const dueDate = params.get('due_date') || '';
   const taskCreate = params.get('task_create') || '';
+  const paymentStatus = params.get('payment_status') || '';
 
   let dueDateFilter: { gte?: Date; lte?: Date } = {};
   if (dueDate) {
@@ -149,6 +153,7 @@ export const fetchAllTasks = async (data?: string) => {
       },
     ],
   };
+
   if (status && status !== 'ALL') {
     (where.AND as Prisma.TaskWhereInput[]).push({
       status: status as TaskStatus,
@@ -182,6 +187,23 @@ export const fetchAllTasks = async (data?: string) => {
         },
       },
     });
+  }
+
+  // Add paymentStatus filter
+  if (paymentStatus && paymentStatus !== 'all') {
+    if (paymentStatus === 'due') {
+      (where.AND as Prisma.TaskWhereInput[]).push({
+        amount: {
+          gt: 0,
+        },
+      });
+    } else if (paymentStatus === 'paid') {
+      (where.AND as Prisma.TaskWhereInput[]).push({
+        amount: {
+          equals: 0,
+        },
+      });
+    }
   }
 
   try {
