@@ -4,7 +4,6 @@ export type CreateTaskType = {
   title: string;
   description?: string;
   amount: number;
-  total_amount: number;
   status: $Enums.TaskStatus;
   assignedToId: number;
   clientId?: number;

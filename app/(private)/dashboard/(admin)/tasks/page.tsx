@@ -157,6 +157,8 @@ export default function TasksPage() {
     router.push(queryString);
   }, [queryString, router]);
 
+  console.log({ fetchTasks });
+
   return (
     <div className='space-y-6'>
       <div className='flex items-center justify-between'>
@@ -502,18 +504,19 @@ export default function TasksPage() {
                         </TableCell>
                         <TableCell>
                           <div className='flex items-center gap-2'>
-                            <span>৳ {task.total_amount}</span>
+                            <span>৳ {task.amount}</span>
                           </div>
                         </TableCell>
                         <TableCell>
                           <div className='flex items-center gap-2'>
-                            ৳ {task.amount}
+                            ৳{' '}
+                            {task.paid ? task.amount - task.paid : task.amount}
                             {getPaymentStatusBadge(task.amount)}
                           </div>
                         </TableCell>
                         <TableCell>
                           <div className='flex items-center gap-2'>
-                            ৳ {task.total_amount - task.amount}
+                            ৳ {task.paid}
                           </div>
                         </TableCell>
                         <TableCell>{getStatusBadge(task.status)}</TableCell>

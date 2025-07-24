@@ -46,16 +46,7 @@ export async function createPayment({
         },
       });
 
-      const updatedTask = await tx.task.update({
-        where: { id: +taskId },
-        data: {
-          amount: {
-            decrement: amount,
-          },
-        },
-      });
-
-      return { payment, updatedTask };
+      return { payment };
     });
 
     return {

@@ -20,7 +20,7 @@ export type UserType = {
   updatedAt?: Date;
   tasks?: TaskType[];
   createdTasks?: TaskType[];
-  payments?: FlatPaymentType[]; // Use the flat payment type
+  payments?: FlatPaymentType[];
 };
 
 export type TaskType = {
@@ -29,7 +29,6 @@ export type TaskType = {
   description?: string | null;
   link?: string | null;
   amount: number;
-  total_amount: number;
   status: $Enums.TaskStatus;
   isDeleted: boolean;
   createdAt: Date;
@@ -39,6 +38,7 @@ export type TaskType = {
   createdById?: number | null;
   clientId?: number | null;
   paper_type: $Enums.PaperType;
+  paid?: number;
   client?: {
     id: number;
     name: string;

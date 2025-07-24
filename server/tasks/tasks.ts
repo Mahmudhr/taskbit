@@ -12,7 +12,6 @@ export async function createTasks(data: CreateTaskType) {
       title,
       description,
       amount,
-      total_amount: amount,
       status,
       assignedToId: +data.assignedToId,
       paper_type,
@@ -41,7 +40,6 @@ export async function updateTask(id: number, data: CreateTaskType) {
       title: string;
       description?: string;
       amount: number;
-      total_amount: number;
       status: TaskStatus;
       assignedToId: number;
       paper_type: PaperType;
@@ -52,7 +50,6 @@ export async function updateTask(id: number, data: CreateTaskType) {
       title,
       description,
       amount,
-      total_amount: amount,
       status,
       assignedToId: +data.assignedToId,
       paper_type,
@@ -229,11 +226,46 @@ export const fetchAllTasks = async (data?: string) => {
             email: true,
           },
         },
+        payments: {
+          where: {
+            status: 'COMPLETED',
+          },
+          select: {
+            amount: true,
+          },
+        },
       },
     });
+
+    const tasksWithPaid = tasks.map((task) => {
+      const paid = task.payments.reduce(
+        (total, payment) => total + payment.amount,
+        0
+      );
+      return {
+        id: task.id,
+        title: task.title,
+        description: task.description,
+        link: task.link,
+        amount: task.amount,
+        status: task.status,
+        paper_type: task.paper_type,
+        isDeleted: task.isDeleted,
+        createdAt: task.createdAt,
+        updatedAt: task.updatedAt,
+        duration: task.duration,
+        assignedToId: task.assignedToId,
+        clientId: task.clientId,
+        createdById: task.createdById,
+        assignedTo: task.assignedTo,
+        client: task.client,
+        paid,
+      };
+    });
+
     return {
       meta: { count, page, limit, totalPages },
-      data: tasks,
+      data: tasksWithPaid,
     };
   } catch {
     throw new Error('Failed to load tasks');

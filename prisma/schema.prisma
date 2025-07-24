@@ -52,7 +52,6 @@ model Task {
   title           String
   description     String?
   link            String?
-  total_amount    Float
   amount          Float
   status          TaskStatus @default(PENDING)
   paper_type      PaperType @default(CONFERENCE)
