@@ -73,7 +73,7 @@ const getStatusBadge = (status: string) => {
     COMPLETED: 'bg-green-100 text-green-800 hover:bg-green-200',
   } as const;
   return (
-    <Badge className={cn(variants[status as keyof typeof variants])}>
+    <Badge className={cn(variants[status as keyof typeof variants], 'text-xs')}>
       {taskStatusConvert[status as keyof typeof taskStatusConvert]}
     </Badge>
   );
@@ -81,10 +81,14 @@ const getStatusBadge = (status: string) => {
 
 const getPaymentStatusBadge = (amount: number) => {
   if (amount > 0) {
-    return <Badge variant='destructive'>Due</Badge>;
+    return (
+      <Badge variant='destructive' className='text-xs'>
+        Due
+      </Badge>
+    );
   } else {
     return (
-      <Badge className='bg-green-100 text-green-800 hover:bg-green-200'>
+      <Badge className='bg-green-100 text-green-800 hover:bg-green-200text-xs'>
         Paid
       </Badge>
     );
@@ -650,7 +654,7 @@ export default function TasksPage() {
                     </div>
                   </div>
                   <div className='space-y-2 text-sm'>
-                    <div className='flex justify-between'>
+                    <div className='flex justify-between text-xs'>
                       <span className='text-muted-foreground'>Due Date:</span>
                       <span>
                         {task?.duration
@@ -670,14 +674,30 @@ export default function TasksPage() {
                           : ''}
                       </span>
                     </div>
-                    <div className='flex justify-between items-center'>
+                    <div className='flex justify-between items-center text-xs'>
                       <span className='text-muted-foreground'>Amount:</span>
                       <div className='flex items-center gap-2'>
                         <span className='font-medium'>৳ {task.amount}</span>
-                        {getPaymentStatusBadge(task.amount)}
                       </div>
                     </div>
-                    <div className='flex justify-between'>
+                    <div className='flex justify-between items-center text-xs'>
+                      <span className='text-muted-foreground'>Due Amount:</span>
+                      <div className='flex items-center gap-2'>
+                        <span className='font-medium'>
+                          ৳ {task.paid ? task.amount - task.paid : task.amount}
+                        </span>
+                        {getPaymentStatusBadge(
+                          task.paid ? task.amount - task.paid : task.amount
+                        )}
+                      </div>
+                    </div>
+                    <div className='flex justify-between items-center text-xs'>
+                      <span className='text-muted-foreground'>Due Amount:</span>
+                      <div className='flex items-center gap-2'>
+                        <span className='font-medium'>৳ {task.paid}</span>
+                      </div>
+                    </div>
+                    <div className='flex justify-between text-xs'>
                       <span className='text-muted-foreground'>Assignee:</span>
                       <span>
                         {task.assignedTo?.name
@@ -687,15 +707,39 @@ export default function TasksPage() {
                           : ''}
                       </span>
                     </div>
-                    <div className='flex justify-between items-center'>
+                    <div className='flex justify-between items-center text-xs'>
                       <span className='text-muted-foreground'>Status:</span>
                       {getStatusBadge(task.status)}
                     </div>
-                    <div className='flex justify-between'>
+                    <div className='flex justify-between items-center text-xs'>
+                      <span className='text-muted-foreground'>Client:</span>
+                      {task.client?.name ? (
+                        task.client.name.length > 20 ? (
+                          task.client.name.slice(0, 20) + '...'
+                        ) : (
+                          task.client.name
+                        )
+                      ) : (
+                        <div>-</div>
+                      )}
+                    </div>
+                    <div className='flex justify-between items-center text-xs'>
+                      <span className='text-muted-foreground'>Paper Type:</span>
+                      {
+                        paperTypeConvert[
+                          task.paper_type as keyof typeof paperTypeConvert
+                        ]
+                      }
+                    </div>
+                    <div className='flex justify-between items-center text-xs'>
+                      <span className='text-muted-foreground'>Created At:</span>
+                      {dayjs(task.createdAt).format('DD-MM-YYYY')}
+                    </div>
+                    <div className='flex justify-between text-xs'>
                       <span className='text-muted-foreground'>Link:</span>
                       <a
                         href={task.link || ''}
-                        className='text-blue-600 hover:underline text-sm'
+                        className='text-blue-600 hover:underline md:text-sm text-xs'
                         target='_blank'
                         rel='noopener noreferrer'
                       >
@@ -710,7 +754,7 @@ export default function TasksPage() {
             )}
           </div>
           {fetchTasks && fetchTasks?.meta.count > 0 && (
-            <div className='flex items-center justify-between space-x-2 py-4'>
+            <div className='flex md:flex-row flex-col items-center md:justify-between justify-center gap-3 py-4'>
               <div className='text-sm text-muted-foreground'>
                 Showing 1 to {fetchTasks?.data.length} of{' '}
                 {fetchTasks?.meta.count} results

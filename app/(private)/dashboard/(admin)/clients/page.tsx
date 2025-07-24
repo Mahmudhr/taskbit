@@ -369,7 +369,7 @@ export default function ClientsPage() {
             <UserCardSkeleton />
           )}
           {fetchAllClients && fetchAllClients?.meta.count > 0 && (
-            <div className='flex items-center justify-between space-x-2 py-4'>
+            <div className='flex md:flex-row flex-col items-center md:justify-between justify-center gap-3 py-4'>
               <div className='text-sm text-muted-foreground'>
                 {fetchAllClients &&
                   ` Showing ${params.page} to ${
