@@ -11,7 +11,8 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { User, Settings, LogOut, ChevronsUpDown } from 'lucide-react';
+import { roleConvert } from '@/lib/utils';
+import { User, LogOut, ChevronsUpDown } from 'lucide-react';
 import { signOut, useSession } from 'next-auth/react';
 import Link from 'next/link';
 
@@ -35,7 +36,7 @@ export function UserNav() {
           className='relative h-10 w-full justify-start rounded-md px-2 text-sm font-normal bg-transparent'
         >
           <Avatar className='h-6 w-6 mr-2'>
-            <AvatarFallback className='text-xs bg-gray-200'>
+            <AvatarFallback className='text-xs bg-gray-200 dark:text-gray-700'>
               {initials}
             </AvatarFallback>
           </Avatar>
@@ -44,7 +45,7 @@ export function UserNav() {
               {session?.user.name}
             </span>
             <span className='truncate text-xs text-muted-foreground'>
-              {session?.user.role}
+              {roleConvert[session?.user.role as keyof typeof roleConvert]}
             </span>
           </div>
           <ChevronsUpDown className='ml-auto h-4 w-4 shrink-0 opacity-50' />
@@ -68,10 +69,6 @@ export function UserNav() {
               <User className='mr-2 h-4 w-4' />
               <span>Profile</span>
             </Link>
-          </DropdownMenuItem>
-          <DropdownMenuItem>
-            <Settings className='mr-2 h-4 w-4' />
-            <span>Settings</span>
           </DropdownMenuItem>
         </DropdownMenuGroup>
         <DropdownMenuSeparator />

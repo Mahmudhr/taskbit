@@ -16,7 +16,7 @@ export default withAuth(
 
     const path = req.nextUrl.pathname;
 
-    if (role === 'USER') {
+    if (role === 'USER' && !new URL('/dashboard/profile', req.url)) {
       // If trying to access any admin path or its subpages, redirect to /dashboard/my-tasks
       if (ADMIN_PATHS.some((adminPath) => path.startsWith(adminPath))) {
         return NextResponse.redirect(new URL('/dashboard/my-tasks', req.url));

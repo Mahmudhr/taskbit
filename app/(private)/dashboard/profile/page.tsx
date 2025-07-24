@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import {
@@ -184,6 +184,15 @@ export default function ProfilePage() {
     setShowPassword(false);
   };
 
+  const initials =
+    session?.user.name &&
+    session?.user.name
+      .split(' ')
+      .map((word) => word[0])
+      .slice(0, 2)
+      .join('')
+      .toUpperCase();
+
   // Show loading state while session or profile is loading
   if (!session || fetchUserProfileQuery.isLoading) {
     return (
@@ -273,16 +282,9 @@ export default function ProfilePage() {
           <CardContent className='space-y-6'>
             <div className='flex flex-col items-center space-y-4'>
               <div className='relative'>
-                <Avatar className='h-24 w-24'>
-                  <AvatarImage
-                    src={formData.avatar || '/placeholder.svg'}
-                    alt='Profile'
-                  />
-                  <AvatarFallback className='text-lg'>
-                    {formData.name
-                      .split(' ')
-                      .map((n) => n[0])
-                      .join('')}
+                <Avatar className='h-20 w-20 mr-2'>
+                  <AvatarFallback className='text-2xl bg-gray-200 dark:text-gray-700'>
+                    {initials}
                   </AvatarFallback>
                 </Avatar>
                 {isEditing && (
@@ -300,17 +302,19 @@ export default function ProfilePage() {
                 <p className='text-sm text-muted-foreground'>
                   {formData.email}
                 </p>
-                <Badge variant='secondary' className='mt-2'>
-                  {formData.role}
-                </Badge>
-                <Badge
-                  variant={
-                    formData.status === 'ACTIVE' ? 'default' : 'secondary'
-                  }
-                  className='mt-1'
-                >
-                  {formData.status}
-                </Badge>
+                <div className='flex gap-2 justify-center'>
+                  <Badge variant='secondary' className='mt-2'>
+                    {formData.role}
+                  </Badge>
+                  <Badge
+                    variant={
+                      formData.status === 'ACTIVE' ? 'default' : 'secondary'
+                    }
+                    className='mt-1'
+                  >
+                    {formData.status}
+                  </Badge>
+                </div>
               </div>
             </div>
 

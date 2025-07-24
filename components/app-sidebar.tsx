@@ -1,6 +1,6 @@
 'use client';
 
-import { CheckSquare, CreditCard, Users, User, DollarSign } from 'lucide-react';
+import { CheckSquare, CreditCard, Users, User } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 
@@ -17,7 +17,9 @@ import {
   SidebarMenuItem,
   SidebarRail,
 } from '@/components/ui/sidebar';
+import { Skeleton } from '@/components/ui/skeleton';
 import { UserNav } from './user.nav';
+import { useSession } from 'next-auth/react';
 
 const adminMenuItems = [
   {
@@ -48,17 +50,39 @@ const userMenuItems = [
     url: '/dashboard/my-tasks',
     icon: User,
   },
-  {
-    title: 'My Payments',
-    url: '/dashboard/my-payments',
-    icon: DollarSign,
-  },
+  // {
+  //   title: 'My Payments',
+  //   url: '/dashboard/my-payments',
+  //   icon: CreditCard,
+  // },
 ];
 
+const MenuSkeleton = () => (
+  <SidebarGroup>
+    <SidebarGroupLabel>
+      <Skeleton className='h-4 w-20 bg-gray-300 dark:bg-gray-600' />
+    </SidebarGroupLabel>
+    <SidebarGroupContent>
+      <SidebarMenu>
+        {Array.from({ length: 3 }).map((_, index) => (
+          <SidebarMenuItem key={index}>
+            <SidebarMenuButton className=''>
+              <Skeleton className='h-4 w-4 bg-gray-300 dark:bg-gray-600' />
+              <Skeleton className='h-4 w-16 bg-gray-300 dark:bg-gray-600' />
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+        ))}
+      </SidebarMenu>
+    </SidebarGroupContent>
+  </SidebarGroup>
+);
+
 export function AppSidebar() {
-  // In a real app, you'd get this from authentication context
-  const userRole = 'admin'; // or "user"
+  const { data: session, status } = useSession();
+  const userRole = session?.user?.role;
   const pathname = usePathname();
+
+  // Loading skeleton component for menu items
 
   return (
     <Sidebar>
@@ -79,43 +103,59 @@ export function AppSidebar() {
         </Link>
       </SidebarHeader>
       <SidebarContent>
-        {userRole === 'admin' && (
-          <SidebarGroup>
-            <SidebarGroupLabel>Admin Panel</SidebarGroupLabel>
-            <SidebarGroupContent>
-              <SidebarMenu>
-                {adminMenuItems.map((item) => (
-                  <SidebarMenuItem key={item.title}>
-                    <SidebarMenuButton asChild isActive={pathname === item.url}>
-                      <Link href={item.url}>
-                        <item.icon />
-                        <span>{item.title}</span>
-                      </Link>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                ))}
-              </SidebarMenu>
-            </SidebarGroupContent>
-          </SidebarGroup>
-        )}
+        {status === 'loading' ? (
+          <MenuSkeleton />
+        ) : (
+          <>
+            {userRole === 'ADMIN' && (
+              <SidebarGroup>
+                <SidebarGroupLabel>Admin Panel</SidebarGroupLabel>
+                <SidebarGroupContent>
+                  <SidebarMenu>
+                    {adminMenuItems.map((item) => (
+                      <SidebarMenuItem key={item.title}>
+                        <SidebarMenuButton
+                          asChild
+                          isActive={pathname === item.url}
+                        >
+                          <Link href={item.url}>
+                            <item.icon />
+                            <span>{item.title}</span>
+                          </Link>
+                        </SidebarMenuButton>
+                      </SidebarMenuItem>
+                    ))}
+                  </SidebarMenu>
+                </SidebarGroupContent>
+              </SidebarGroup>
+            )}
 
-        <SidebarGroup>
-          <SidebarGroupLabel>User Panel</SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {userMenuItems.map((item) => (
-                <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton asChild isActive={pathname === item.url}>
-                    <Link href={item.url}>
-                      <item.icon />
-                      <span>{item.title}</span>
-                    </Link>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
+            {(userRole === 'USER' || userRole === 'ADMIN') && (
+              <SidebarGroup>
+                <SidebarGroupLabel>
+                  {userRole === 'ADMIN' ? 'User Panel' : 'My Dashboard'}
+                </SidebarGroupLabel>
+                <SidebarGroupContent>
+                  <SidebarMenu>
+                    {userMenuItems.map((item) => (
+                      <SidebarMenuItem key={item.title}>
+                        <SidebarMenuButton
+                          asChild
+                          isActive={pathname === item.url}
+                        >
+                          <Link href={item.url}>
+                            <item.icon />
+                            <span>{item.title}</span>
+                          </Link>
+                        </SidebarMenuButton>
+                      </SidebarMenuItem>
+                    ))}
+                  </SidebarMenu>
+                </SidebarGroupContent>
+              </SidebarGroup>
+            )}
+          </>
+        )}
       </SidebarContent>
       <SidebarFooter>
         <UserNav />

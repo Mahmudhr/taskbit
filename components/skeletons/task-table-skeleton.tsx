@@ -6,17 +6,20 @@ export default function TaskTableSkeleton() {
       <table className='w-full'>
         <thead>
           <tr>
-            {[...Array(7)].map((_, i) => (
-              <th key={i} className='py-2 px-4 bg-gray-100'></th>
+            {[...Array(10)].map((_, i) => (
+              <th
+                key={i}
+                className='py-2 px-4 bg-gray-200 dark:bg-gray-600'
+              ></th>
             ))}
           </tr>
         </thead>
         <tbody>
-          {[...Array(6)].map((_, rowIdx) => (
+          {[...Array(9)].map((_, rowIdx) => (
             <tr key={rowIdx}>
-              {[...Array(7)].map((_, colIdx) => (
+              {[...Array(10)].map((_, colIdx) => (
                 <td key={colIdx} className='py-3 px-4'>
-                  <div className='h-4 bg-gray-200 rounded w-full'></div>
+                  <div className='h-4 bg-gray-200 dark:bg-gray-600 rounded w-full'></div>
                 </td>
               ))}
             </tr>
