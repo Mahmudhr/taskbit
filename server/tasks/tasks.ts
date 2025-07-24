@@ -186,23 +186,6 @@ export const fetchAllTasks = async (data?: string) => {
     });
   }
 
-  // Add paymentStatus filter
-  if (paymentStatus && paymentStatus !== 'all') {
-    if (paymentStatus === 'due') {
-      (where.AND as Prisma.TaskWhereInput[]).push({
-        amount: {
-          gt: 0,
-        },
-      });
-    } else if (paymentStatus === 'paid') {
-      (where.AND as Prisma.TaskWhereInput[]).push({
-        amount: {
-          equals: 0,
-        },
-      });
-    }
-  }
-
   try {
     const count = await prisma.task.count({ where });
     const totalPages = Math.ceil(count / limit);
@@ -237,7 +220,8 @@ export const fetchAllTasks = async (data?: string) => {
       },
     });
 
-    const tasksWithPaid = tasks.map((task) => {
+    // Calculate paid amount for each task and add it to the response
+    let tasksWithPaid = tasks.map((task) => {
       const paid = task.payments.reduce(
         (total, payment) => total + payment.amount,
         0
@@ -262,6 +246,22 @@ export const fetchAllTasks = async (data?: string) => {
         paid,
       };
     });
+
+    // Apply payment status filter after calculating paid amounts
+    if (paymentStatus && paymentStatus !== 'all') {
+      tasksWithPaid = tasksWithPaid.filter((task) => {
+        const remainingAmount = task.amount - task.paid;
+
+        if (paymentStatus === 'paid') {
+          // Task is paid if remaining amount is 0 or less (fully paid/overpaid)
+          return remainingAmount <= 0;
+        } else if (paymentStatus === 'due') {
+          // Task is due if remaining amount is greater than 0
+          return remainingAmount > 0;
+        }
+        return true;
+      });
+    }
 
     return {
       meta: { count, page, limit, totalPages },

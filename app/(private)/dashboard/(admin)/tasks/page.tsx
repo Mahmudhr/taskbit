@@ -157,8 +157,6 @@ export default function TasksPage() {
     router.push(queryString);
   }, [queryString, router]);
 
-  console.log({ fetchTasks });
-
   return (
     <div className='space-y-6'>
       <div className='flex items-center justify-between'>
@@ -511,7 +509,9 @@ export default function TasksPage() {
                           <div className='flex items-center gap-2'>
                             ৳{' '}
                             {task.paid ? task.amount - task.paid : task.amount}
-                            {getPaymentStatusBadge(task.amount)}
+                            {getPaymentStatusBadge(
+                              task.paid ? task.amount - task.paid : task.amount
+                            )}
                           </div>
                         </TableCell>
                         <TableCell>

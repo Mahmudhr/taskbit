@@ -18,19 +18,37 @@ export async function createPayment({
   userId: string;
   taskId: number;
 }) {
-  // First, get the current task to check its amount
+  // First, get the current task to check its amount and existing payments
   try {
     const task = await prisma.task.findUnique({
       where: { id: +taskId },
-      select: { amount: true },
+      select: {
+        amount: true,
+        payments: {
+          where: {
+            status: 'COMPLETED',
+          },
+          select: {
+            amount: true,
+          },
+        },
+      },
     });
 
     if (!task) {
       throw new Error('Task not found');
     }
 
-    if (task.amount < amount) {
-      throw new Error('Payment amount cannot exceed task amount');
+    // Calculate total amount already paid
+    const totalPaid = task.payments.reduce(
+      (sum, payment) => sum + payment.amount,
+      0
+    );
+    const remainingAmount = task.amount - totalPaid;
+
+    // Check if new payment amount exceeds remaining amount
+    if (amount > remainingAmount) {
+      throw new Error('Payment amount cannot exceed remaining task amount');
     }
 
     const result = await prisma.$transaction(async (tx) => {
@@ -45,6 +63,15 @@ export async function createPayment({
           taskId: +taskId,
         },
       });
+
+      // const updatedTask = await tx.task.update({
+      //   where: { id: +taskId },
+      //   data: {
+      //     amount: {
+      //       decrement: amount,
+      //     },
+      //   },
+      // });
 
       return { payment };
     });
