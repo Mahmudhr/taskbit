@@ -65,6 +65,8 @@ import {
 import { Calendar } from '@/components/ui/calendar';
 import { useClient } from '@/hooks/use-client';
 import Link from 'next/link';
+import Modal from '@/components/modal';
+import TaskDetailsView from '@/components/task-details-view';
 
 export const getStatusBadge = (status: string) => {
   const variants = {
@@ -109,6 +111,8 @@ export default function TasksPage() {
   const [createdDate, setCreatedDate] = useState<Date | undefined>(undefined);
   const [taskDateOpen, setTaskDateOpen] = useState(false);
   const [taskDate, setTaskDate] = useState<Date | undefined>(undefined);
+  const [viewTask, setViewTask] = useState<TaskType | null>(null);
+  const [viewTaskModal, setViewTaskModal] = useState(false);
 
   const router = useRouter();
   const [params, setParams] = useState({
@@ -156,6 +160,11 @@ export default function TasksPage() {
   const handleEditTask = (task: TaskType) => {
     setSelectedTask(task);
     setUpdateTaskOpen(true);
+  };
+
+  const handleViewTask = (task: TaskType) => {
+    setViewTask(task);
+    setViewTaskModal(true);
   };
 
   useEffect(() => {
@@ -578,6 +587,11 @@ export default function TasksPage() {
                                 <DropdownMenuLabel>Options</DropdownMenuLabel>
                                 <DropdownMenuSeparator />
                                 <DropdownMenuItem
+                                  onClick={() => handleViewTask(task)}
+                                >
+                                  Details
+                                </DropdownMenuItem>
+                                <DropdownMenuItem
                                   onClick={() => {
                                     setOpenPayment(true);
                                     setTaskId(task.id);
@@ -643,6 +657,11 @@ export default function TasksPage() {
                         <DropdownMenuContent align='end'>
                           <DropdownMenuLabel>Options</DropdownMenuLabel>
                           <DropdownMenuSeparator />
+                          <DropdownMenuItem
+                            onClick={() => handleViewTask(task)}
+                          >
+                            Details
+                          </DropdownMenuItem>
                           <DropdownMenuItem
                             onClick={() => {
                               setOpenPayment(true);
@@ -846,6 +865,14 @@ export default function TasksPage() {
       >
         <CreatePaymentForm setIsOpen={setOpenPayment} taskId={taskId} />
       </AlertModal>
+      <Modal
+        isOpen={viewTaskModal}
+        setIsOpen={setViewTaskModal}
+        title='Task Details'
+        description=' '
+      >
+        {viewTask && <TaskDetailsView task={viewTask} />}
+      </Modal>
     </div>
   );
 }
