@@ -31,9 +31,14 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useUserTask } from '@/hooks/use-user-task';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { cn, generateQueryString, taskStatusConvert } from '@/lib/utils';
+import {
+  cn,
+  generateQueryString,
+  paperTypeConvert,
+  taskStatusConvert,
+} from '@/lib/utils';
 import { useDebouncedCallback } from 'use-debounce';
-import { TaskType } from '@/types/common';
+import { UserTaskType } from '@/types/common';
 import TaskTableSkeleton from '@/components/skeletons/task-table-skeleton';
 import TaskCardSkeleton from '@/components/skeletons/task-card-skeleton';
 import {
@@ -43,6 +48,8 @@ import {
 } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
 import dayjs from 'dayjs';
+import { getPaymentStatusBadge } from '../../(admin)/tasks/page';
+import Link from 'next/link';
 
 const getStatusBadge = (status: string) => {
   const variants = {
@@ -62,9 +69,6 @@ export default function MyTasksPage() {
   const searchParams = useSearchParams();
   const { data: session } = useSession();
   const email = session?.user?.email || undefined;
-  // const [statusFilter, setStatusFilter] = useState('all');
-  // const [timeFilter, setTimeFilter] = useState('all');
-  const [currentPage, setCurrentPage] = useState(1);
   const [taskDateOpen, setTaskDateOpen] = useState(false);
   const [taskDate, setTaskDate] = useState<Date | undefined>(undefined);
   const [createdDateOpen, setCreatedDateOpen] = useState(false);
@@ -77,6 +81,8 @@ export default function MyTasksPage() {
     status: searchParams.get('status') || '',
     due_date: searchParams.get('due_date') || '',
     task_create: searchParams.get('task_create') || '',
+    paper_type: searchParams.get('paper_type') || '',
+    payment_status: searchParams.get('payment_status') || '',
   });
   const [searchQuery, setSearchQuery] = useState(
     searchParams.get('search') || ''
@@ -143,6 +149,43 @@ export default function MyTasksPage() {
                 <SelectItem value='IN_PROGRESS'>In Progress</SelectItem>
                 <SelectItem value='SUBMITTED'>Submitted</SelectItem>
                 <SelectItem value='COMPLETED'>Completed</SelectItem>
+              </SelectContent>
+            </Select>
+            <Select
+              value={params.payment_status}
+              onValueChange={(value) => {
+                setParams((prev) => ({
+                  ...prev,
+                  payment_status: value === 'ALL' ? '' : value,
+                }));
+              }}
+            >
+              <SelectTrigger className='w-[180px]'>
+                <SelectValue placeholder='Filter by payment status' />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value='ALL'>All Status</SelectItem>
+                <SelectItem value='paid'>Paid</SelectItem>
+                <SelectItem value='due'>Due</SelectItem>
+              </SelectContent>
+            </Select>
+            <Select
+              value={params.paper_type}
+              onValueChange={(value) => {
+                setParams((prev) => ({
+                  ...prev,
+                  paper_type: value === 'ALL' ? '' : value,
+                }));
+              }}
+            >
+              <SelectTrigger className='w-[180px]'>
+                <SelectValue placeholder='Filter by paper type' />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value='ALL'>All Type</SelectItem>
+                <SelectItem value='CONFERENCE'>Conference</SelectItem>
+                <SelectItem value='SURVEY'>Survey</SelectItem>
+                <SelectItem value='JOURNAL'>Journal</SelectItem>
               </SelectContent>
             </Select>
             <div className='flex flex-col gap-3'>
@@ -228,12 +271,13 @@ export default function MyTasksPage() {
                     setSearchQuery('');
                   }}
                 >
-                  <X className='w-5 h-5' />
+                  <X className='w-4 h-4 cursor-pointer' />
                 </span>
               </div>
             )}
             {params.status && (
               <div className='pl-3 pr-2 py-1 border flex gap-2 items-center rounded-full text-sm'>
+                Task Status:{' '}
                 {params.status !== 'ALL'
                   ? taskStatusConvert[
                       params.status as keyof typeof taskStatusConvert
@@ -247,7 +291,28 @@ export default function MyTasksPage() {
                     }));
                   }}
                 >
-                  <X className='w-5 h-5' />
+                  <X className='w-4 h-4 cursor-pointer' />
+                </span>
+              </div>
+            )}
+            {params.paper_type && (
+              <div className='pl-3 pr-2 py-1 border flex gap-2 items-center rounded-full text-sm'>
+                Paper Type:{' '}
+                {
+                  paperTypeConvert[
+                    params.paper_type as keyof typeof paperTypeConvert
+                  ]
+                }
+                <span
+                  onClick={() => {
+                    setParams((prev) => ({
+                      ...prev,
+                      paper_type: '',
+                      page: '1',
+                    }));
+                  }}
+                >
+                  <X className='w-4 h-4 cursor-pointer' />
                 </span>
               </div>
             )}
@@ -265,7 +330,7 @@ export default function MyTasksPage() {
                     setCreatedDate(undefined);
                   }}
                 >
-                  <X className='w-5 h-5' />
+                  <X className='w-4 h-4 cursor-pointer' />
                 </span>
               </div>
             )}
@@ -282,7 +347,24 @@ export default function MyTasksPage() {
                     setTaskDate(undefined);
                   }}
                 >
-                  <X className='w-5 h-5' />
+                  <X className='w-4 h-4 cursor-pointer' />
+                </span>
+              </div>
+            )}
+            {params.payment_status && (
+              <div className='pl-3 pr-2 py-1 border flex gap-2 items-center rounded-full text-sm capitalize'>
+                Payment Status: {params.payment_status}
+                <span
+                  onClick={() => {
+                    setParams((prev) => ({
+                      ...prev,
+                      payment_status: '',
+                      page: '1',
+                    }));
+                    setTaskDate(undefined);
+                  }}
+                >
+                  <X className='w-4 h-4 cursor-pointer' />
                 </span>
               </div>
             )}
@@ -304,7 +386,10 @@ export default function MyTasksPage() {
                   <TableHead>Due Date</TableHead>
                   <TableHead>Link</TableHead>
                   <TableHead>Amount</TableHead>
+                  <TableHead>Due Amount</TableHead>
+                  <TableHead>Paid Amount</TableHead>
                   <TableHead>Status</TableHead>
+                  <TableHead>Paper Type</TableHead>
                   <TableHead>Created At</TableHead>
                   <TableHead>Actions</TableHead>
                 </TableRow>
@@ -317,7 +402,7 @@ export default function MyTasksPage() {
                     </td>
                   </tr>
                 ) : (
-                  tasks?.data?.map((task: TaskType, index: number) => (
+                  tasks?.data?.map((task: UserTaskType, index: number) => (
                     <TableRow key={task.id}>
                       <TableCell>{index + 1}</TableCell>
                       <TableCell className='font-medium'>
@@ -329,19 +414,42 @@ export default function MyTasksPage() {
                           : '-'}
                       </TableCell>
                       <TableCell>
-                        <a
-                          href={task.link || '#'}
-                          className='text-blue-600 hover:underline'
-                          target='_blank'
-                          rel='noopener noreferrer'
-                        >
-                          View Link
-                        </a>
+                        {task.link ? (
+                          <Link
+                            href={task.link || '#'}
+                            className='text-blue-600 hover:underline'
+                            target='_blank'
+                            rel='noopener noreferrer'
+                          >
+                            View Link
+                          </Link>
+                        ) : (
+                          '-'
+                        )}
                       </TableCell>
-                      <TableCell>${task.amount}</TableCell>
+                      <TableCell>৳ {task.amount}</TableCell>
+                      <TableCell>
+                        <div className='flex items-center gap-2'>
+                          ৳ {task.paid ? task.amount - task.paid : task.amount}
+                          {getPaymentStatusBadge(
+                            task.paid ? task.amount - task.paid : task.amount
+                          )}
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className='flex items-center gap-2'>
+                          ৳ {task.paid}
+                        </div>
+                      </TableCell>
                       <TableCell>{getStatusBadge(task.status)}</TableCell>
                       <TableCell>
-                        {' '}
+                        {
+                          paperTypeConvert[
+                            task.paper_type as keyof typeof paperTypeConvert
+                          ]
+                        }
+                      </TableCell>
+                      <TableCell>
                         {task.createdAt
                           ? dayjs(task.createdAt).format('DD-MM-YYYY')
                           : '-'}
@@ -366,10 +474,10 @@ export default function MyTasksPage() {
             ) : tasks?.data?.length === 0 ? (
               <Card className='p-4 text-center'>No tasks found.</Card>
             ) : (
-              tasks?.data?.map((task: TaskType, index: number) => (
+              tasks?.data?.map((task: UserTaskType, index: number) => (
                 <Card key={task.id} className='p-4'>
                   <div className='flex justify-between items-start mb-3'>
-                    <div className='flex items-center gap-2'>
+                    <div className='flex items-start gap-2'>
                       <span className='text-sm text-muted-foreground'>
                         #{index + 1}
                       </span>
@@ -380,36 +488,65 @@ export default function MyTasksPage() {
                       Deliver
                     </Button>
                   </div>
-                  <div className='space-y-2 text-sm'>
-                    <div className='flex justify-between'>
+                  <div className='space-y-3 text-sm'>
+                    <div className='flex justify-between text-xs'>
                       <span className='text-muted-foreground'>Due Date:</span>
                       <span>
                         {task.duration
-                          ? new Date(task.duration).toLocaleDateString()
+                          ? dayjs(task.duration).format('DD-MM-YYYY')
                           : '-'}
                       </span>
                     </div>
-                    <div className='flex justify-between'>
+                    <div className='flex justify-between text-xs'>
                       <span className='text-muted-foreground'>Amount:</span>
-                      <span className='font-medium'>${task.amount}</span>
+                      <span className='font-medium'>৳ {task.amount}</span>
                     </div>
-                    <div className='flex justify-between items-center'>
+                    <div className='flex justify-between text-xs'>
+                      <span className='text-muted-foreground'>Due Amount:</span>
+                      <span className='font-medium'>
+                        ৳ {task.paid ? task.amount - task.paid : task.amount}{' '}
+                        {getPaymentStatusBadge(
+                          task.paid ? task.amount - task.paid : task.amount
+                        )}
+                      </span>
+                    </div>
+                    <div className='flex justify-between text-xs'>
+                      <span className='text-muted-foreground'>
+                        Paid Amount:
+                      </span>
+                      <span className='font-medium'>৳ {task.paid}</span>
+                    </div>
+                    <div className='flex justify-between items-center text-xs'>
                       <span className='text-muted-foreground'>Status:</span>
                       {getStatusBadge(task.status)}
                     </div>
-                    <div className='flex justify-between'>
+                    <div className='flex justify-between items-center text-xs'>
+                      <span className='text-muted-foreground'>Paper Type:</span>
+                      {
+                        paperTypeConvert[
+                          task.paper_type as keyof typeof paperTypeConvert
+                        ]
+                      }
+                    </div>
+                    <div className='flex justify-between items-center text-xs'>
+                      <span className='text-muted-foreground'>Created At:</span>
+                      {task.createdAt
+                        ? dayjs(task.createdAt).format('DD-MM-YYYY')
+                        : '-'}
+                    </div>
+                    <div className='flex justify-between text-xs'>
                       <span className='text-muted-foreground'>Link:</span>
                       {task.link ? (
-                        <a
-                          href={task.link}
-                          className='text-blue-600 hover:underline text-sm'
+                        <Link
+                          href={task.link || '#'}
+                          className='text-blue-600 hover:underline'
                           target='_blank'
                           rel='noopener noreferrer'
                         >
                           View Link
-                        </a>
+                        </Link>
                       ) : (
-                        <span>-</span>
+                        '-'
                       )}
                     </div>
                   </div>
@@ -418,30 +555,43 @@ export default function MyTasksPage() {
             )}
           </div>
 
-          <div className='flex items-center justify-between space-x-2 py-4'>
-            <div className='text-sm text-muted-foreground'>
-              {/* Showing 1 to {tasks.length} of {tasks.length} results */}
+          {tasks && tasks?.meta.count > 0 && (
+            <div className='flex md:flex-row flex-col items-center md:justify-between justify-center gap-3 py-4'>
+              <div className='text-sm text-muted-foreground'>
+                Showing 1 to {tasks?.data.length} of {tasks?.meta.count} results
+              </div>
+              <div className='flex items-center space-x-2'>
+                <Button
+                  variant='outline'
+                  size='sm'
+                  onClick={() =>
+                    setParams((prev) => ({
+                      ...prev,
+                      page: (+params.page - 1).toString(),
+                    }))
+                  }
+                  disabled={+params.page === 1}
+                >
+                  <ChevronLeft className='h-4 w-4' />
+                  Previous
+                </Button>
+                <Button
+                  variant='outline'
+                  size='sm'
+                  onClick={() =>
+                    setParams((prev) => ({
+                      ...prev,
+                      page: (+params.page + 1).toString(),
+                    }))
+                  }
+                  disabled={+params.page === (tasks && tasks.meta.totalPages)}
+                >
+                  Next
+                  <ChevronRight className='h-4 w-4' />
+                </Button>
+              </div>
             </div>
-            <div className='flex items-center space-x-2'>
-              <Button
-                variant='outline'
-                size='sm'
-                onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
-                disabled={currentPage === 1}
-              >
-                <ChevronLeft className='h-4 w-4' />
-                Previous
-              </Button>
-              <Button
-                variant='outline'
-                size='sm'
-                onClick={() => setCurrentPage(currentPage + 1)}
-              >
-                Next
-                <ChevronRight className='h-4 w-4' />
-              </Button>
-            </div>
-          </div>
+          )}
         </CardContent>
       </Card>
     </div>

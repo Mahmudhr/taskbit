@@ -51,6 +51,21 @@ export type TaskType = {
   } | null;
 };
 
+export type UserTaskType = {
+  id: number;
+  title: string;
+  description?: string | null;
+  link?: string | null;
+  amount: number;
+  status: $Enums.TaskStatus;
+  createdAt: Date;
+  updatedAt: Date;
+  assignedToId?: number | null;
+  duration: Date | null;
+  paper_type: $Enums.PaperType;
+  paid?: number;
+};
+
 export type PaymentTypes = {
   id: number;
   referenceNumber: string;

@@ -1,10 +1,9 @@
 import { fetchTasksByUserEmail } from '@/server/tasks/tasks';
-import { Meta, Response, TaskType } from '@/types/common';
+import { Meta, Response, UserTaskType } from '@/types/common';
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
 
 export function useUserTask(email?: string, options?: string) {
-  // Fetch tasks assigned to a user (with filters)
-  const fetchUserTasksMutation = useQuery<Response<TaskType[], Meta>>({
+  const fetchUserTasksMutation = useQuery<Response<UserTaskType[], Meta>>({
     queryKey: ['user-tasks', email, options],
     queryFn: async () => {
       if (!email)

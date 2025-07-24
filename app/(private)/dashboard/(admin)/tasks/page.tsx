@@ -64,8 +64,9 @@ import {
 } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
 import { useClient } from '@/hooks/use-client';
+import Link from 'next/link';
 
-const getStatusBadge = (status: string) => {
+export const getStatusBadge = (status: string) => {
   const variants = {
     PENDING: 'bg-gray-100 text-gray-800 hover:bg-gray-200',
     IN_PROGRESS: 'bg-blue-100 text-blue-800 hover:bg-blue-200',
@@ -79,7 +80,7 @@ const getStatusBadge = (status: string) => {
   );
 };
 
-const getPaymentStatusBadge = (amount: number) => {
+export const getPaymentStatusBadge = (amount: number) => {
   if (amount > 0) {
     return (
       <Badge variant='destructive' className='text-xs'>
@@ -211,7 +212,7 @@ export default function TasksPage() {
               </SelectContent>
             </Select>
             <Select
-              value={params.status}
+              value={params.payment_status}
               onValueChange={(value) => {
                 setParams((prev) => ({
                   ...prev,
@@ -480,6 +481,7 @@ export default function TasksPage() {
                   <TableRow>
                     <TableHead>Serial</TableHead>
                     <TableHead>Task Title</TableHead>
+                    <TableHead>Link</TableHead>
                     <TableHead>Due Date</TableHead>
                     <TableHead>Total Amount</TableHead>
                     <TableHead>Due Amount</TableHead>
@@ -500,6 +502,20 @@ export default function TasksPage() {
                         <TableCell>{index + 1}</TableCell>
                         <TableCell className='font-medium'>
                           {task.title}
+                        </TableCell>
+                        <TableCell className='font-medium'>
+                          {task.link ? (
+                            <Link
+                              href={task.link || '#'}
+                              className='text-blue-600 hover:underline'
+                              target='_blank'
+                              rel='noopener noreferrer'
+                            >
+                              View Link
+                            </Link>
+                          ) : (
+                            '-'
+                          )}
                         </TableCell>
                         <TableCell>
                           {dayjs(task.duration).format('DD-MM-YYYY')}
@@ -674,6 +690,21 @@ export default function TasksPage() {
                           : ''}
                       </span>
                     </div>
+                    <div className='flex justify-between text-xs'>
+                      <span className='text-muted-foreground'>Link:</span>
+                      {task.link ? (
+                        <Link
+                          href={task.link || '#'}
+                          className='text-blue-600 hover:underline'
+                          target='_blank'
+                          rel='noopener noreferrer'
+                        >
+                          View Link
+                        </Link>
+                      ) : (
+                        '-'
+                      )}
+                    </div>
                     <div className='flex justify-between items-center text-xs'>
                       <span className='text-muted-foreground'>Amount:</span>
                       <div className='flex items-center gap-2'>
@@ -734,17 +765,6 @@ export default function TasksPage() {
                     <div className='flex justify-between items-center text-xs'>
                       <span className='text-muted-foreground'>Created At:</span>
                       {dayjs(task.createdAt).format('DD-MM-YYYY')}
-                    </div>
-                    <div className='flex justify-between text-xs'>
-                      <span className='text-muted-foreground'>Link:</span>
-                      <a
-                        href={task.link || ''}
-                        className='text-blue-600 hover:underline md:text-sm text-xs'
-                        target='_blank'
-                        rel='noopener noreferrer'
-                      >
-                        View Link
-                      </a>
                     </div>
                   </div>
                 </Card>

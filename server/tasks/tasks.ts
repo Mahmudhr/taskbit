@@ -288,6 +288,8 @@ export const fetchTasksByUserEmail = async (email: string, option?: string) => {
     const status = params.get('status') || '';
     const dueDate = params.get('due_date') || '';
     const taskCreate = params.get('task_create') || '';
+    const paymentStatus = params.get('payment_status') || '';
+    const paper_type = params.get('paper_type') || '';
 
     let dueDateFilter: { gte?: Date; lte?: Date } = {};
     if (dueDate) {
@@ -374,6 +376,12 @@ export const fetchTasksByUserEmail = async (email: string, option?: string) => {
       });
     }
 
+    if (paper_type && paper_type !== 'ALL') {
+      (where.AND as Prisma.TaskWhereInput[]).push({
+        paper_type: paper_type as PaperType,
+      });
+    }
+
     const count = await prisma.task.count({ where });
     const totalPages = Math.ceil(count / limit);
     const tasks = await prisma.task.findMany({
@@ -383,11 +391,61 @@ export const fetchTasksByUserEmail = async (email: string, option?: string) => {
       orderBy: { createdAt: 'desc' },
       include: {
         assignedTo: { select: { name: true, email: true } },
+
+        payments: {
+          where: {
+            status: 'COMPLETED',
+          },
+          select: {
+            amount: true,
+          },
+        },
       },
     });
+
+    let tasksWithPaid = tasks.map((task) => {
+      const paid = task.payments.reduce(
+        (total, payment) => total + payment.amount,
+        0
+      );
+      return {
+        id: task.id,
+        title: task.title,
+        description: task.description,
+        link: task.link,
+        amount: task.amount,
+        status: task.status,
+        paper_type: task.paper_type,
+        isDeleted: task.isDeleted,
+        createdAt: task.createdAt,
+        updatedAt: task.updatedAt,
+        duration: task.duration,
+        assignedToId: task.assignedToId,
+        clientId: task.clientId,
+        createdById: task.createdById,
+        assignedTo: task.assignedTo,
+        paid,
+      };
+    });
+
+    if (paymentStatus && paymentStatus !== 'all') {
+      tasksWithPaid = tasksWithPaid.filter((task) => {
+        const remainingAmount = task.amount - task.paid;
+
+        if (paymentStatus === 'paid') {
+          // Task is paid if remaining amount is 0 or less (fully paid/overpaid)
+          return remainingAmount <= 0;
+        } else if (paymentStatus === 'due') {
+          // Task is due if remaining amount is greater than 0
+          return remainingAmount > 0;
+        }
+        return true;
+      });
+    }
+
     return {
       meta: { count, page, limit, totalPages },
-      data: tasks,
+      data: tasksWithPaid,
     };
   } catch (error) {
     throw error;
