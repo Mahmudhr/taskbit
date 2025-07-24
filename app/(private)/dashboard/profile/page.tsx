@@ -12,7 +12,6 @@ import {
   Phone,
   Calendar,
   Save,
-  Upload,
   MessageCircle,
   CreditCard,
   Eye,
@@ -27,6 +26,9 @@ export default function ProfilePage() {
   const { data: session } = useSession();
   const [isEditing, setIsEditing] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [passwordError, setPasswordError] = useState('');
   const [formData, setFormData] = useState({
     id: 0,
     name: '',
@@ -62,7 +64,7 @@ export default function ProfilePage() {
         id: userProfile.id,
         name: userProfile.name || '',
         email: userProfile.email || '',
-        password: '********', // Default masked password
+        password: '', // Default masked password
         phone: userProfile.phone || '',
         whatsapp: userProfile.whatsapp || '',
         bkashNumber: userProfile.bkashNumber || '',
@@ -87,10 +89,50 @@ export default function ProfilePage() {
 
   const handleInputChange = (field: string, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
+
+    // Password validation when password field changes
+    if (field === 'password') {
+      validatePasswords(value, confirmPassword);
+    }
+  };
+
+  const handleConfirmPasswordChange = (value: string) => {
+    setConfirmPassword(value);
+    validatePasswords(formData.password, value);
+  };
+
+  const validatePasswords = (password: string, confirmPass: string) => {
+    if (password && confirmPass) {
+      if (password !== confirmPass) {
+        setPasswordError('Passwords do not match');
+      } else {
+        setPasswordError('');
+      }
+    } else {
+      setPasswordError('');
+    }
   };
 
   const handleSave = async () => {
     try {
+      // Check for password validation errors
+      if (passwordError) {
+        toast.error('Please fix password validation errors before saving');
+        return;
+      }
+
+      // If password is being changed, ensure confirm password matches
+      if (formData.password && formData.password !== '********') {
+        if (!confirmPassword) {
+          toast.error('Please confirm your password');
+          return;
+        }
+        if (formData.password !== confirmPassword) {
+          toast.error('Passwords do not match');
+          return;
+        }
+      }
+
       // Prepare update data (exclude fields that shouldn't be updated)
       const updateData: {
         name?: string;
@@ -182,6 +224,9 @@ export default function ProfilePage() {
     }
     setIsEditing(false);
     setShowPassword(false);
+    setShowConfirmPassword(false);
+    setConfirmPassword('');
+    setPasswordError('');
   };
 
   const initials =
@@ -274,7 +319,6 @@ export default function ProfilePage() {
       </div>
 
       <div className='grid gap-6 md:grid-cols-3'>
-        {/* Profile Overview */}
         <Card className='md:col-span-1'>
           <CardHeader>
             <CardTitle>Profile Overview</CardTitle>
@@ -287,15 +331,6 @@ export default function ProfilePage() {
                     {initials}
                   </AvatarFallback>
                 </Avatar>
-                {isEditing && (
-                  <Button
-                    size='sm'
-                    variant='outline'
-                    className='absolute -bottom-2 -right-2 h-8 w-8 rounded-full p-0 bg-transparent'
-                  >
-                    <Upload className='h-4 w-4' />
-                  </Button>
-                )}
               </div>
               <div className='text-center'>
                 <h3 className='text-lg font-semibold'>{formData.name}</h3>
@@ -413,6 +448,44 @@ export default function ProfilePage() {
                   )}
                 </div>
               </div>
+
+              {isEditing &&
+                formData.password &&
+                formData.password !== '********' && (
+                  <div className='space-y-2'>
+                    <Label htmlFor='confirmPassword'>Confirm Password</Label>
+                    <div className='relative'>
+                      <Input
+                        id='confirmPassword'
+                        type={showConfirmPassword ? 'text' : 'password'}
+                        value={confirmPassword}
+                        onChange={(e) =>
+                          handleConfirmPasswordChange(e.target.value)
+                        }
+                        placeholder='Confirm your password'
+                        className={passwordError ? 'border-red-500' : ''}
+                      />
+                      <Button
+                        type='button'
+                        variant='ghost'
+                        size='sm'
+                        className='absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent'
+                        onClick={() =>
+                          setShowConfirmPassword(!showConfirmPassword)
+                        }
+                      >
+                        {showConfirmPassword ? (
+                          <EyeOff className='h-4 w-4' />
+                        ) : (
+                          <Eye className='h-4 w-4' />
+                        )}
+                      </Button>
+                    </div>
+                    {passwordError && (
+                      <p className='text-xs text-red-500'>{passwordError}</p>
+                    )}
+                  </div>
+                )}
 
               <div className='grid gap-4 md:grid-cols-2'>
                 <div className='space-y-2'>
