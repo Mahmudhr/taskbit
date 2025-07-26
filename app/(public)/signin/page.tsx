@@ -121,7 +121,7 @@ export default function SignInPage() {
                     <FormLabel>Password</FormLabel>
                     <FormControl>
                       <Input
-                        placeholder='shadcn'
+                        placeholder='Enter your password'
                         type={!showPass ? 'password' : 'text'}
                         {...field}
                       />
