@@ -246,9 +246,6 @@ export const fetchAllTasks = async (data?: string) => {
           where: {
             status: 'COMPLETED',
           },
-          select: {
-            amount: true,
-          },
         },
       },
     });
@@ -275,6 +272,7 @@ export const fetchAllTasks = async (data?: string) => {
         clientId: task.clientId,
         createdById: task.createdById,
         assignedTo: task.assignedTo,
+        payments: task.payments,
         client: task.client,
         paid,
       };
@@ -428,9 +426,6 @@ export const fetchTasksByUserEmail = async (email: string, option?: string) => {
           where: {
             status: 'COMPLETED',
           },
-          select: {
-            amount: true,
-          },
         },
       },
     });
@@ -455,6 +450,7 @@ export const fetchTasksByUserEmail = async (email: string, option?: string) => {
         clientId: task.clientId,
         createdById: task.createdById,
         assignedTo: task.assignedTo,
+        payments: task.payments,
         paid,
         note: task.note,
       };

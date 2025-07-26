@@ -1,12 +1,9 @@
-'use client';
-
-import { TaskType } from '@/types/common';
-
+import { UserTaskType } from '@/types/common';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
-import TaskDetails from './task-details';
-import PaymentDetails from './payment-details';
+import UserTaskDetails from './user-task-details';
+import UserTaskPaymentDetails from './user-task-payment-details';
 
-export default function TaskDetailsView({ task }: { task: TaskType }) {
+export default function UsersTaskDetails({ data }: { data: UserTaskType }) {
   return (
     <div className='space-y-4'>
       <Tabs defaultValue='task_details' className='w-full'>
@@ -19,10 +16,10 @@ export default function TaskDetailsView({ task }: { task: TaskType }) {
           </TabsTrigger>
         </TabsList>
         <TabsContent value='task_details'>
-          <TaskDetails task={task} />
+          <UserTaskDetails task={data} />
         </TabsContent>
         <TabsContent value='payment_details'>
-          <PaymentDetails payments={task.payments} />
+          <UserTaskPaymentDetails payments={data.payments} />
         </TabsContent>
       </Tabs>
     </div>

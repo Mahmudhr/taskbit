@@ -51,7 +51,7 @@ import Modal from '@/components/modal';
 import UpdatePaymentForm from '@/components/forms/update-payment-form';
 import { PaymentTypes } from '@/types/common';
 
-const getStatusBadge = (status: $Enums.PaymentStatus) => {
+export const getStatusBadge = (status: $Enums.PaymentStatus) => {
   const variants = {
     PENDING: 'bg-gray-100 text-gray-800 hover:bg-gray-200',
     COMPLETED: 'bg-green-100 text-green-800 hover:bg-green-200',

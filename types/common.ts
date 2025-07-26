@@ -50,6 +50,7 @@ export type TaskType = {
     name: string;
     email: string;
   } | null;
+  payments: FlatPaymentType[];
 };
 
 export type UserTaskType = {
@@ -66,6 +67,7 @@ export type UserTaskType = {
   duration: Date | null;
   paper_type: $Enums.PaperType;
   paid?: number;
+  payments: FlatPaymentType[];
 };
 
 export type PaymentTypes = {

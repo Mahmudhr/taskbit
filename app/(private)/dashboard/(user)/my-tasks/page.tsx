@@ -60,6 +60,8 @@ import {
 } from '@/components/ui/dropdown-menu';
 import AlertModal from '@/components/alert-modal';
 import CreateTaskDeliveryForm from '@/components/forms/create-task-delivery-form';
+import Modal from '@/components/modal';
+import UsersTaskDetails from '@/components/users-task-details';
 
 const getStatusBadge = (status: string) => {
   const variants = {
@@ -86,6 +88,7 @@ export default function MyTasksPage() {
   // const [taskId, setTaskId] = useState<number | null>(null);
   const [selectedTask, setSelectedTask] = useState<UserTaskType | null>(null);
   const [openTask, setOpenTask] = useState(false);
+  const [openTaskDetails, setOpenTaskDetails] = useState(false);
 
   const router = useRouter();
   const [params, setParams] = useState({
@@ -478,6 +481,15 @@ export default function MyTasksPage() {
                               <DropdownMenuSeparator />
                               <DropdownMenuItem
                                 onClick={() => {
+                                  setOpenTaskDetails(true);
+                                  setSelectedTask(task);
+                                }}
+                                disabled={task.status === 'COMPLETED'}
+                              >
+                                Details
+                              </DropdownMenuItem>
+                              <DropdownMenuItem
+                                onClick={() => {
                                   setOpenTask(true);
                                   setSelectedTask(task);
                                 }}
@@ -520,6 +532,15 @@ export default function MyTasksPage() {
                         <DropdownMenuContent align='end'>
                           <DropdownMenuLabel>Options</DropdownMenuLabel>
                           <DropdownMenuSeparator />
+                          <DropdownMenuItem
+                            onClick={() => {
+                              setOpenTaskDetails(true);
+                              setSelectedTask(task);
+                            }}
+                            disabled={task.status === 'COMPLETED'}
+                          >
+                            Details
+                          </DropdownMenuItem>
                           <DropdownMenuItem
                             onClick={() => {
                               setOpenTask(true);
@@ -647,6 +668,14 @@ export default function MyTasksPage() {
       >
         <CreateTaskDeliveryForm setIsOpen={setOpenTask} data={selectedTask} />
       </AlertModal>
+      <Modal
+        isOpen={openTaskDetails}
+        setIsOpen={setOpenTaskDetails}
+        title='Delivered your task'
+        description=' '
+      >
+        {selectedTask && <UsersTaskDetails data={selectedTask} />}
+      </Modal>
     </div>
   );
 }
