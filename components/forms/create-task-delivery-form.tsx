@@ -34,15 +34,36 @@ export type CreateTaskDeliveryFormProps = {
   data?: UserTaskType | null;
 };
 
-const FormSchema = z.object({
-  title: z.string().min(2, { message: 'Title must be at least 2 characters.' }),
-  note: z.string().optional(),
-  link: z
-    .string()
-    .min(1, { message: 'Link is required' })
-    .url({ message: 'Must be a valid URL' }),
-  status: z.nativeEnum(TaskStatus),
-});
+const FormSchema = z
+  .object({
+    title: z
+      .string()
+      .min(2, { message: 'Title must be at least 2 characters.' }),
+    note: z.string().optional(),
+    link: z.string().optional(),
+    status: z.nativeEnum(TaskStatus),
+  })
+  .refine(
+    (data) => {
+      if (data.status === TaskStatus.SUBMITTED) {
+        return (
+          data.link &&
+          data.link.trim().length > 0 &&
+          z.string().url().safeParse(data.link).success
+        );
+      }
+
+      if (data.link && data.link.trim().length > 0) {
+        return z.string().url().safeParse(data.link).success;
+      }
+      return true;
+    },
+    {
+      message:
+        "Link is required and must be a valid URL when status is 'Submitted'",
+      path: ['link'],
+    }
+  );
 
 export default function CreateTaskDeliveryForm({
   setIsOpen,
@@ -59,6 +80,8 @@ export default function CreateTaskDeliveryForm({
       note: data?.note || '',
     },
   });
+
+  const watchedStatus = form.watch('status');
 
   function onSubmit(formData: z.infer<typeof FormSchema>) {
     if (!data?.id) return;
@@ -108,11 +131,20 @@ export default function CreateTaskDeliveryForm({
           name='link'
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Link</FormLabel>
+              <FormLabel>
+                Link{' '}
+                {watchedStatus === TaskStatus.SUBMITTED && (
+                  <span className='text-red-500'>*</span>
+                )}
+              </FormLabel>
               <FormControl>
                 <Input
                   className='w-full'
-                  placeholder='Enter task title'
+                  placeholder={
+                    watchedStatus === TaskStatus.SUBMITTED
+                      ? 'Enter task delivery link (required)'
+                      : 'Enter task delivery link (optional)'
+                  }
                   {...field}
                 />
               </FormControl>
@@ -127,22 +159,32 @@ export default function CreateTaskDeliveryForm({
           render={({ field }) => (
             <FormItem>
               <FormLabel>Status</FormLabel>
-              <Select onValueChange={field.onChange} defaultValue={field.value}>
+              <Select
+                onValueChange={(value) => {
+                  field.onChange(value);
+                  // Trigger validation for the link field when status changes
+                  form.trigger('link');
+                }}
+                defaultValue={field.value}
+              >
                 <FormControl>
                   <SelectTrigger>
                     <SelectValue placeholder='Select status' />
                   </SelectTrigger>
                 </FormControl>
                 <SelectContent className='z-[9999]'>
-                  {Object.values(TaskStatus).map((status) => (
-                    <SelectItem key={status} value={status}>
-                      {
-                        taskStatusConvert[
-                          status as keyof typeof taskStatusConvert
-                        ]
-                      }
-                    </SelectItem>
-                  ))}
+                  {Object.values(TaskStatus).map(
+                    (status) =>
+                      status !== 'COMPLETED' && (
+                        <SelectItem key={status} value={status}>
+                          {
+                            taskStatusConvert[
+                              status as keyof typeof taskStatusConvert
+                            ]
+                          }
+                        </SelectItem>
+                      )
+                  )}
                 </SelectContent>
               </Select>
               <FormMessage />
