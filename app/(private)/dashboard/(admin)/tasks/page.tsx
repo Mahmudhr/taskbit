@@ -696,22 +696,18 @@ export default function TasksPage() {
                   </div>
                   <div className='space-y-2 text-sm'>
                     <div className='flex justify-between text-xs'>
+                      <span className='text-muted-foreground'>Start Date:</span>
+                      <span>
+                        {task.startDate
+                          ? dayjs(task.startDate).format('DD-MM-YYYY')
+                          : ''}
+                      </span>
+                    </div>
+                    <div className='flex justify-between text-xs'>
                       <span className='text-muted-foreground'>Due Date:</span>
                       <span>
-                        {task?.duration
-                          ? typeof task.duration === 'string'
-                            ? task.duration
-                            : `${task.duration
-                                .getDate()
-                                .toString()
-                                .padStart(2, '0')}-${(
-                                task.duration.getMonth() + 1
-                              )
-                                .toString()
-                                .padStart(
-                                  2,
-                                  '0'
-                                )}-${task.duration.getFullYear()}`
+                        {task.duration
+                          ? dayjs(task.duration).format('DD-MM-YYYY')
                           : ''}
                       </span>
                     </div>
@@ -748,7 +744,9 @@ export default function TasksPage() {
                       </div>
                     </div>
                     <div className='flex justify-between items-center text-xs'>
-                      <span className='text-muted-foreground'>Due Amount:</span>
+                      <span className='text-muted-foreground'>
+                        Paid Amount:
+                      </span>
                       <div className='flex items-center gap-2'>
                         <span className='font-medium'>৳ {task.paid}</span>
                       </div>
