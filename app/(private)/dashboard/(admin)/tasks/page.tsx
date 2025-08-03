@@ -491,6 +491,7 @@ export default function TasksPage() {
                     <TableHead>Serial</TableHead>
                     <TableHead>Task Title</TableHead>
                     <TableHead>Link</TableHead>
+                    <TableHead>Start Date</TableHead>
                     <TableHead>Due Date</TableHead>
                     <TableHead>Total Amount</TableHead>
                     <TableHead>Due Amount</TableHead>
@@ -504,7 +505,7 @@ export default function TasksPage() {
                     <TableHead className='text-center'>Actions</TableHead>
                   </TableRow>
                 </TableHeader>
-                <TableBody>
+                <TableBody className='text-xs'>
                   {fetchTasks &&
                     fetchTasks.data.map((task, index) => (
                       <TableRow key={task.id}>
@@ -525,6 +526,11 @@ export default function TasksPage() {
                           ) : (
                             '-'
                           )}
+                        </TableCell>
+                        <TableCell>
+                          {task.startDate
+                            ? dayjs(task.startDate).format('DD-MM-YYYY')
+                            : '-'}
                         </TableCell>
                         <TableCell>
                           {dayjs(task.duration).format('DD-MM-YYYY')}

@@ -8,18 +8,31 @@ import {
 } from '../types/tasks-type';
 
 export async function createTasks(data: CreateTaskType) {
-  const { title, description, amount, status, duration, clientId, paper_type } =
-    data;
+  const {
+    title,
+    description,
+    amount,
+    status,
+    duration,
+    clientId,
+    paper_type,
+    startDate,
+    assignedToId,
+  } = data;
   try {
     const payload: CreateTaskType = {
       title,
       description,
       amount,
       status,
-      assignedToId: +data.assignedToId,
       paper_type,
       duration,
+      startDate: startDate ? new Date(startDate) : null,
     };
+
+    if (assignedToId) {
+      payload.assignedToId = +assignedToId;
+    }
 
     if (clientId) {
       payload.clientId = clientId;
@@ -36,29 +49,41 @@ export async function createTasks(data: CreateTaskType) {
 }
 
 export async function updateTask(id: number, data: CreateTaskType) {
-  const { title, description, amount, status, duration, paper_type, clientId } =
-    data;
+  const {
+    title,
+    description,
+    amount,
+    status,
+    duration,
+    paper_type,
+    clientId,
+    startDate,
+    assignedToId,
+  } = data;
+
   try {
     const payload: {
       title: string;
       description?: string;
       amount: number;
       status: TaskStatus;
-      assignedToId: number;
+      assignedToId: number | null;
       paper_type: PaperType;
       duration?: Date;
       updatedAt: Date;
       clientId: number | null;
+      startDate?: Date | null;
     } = {
       title,
       description,
       amount,
       status,
-      assignedToId: +data.assignedToId,
+      assignedToId: assignedToId || null,
       paper_type,
       duration,
       updatedAt: new Date(),
       clientId: clientId || null,
+      startDate: startDate ? new Date(startDate) : null,
     };
 
     await prisma.task.update({
@@ -274,6 +299,7 @@ export const fetchAllTasks = async (data?: string) => {
         assignedTo: task.assignedTo,
         payments: task.payments,
         client: task.client,
+        startDate: task.startDate,
         paid,
       };
     });

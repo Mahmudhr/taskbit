@@ -83,3 +83,8 @@ export const paperTypeConvert = {
   SURVEY: 'Survey',
   JOURNAL: 'Journal',
 };
+
+export const formatDateToString = (date: Date | null | undefined): string => {
+  if (!date) return '';
+  return date.toISOString().split('T')[0]; // Converts Date to YYYY-MM-DD
+};

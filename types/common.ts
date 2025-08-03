@@ -51,6 +51,7 @@ export type TaskType = {
     email: string;
   } | null;
   payments: FlatPaymentType[];
+  startDate?: Date | null;
 };
 
 export type UserTaskType = {

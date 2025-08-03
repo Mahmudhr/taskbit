@@ -27,6 +27,7 @@ import ReactAsyncSelect from '../react-async-select';
 import { Card } from '../ui/card';
 import { useState } from 'react';
 import {
+  formatDateToString,
   getErrorMessage,
   paperTypeConvert,
   taskStatusConvert,
@@ -51,11 +52,10 @@ const FormSchema = z.object({
     .min(1, { message: 'Amount must be greater than 0' }),
   status: z.nativeEnum(TaskStatus),
   paper_type: z.nativeEnum(PaperType),
-  assignedToId: z.coerce
-    .number()
-    .min(1, { message: 'Please select a user to assign' }),
+  assignedToId: z.coerce.number().optional(),
   clientId: z.coerce.number().optional(),
   duration: z.string().optional(),
+  startDate: z.date().optional().nullable(),
 });
 
 type CreateTaskFormProps = {
@@ -85,6 +85,7 @@ export default function CreateTaskForm({ setIsOpen }: CreateTaskFormProps) {
       assignedToId: 0,
       clientId: 0,
       duration: '',
+      startDate: null,
     },
   });
 
@@ -284,6 +285,33 @@ export default function CreateTaskForm({ setIsOpen }: CreateTaskFormProps) {
                   ))}
                 </SelectContent>
               </Select>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name='startDate'
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Start Date</FormLabel>
+              <FormControl>
+                <Input
+                  className='w-full'
+                  type='date'
+                  placeholder='Select start date'
+                  value={formatDateToString(field.value)}
+                  onChange={(e) => {
+                    const dateValue = e.target.value
+                      ? new Date(e.target.value)
+                      : null;
+                    field.onChange(dateValue);
+                  }}
+                  onBlur={field.onBlur}
+                  name={field.name}
+                  ref={field.ref}
+                />
+              </FormControl>
               <FormMessage />
             </FormItem>
           )}

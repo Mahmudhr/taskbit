@@ -5,11 +5,12 @@ export type CreateTaskType = {
   description?: string;
   amount: number;
   status: $Enums.TaskStatus;
-  assignedToId: number;
+  assignedToId?: number;
   clientId?: number;
   duration: Date;
   paper_type: $Enums.PaperType;
   updatedAt?: Date;
+  startDate?: Date | null;
 };
 
 export type UpdateUserTaskDeliveryType = {
