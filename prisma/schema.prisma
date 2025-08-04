@@ -27,6 +27,7 @@ model User {
   tasks           Task[]    @relation("AssignedTasks")
   createdTasks    Task[]    @relation("CreatedTasks")
   payments        Payment[] @relation("UserPayments")
+  salaries        Salary[]  @relation("UserSalaries")
   isDeleted       Boolean   @default(false) @map("is_deleted")
 
   @@map("users")
@@ -88,6 +89,24 @@ model Payment {
   @@map("payments")
 }
 
+model Salary {
+  id              Int           @id @default(autoincrement())
+  amount          Float
+  month           Int           // 1-12 representing months
+  year            Int
+  status          SalaryStatus  @default(PENDING)
+  salaryType      SalaryType    @map("salary_type")
+  referenceNumber String?       @map("reference_number")
+  note            String?
+  paymentType     PaymentType   @map("payment_type")
+  createdAt       DateTime      @default(now()) @map("created_at")
+  updatedAt       DateTime      @updatedAt @map("updated_at")
+  user            User          @relation("UserSalaries", fields: [userId], references: [id])
+  userId          Int           @map("user_id")
+
+  @@map("salaries")
+}
+
 enum Role {
   ADMIN
   USER
@@ -115,6 +134,18 @@ enum PaymentType {
   BKASH
   NAGAD
   BANK_TRANSFER
+}
+
+enum SalaryStatus {
+  PENDING
+  PAID
+  CANCELLED
+}
+
+enum SalaryType {
+  MONTHLY
+  BONUS
+  OVERTIME
 }
 
 enum PaperType {

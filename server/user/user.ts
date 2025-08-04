@@ -114,6 +114,17 @@ export const fetchAllUser = async (data?: string) => {
         status: true,
         createdAt: true,
         updatedAt: true,
+        salaries: {
+          select: {
+            id: true,
+            month: true,
+            year: true,
+            salaryType: true,
+            amount: true,
+            referenceNumber: true,
+            paymentType: true,
+          },
+        },
         tasks: {
           include: {
             payments: true,

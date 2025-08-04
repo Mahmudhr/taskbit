@@ -29,6 +29,7 @@ import {
   X,
   EllipsisVertical,
   Eye,
+  Banknote,
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import AddUserForm from '@/components/forms/add-user-form';
@@ -59,6 +60,7 @@ import {
 import dayjs from 'dayjs';
 import UserDetailsView from '@/components/user-details-view';
 import Modal from '@/components/modal';
+import CreateUserPaymentForm from '@/components/forms/create-user-payment-form';
 
 const getStatusBadge = (status: string) => {
   const variants = {
@@ -83,6 +85,8 @@ export default function UsersPage() {
 
   const [addUserOpen, setAddUserOpen] = useState(false);
   const [confirmModal, setConfirmModal] = useState(false);
+  const [createUserPaymentOpen, setCreateUserPaymentOpen] = useState(false);
+  const [paymentUserId, setPaymentUserId] = useState<number | null>(null);
   const [isPending, startTransition] = useTransition();
   const [userId, setUserId] = useState<number | null>(null);
   const router = useRouter();
@@ -135,6 +139,11 @@ export default function UsersPage() {
   const handleViewUser = (user: UserType) => {
     setViewUser(user);
     setViewUserModal(true);
+  };
+
+  const handleCreatePayment = (userId: number) => {
+    setPaymentUserId(userId);
+    setCreateUserPaymentOpen(true);
   };
 
   useEffect(() => {
@@ -316,6 +325,12 @@ export default function UsersPage() {
                                 <DropdownMenuLabel>Options</DropdownMenuLabel>
                                 <DropdownMenuSeparator />
                                 <DropdownMenuItem
+                                  onClick={() => handleCreatePayment(user.id)}
+                                >
+                                  <Banknote className='mr-2 h-4 w-4' />
+                                  Make Payment
+                                </DropdownMenuItem>
+                                <DropdownMenuItem
                                   onClick={() => handleViewUser(user)}
                                 >
                                   <Eye className='mr-2 h-4 w-4' />
@@ -485,6 +500,17 @@ export default function UsersPage() {
         description=' '
       >
         <AddUserForm setIsOpen={setAddUserOpen} />
+      </AlertModal>
+      <AlertModal
+        isOpen={createUserPaymentOpen}
+        setIsOpen={setCreateUserPaymentOpen}
+        title='Create new user'
+        description=' '
+      >
+        <CreateUserPaymentForm
+          setIsOpen={setCreateUserPaymentOpen}
+          userId={paymentUserId}
+        />
       </AlertModal>
       <AlertModal
         isOpen={updateUserModal}
