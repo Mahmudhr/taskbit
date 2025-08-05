@@ -135,7 +135,6 @@ export default function CreateSalaryForm({
       paymentType: data.paymentType || undefined,
       userId: userId.toString(),
     };
-    console.log({ payload });
 
     startTransition(() => {
       toast.promise(createSalaryMutationAsync(payload), {

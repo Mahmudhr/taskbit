@@ -123,6 +123,8 @@ export const fetchAllUser = async (data?: string) => {
             amount: true,
             referenceNumber: true,
             paymentType: true,
+            status: true,
+            createdAt: true,
           },
         },
         tasks: {

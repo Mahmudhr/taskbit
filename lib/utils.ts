@@ -88,3 +88,16 @@ export const formatDateToString = (date: Date | null | undefined): string => {
   if (!date) return '';
   return date.toISOString().split('T')[0]; // Converts Date to YYYY-MM-DD
 };
+
+export const salaryStatusConvert = {
+  PENDING: 'Pending',
+  PAID: 'Paid',
+  CANCELLED: 'Cancelled',
+} as const;
+
+export const salaryTypeConvert = {
+  MONTHLY: 'Monthly Salary',
+  BONUS: 'Bonus',
+  OVERTIME: 'Overtime',
+  DEDUCTION: 'Deduction',
+} as const;

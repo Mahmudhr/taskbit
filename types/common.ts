@@ -1,6 +1,22 @@
 import { $Enums } from '@prisma/client';
 
 // Types
+
+export type SalaryType = {
+  id: number;
+  userId: number;
+  amount: number;
+  month: number;
+  year: number;
+  status: $Enums.SalaryStatus;
+  salaryType: $Enums.SalaryType;
+  paymentType: $Enums.PaymentType;
+  referenceNumber?: string | null;
+  note?: string | null;
+  createdAt: Date;
+  updatedAt?: Date;
+};
+
 export type UserType = {
   id: number;
   name: string;
@@ -21,6 +37,7 @@ export type UserType = {
   tasks?: TaskType[];
   createdTasks?: TaskType[];
   payments?: FlatPaymentType[];
+  salaries: SalaryType[];
 };
 
 export type TaskType = {
