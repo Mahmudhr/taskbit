@@ -15,6 +15,7 @@ export type SalaryType = {
   note?: string | null;
   createdAt: Date;
   updatedAt?: Date;
+  user: UserType;
 };
 
 export type UserType = {

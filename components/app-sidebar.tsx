@@ -1,6 +1,6 @@
 'use client';
 
-import { CheckSquare, CreditCard, Users, User } from 'lucide-react';
+import { CheckSquare, CreditCard, Users, User, Banknote } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 
@@ -31,6 +31,11 @@ const adminMenuItems = [
     title: 'Payments',
     url: '/dashboard/payments',
     icon: CreditCard,
+  },
+  {
+    title: 'Salaries',
+    url: '/dashboard/salaries',
+    icon: Banknote,
   },
   {
     title: 'Users',

@@ -4,6 +4,7 @@ import { NextResponse } from 'next/server';
 const USER_ALLOWED_PATHS = ['/dashboard/my-tasks', '/dashboard/my-payments'];
 const ADMIN_PATHS = [
   '/dashboard/payments',
+  '/dashboard/salaries',
   '/dashboard/tasks',
   '/dashboard/users',
   '/dashboard/clients',
