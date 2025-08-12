@@ -69,7 +69,7 @@ model Task {
   createdById     Int?      @map("created_by_id")
   client          Client?   @relation("ClientTasks", fields: [clientId], references: [id])
   clientId        Int?      @map("client_id")
-
+  
 
   @@map("tasks")
 }
@@ -105,6 +105,16 @@ model Salary {
   userId          Int           @map("user_id")
 
   @@map("salaries")
+}
+
+model Expense {
+  id        Int      @id @default(autoincrement())
+  title     String
+  amount    Float
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("expenses")
 }
 
 enum Role {

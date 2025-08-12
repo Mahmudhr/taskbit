@@ -38,6 +38,11 @@ const adminMenuItems = [
     icon: Banknote,
   },
   {
+    title: 'Expenses',
+    url: '/dashboard/expenses',
+    icon: Banknote,
+  },
+  {
     title: 'Users',
     url: '/dashboard/users',
     icon: Users,

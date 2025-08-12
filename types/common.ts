@@ -4,18 +4,18 @@ import { $Enums } from '@prisma/client';
 
 export type SalaryType = {
   id: number;
-  userId: number;
+  userId?: number;
   amount: number;
   month: number;
   year: number;
   status: $Enums.SalaryStatus;
   salaryType: $Enums.SalaryType;
   paymentType: $Enums.PaymentType;
-  referenceNumber?: string | null;
+  referenceNumber: string | null;
   note?: string | null;
   createdAt: Date;
   updatedAt?: Date;
-  user: UserType;
+  // user: UserType;
 };
 
 export type UserType = {
@@ -38,7 +38,17 @@ export type UserType = {
   tasks?: TaskType[];
   createdTasks?: TaskType[];
   payments?: FlatPaymentType[];
-  salaries: SalaryType[];
+  salaries: {
+    id: number; // changed from string
+    month: number;
+    year: number;
+    amount: number;
+    referenceNumber: string | null; // also your query can return null
+    salaryType: $Enums.SalaryType;
+    paymentType: $Enums.PaymentType;
+    status: $Enums.SalaryStatus;
+    createdAt: Date;
+  }[];
 };
 
 export type TaskType = {
@@ -151,4 +161,17 @@ export interface ClientSelectOption {
   id: number;
   name: string;
   email?: string | null;
+}
+
+export interface ExpensesType {
+  id: number;
+  title: string;
+  amount: number;
+  createdAt: Date;
+  updatedAt?: Date;
+}
+export interface ExpenseCalculationType {
+  totalExpenses: number;
+  totalAmount: number;
+  averageAmount: number;
 }
