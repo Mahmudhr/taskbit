@@ -56,58 +56,10 @@ import UpdateExpenseForm from '@/components/forms/update-expense-form';
 import { useDebouncedCallback } from 'use-debounce';
 import ConfirmModal from '@/components/confirm-modal';
 import { toast } from 'sonner';
+import ExpenseTableRowSkeleton from '@/components/skeletons/expense-table-row-skeleton';
+import ExpenseCardSkeleton from '@/components/skeletons/expense-table-card-skeleton';
 
 // Skeleton Components
-const ExpenseCardSkeleton = () => {
-  return (
-    <Card className='mb-4'>
-      <CardContent className='p-4'>
-        <div className='flex items-start justify-between mb-3'>
-          <div className='flex items-center space-x-3'>
-            <Skeleton className='w-10 h-10 rounded-full' />
-            <div>
-              <Skeleton className='h-5 w-32 mb-1' />
-              <Skeleton className='h-4 w-16' />
-            </div>
-          </div>
-          <div className='text-right'>
-            <Skeleton className='h-6 w-20 mb-2' />
-            <Skeleton className='h-8 w-8' />
-          </div>
-        </div>
-        <div className='grid grid-cols-2 gap-3'>
-          <Skeleton className='h-4 w-24' />
-          <Skeleton className='h-4 w-24' />
-        </div>
-      </CardContent>
-    </Card>
-  );
-};
-
-const ExpenseTableRowSkeleton = () => {
-  return (
-    <TableRow>
-      <TableCell>
-        <Skeleton className='h-4 w-12' />
-      </TableCell>
-      <TableCell>
-        <Skeleton className='h-4 w-32' />
-      </TableCell>
-      <TableCell>
-        <Skeleton className='h-4 w-20' />
-      </TableCell>
-      <TableCell>
-        <Skeleton className='h-4 w-28' />
-      </TableCell>
-      <TableCell>
-        <Skeleton className='h-4 w-28' />
-      </TableCell>
-      <TableCell>
-        <Skeleton className='h-8 w-8' />
-      </TableCell>
-    </TableRow>
-  );
-};
 
 // Expense Card Component for Mobile
 const ExpenseCard = ({
@@ -519,6 +471,7 @@ export default function ExpensePage() {
                         setParams((prev) => ({
                           ...prev,
                           month,
+                          date: '',
                         }))
                       }
                     >
@@ -545,6 +498,7 @@ export default function ExpensePage() {
                         setParams((prev) => ({
                           ...prev,
                           year,
+                          date: '',
                         }))
                       }
                     >
@@ -575,6 +529,8 @@ export default function ExpensePage() {
                       setParams((prev) => ({
                         ...prev,
                         date: e.target.value,
+                        month: '',
+                        year: '',
                       }))
                     }
                   />

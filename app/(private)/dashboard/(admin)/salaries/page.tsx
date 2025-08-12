@@ -1,17 +1,15 @@
 'use client';
 
-import { useState, useMemo } from 'react';
-import { useFetchAllSalaries } from '@/hooks/use-salary';
+import { useState, useEffect, useTransition } from 'react';
+import {
+  useFetchAllSalaries,
+  useFetchAllSalariesCalculations,
+  useSalary,
+} from '@/hooks/use-salary';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
+
 import {
   Table,
   TableBody,
@@ -30,19 +28,41 @@ import {
   Check,
   Grid3X3,
   List,
+  X,
+  ChevronLeft,
+  ChevronRight,
+  EllipsisVertical,
+  ListFilter,
 } from 'lucide-react';
 import {
   cn,
   salaryStatusConvert,
   salaryTypeConvert,
   paymentTypeConvert,
+  generateQueryString,
+  getErrorMessage,
 } from '@/lib/utils';
 import { $Enums } from '@prisma/client';
 import dayjs from 'dayjs';
 import { toast } from 'sonner';
 import { SalaryType, UserType } from '@/types/common';
+import { useDebouncedCallback } from 'use-debounce';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { Skeleton } from '@/components/ui/skeleton';
+import ExpenseTableRowSkeleton from '@/components/skeletons/expense-table-row-skeleton';
+import ExpenseCardSkeleton from '@/components/skeletons/expense-table-card-skeleton';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import ConfirmModal from '@/components/confirm-modal';
+import Modal from '@/components/modal';
+import SalaryFilter from '@/components/filters/salary-filter';
 
-// Status badge component
 const getStatusBadge = (status: $Enums.SalaryStatus) => {
   const variants = {
     PENDING: 'bg-yellow-100 text-yellow-800 hover:bg-yellow-200',
@@ -83,8 +103,10 @@ const getPaymentTypeBadge = (type: $Enums.PaymentType) => {
 // Salary card component for mobile view
 const SalaryCard = ({
   salary,
+  index,
 }: {
   salary: Omit<SalaryType, 'user'> & { user: Partial<UserType> };
+  index: number;
 }) => {
   const [copiedField, setCopiedField] = useState<string | null>(null);
 
@@ -118,7 +140,7 @@ const SalaryCard = ({
     <Card className='mb-4'>
       <CardHeader className='pb-3'>
         <div className='flex items-center justify-between'>
-          <CardTitle className='text-lg'>Salary #{salary.id}</CardTitle>
+          <CardTitle className='text-lg'>Salary #{index + 1}</CardTitle>
           <div className='text-right'>
             <div className='text-lg font-semibold text-green-600'>
               ৳ {salary.amount.toLocaleString()}
@@ -195,42 +217,90 @@ const SalaryCard = ({
 };
 
 export default function SalariesPage() {
-  const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState('ALL');
-  const [salaryTypeFilter, setSalaryTypeFilter] = useState('ALL');
-  const [paymentTypeFilter, setPaymentTypeFilter] = useState('ALL');
+  const searchParams = useSearchParams();
+  const router = useRouter();
+
   const [viewMode, setViewMode] = useState<'table' | 'cards'>('table');
+  const [confirmModal, setConfirmModal] = useState(false);
+  const [isPending, startTransition] = useTransition();
+  const [deletingSalaryId, setDeletingSalaryId] = useState<number | null>(null);
+  const [openSalaryFilter, setOpenSalaryFilter] = useState(false);
 
-  const { data: allSalaries, isLoading, error } = useFetchAllSalaries();
+  const [params, setParams] = useState({
+    search: searchParams.get('search') || '',
+    page: searchParams.get('page') || '1',
+    status: searchParams.get('status') || '',
+    salary_type: searchParams.get('salary_type') || '',
+    payment_type: searchParams.get('payment_type') || '',
+    month: searchParams.get('month') || '',
+    year: searchParams.get('year') || '',
+    date: searchParams.get('date') || '',
+  });
 
-  // Calculate summary stats
-  const stats = useMemo(() => {
-    if (!allSalaries?.data.length)
-      return { total: 0, paid: 0, pending: 0, cancelled: 0 };
+  const [searchQuery, setSearchQuery] = useState(
+    searchParams.get('search') || ''
+  );
 
-    return {
-      total: allSalaries?.data.length,
-      paid: allSalaries?.data.filter((s) => s.status === 'PAID').length,
-      pending: allSalaries?.data.filter((s) => s.status === 'PENDING').length,
-      cancelled: allSalaries?.data.filter((s) => s.status === 'CANCELLED')
-        .length,
-      totalAmount: allSalaries?.data.reduce(
-        (sum, s) => (s.status === 'PAID' ? sum + s.amount : sum),
-        0
-      ),
-    };
-  }, [allSalaries?.data]);
+  const queryString = generateQueryString(params);
 
-  if (isLoading) {
-    return (
-      <div className='flex items-center justify-center min-h-[400px]'>
-        <div className='text-center'>
-          <div className='animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4'></div>
-          <p>Loading salaries...</p>
-        </div>
-      </div>
-    );
-  }
+  const debounced = useDebouncedCallback((value) => {
+    setParams((prevParams) => ({
+      ...prevParams,
+      search: value,
+      page: '1',
+    }));
+  }, 500);
+
+  const {
+    data: allSalaries,
+    isLoading,
+    error,
+  } = useFetchAllSalaries(queryString);
+
+  const { data: allSalariesCalc, isLoading: isLoadingAllSalariesCalc } =
+    useFetchAllSalariesCalculations(queryString);
+
+  const { deleteSalaryMutationAsync } = useSalary();
+
+  useEffect(() => {
+    router.push(queryString);
+  }, [queryString, router]);
+
+  // const clearFilters = () => {
+  //   setSearchQuery('');
+  //   setParams({
+  //     search: '',
+  //     page: '1',
+  //     status: '',
+  //     payment_type: '',
+  //     salary_type: '',
+  //   });
+  // };
+
+  const handleDeleteSalary = () => {
+    if (deletingSalaryId === null) return;
+    startTransition(() => {
+      toast.promise(deleteSalaryMutationAsync(deletingSalaryId), {
+        loading: 'Deleting user...',
+        success: () => {
+          setConfirmModal(false);
+          return 'Successfully User Deleted';
+        },
+        error: (err) => getErrorMessage(err) || 'Something went wrong!',
+      });
+    });
+  };
+
+  // if (isLoading) {
+  //   return (
+  //     <div className='flex items-center justify-center min-h-[400px]'>
+  //       <div className='text-center'>
+  //         <div className='animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4'></div>
+  //         <p>Loading salaries...</p>
+  //       </div>
+  //     </div>
+  //   );
+  // }
 
   if (error) {
     return (
@@ -276,58 +346,81 @@ export default function SalariesPage() {
       </div>
 
       {/* Stats Cards */}
-      <div className='grid grid-cols-2 md:grid-cols-5 gap-4'>
-        <Card>
-          <CardContent className='p-4 text-center'>
-            <div className='text-2xl font-bold'>{stats.total}</div>
-            <div className='text-xs text-muted-foreground'>Total Entries</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className='p-4 text-center'>
-            <div className='text-2xl font-bold text-green-600'>
-              {stats.paid}
-            </div>
-            <div className='text-xs text-muted-foreground'>Paid</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className='p-4 text-center'>
-            <div className='text-2xl font-bold text-yellow-600'>
-              {stats.pending}
-            </div>
-            <div className='text-xs text-muted-foreground'>Pending</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className='p-4 text-center'>
-            <div className='text-2xl font-bold text-red-600'>
-              {stats.cancelled}
-            </div>
-            <div className='text-xs text-muted-foreground'>Cancelled</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className='p-4 text-center'>
-            <div className='text-lg font-bold text-green-600'>
-              ৳ {(stats.totalAmount ?? 0).toLocaleString()}
-            </div>
-            <div className='text-xs text-muted-foreground'>Total Paid</div>
-          </CardContent>
-        </Card>
-      </div>
+      {!isLoadingAllSalariesCalc ? (
+        <div className='grid grid-cols-2 md:grid-cols-5 gap-4'>
+          <Card>
+            <CardContent className='p-4 text-center'>
+              <div className='text-2xl font-bold'>
+                {allSalariesCalc?.data.totalSalaries}
+              </div>
+              <div className='text-xs text-muted-foreground'>Total Entries</div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className='p-4 text-center'>
+              <div className='text-2xl font-bold text-green-600'>
+                {allSalariesCalc?.data.paidCount}
+              </div>
+              <div className='text-xs text-muted-foreground'>Paid</div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className='p-4 text-center'>
+              <div className='text-2xl font-bold text-yellow-600'>
+                {allSalariesCalc?.data.pendingCount}
+              </div>
+              <div className='text-xs text-muted-foreground'>Pending</div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className='p-4 text-center'>
+              <div className='text-2xl font-bold text-red-600'>
+                {allSalariesCalc?.data.cancelledCount}
+              </div>
+              <div className='text-xs text-muted-foreground'>Cancelled</div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className='p-4 text-center'>
+              <div className='text-lg font-bold text-green-600'>
+                ৳ {allSalariesCalc?.data.totalAmount}
+              </div>
+              <div className='text-xs text-muted-foreground'>Total Paid</div>
+            </CardContent>
+          </Card>
+        </div>
+      ) : (
+        <div className='grid grid-cols-1 md:grid-cols-4 gap-4'>
+          {[1, 2, 3, 4].map((i) => (
+            <Card key={i}>
+              <CardContent className='p-6'>
+                <div className='flex items-center justify-between'>
+                  <div>
+                    <Skeleton className='h-4 w-24 mb-2' />
+                    <Skeleton className='h-8 w-16' />
+                  </div>
+                  <Skeleton className='h-8 w-8' />
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      )}
 
       {/* Search and Filters */}
       <Card>
-        <CardContent className='p-4'>
+        <CardContent className='p-4 space-y-2'>
           <div className='flex flex-col sm:flex-row gap-4'>
             {/* Search */}
             <div className='relative flex-1'>
               <Search className='absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground' />
               <Input
                 placeholder='Search by name, email, reference, or ID...'
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
+                value={searchQuery}
+                onChange={(e) => {
+                  debounced(e.target.value);
+                  setSearchQuery(e.target.value);
+                }}
                 className='pl-10'
               />
             </div>
@@ -335,64 +428,139 @@ export default function SalariesPage() {
             {/* Filters */}
             <div className='flex flex-col sm:flex-row gap-2'>
               {/* Status Filter */}
-              <Select value={statusFilter} onValueChange={setStatusFilter}>
-                <SelectTrigger className='w-full sm:w-[140px]'>
-                  <SelectValue placeholder='Status' />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value='ALL'>All Status</SelectItem>
-                  <SelectItem value='PENDING'>Pending</SelectItem>
-                  <SelectItem value='PAID'>Paid</SelectItem>
-                  <SelectItem value='CANCELLED'>Cancelled</SelectItem>
-                </SelectContent>
-              </Select>
-
-              {/* Salary Type Filter */}
-              <Select
-                value={salaryTypeFilter}
-                onValueChange={setSalaryTypeFilter}
-              >
-                <SelectTrigger className='w-full sm:w-[140px]'>
-                  <SelectValue placeholder='Type' />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value='ALL'>All Types</SelectItem>
-                  <SelectItem value='MONTHLY'>Monthly</SelectItem>
-                  <SelectItem value='BONUS'>Bonus</SelectItem>
-                  <SelectItem value='OVERTIME'>Overtime</SelectItem>
-                </SelectContent>
-              </Select>
-
-              {/* Payment Type Filter */}
-              <Select
-                value={paymentTypeFilter}
-                onValueChange={setPaymentTypeFilter}
-              >
-                <SelectTrigger className='w-full sm:w-[140px]'>
-                  <SelectValue placeholder='Payment' />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value='ALL'>All Payments</SelectItem>
-                  <SelectItem value='BANK_TRANSFER'>Bank Transfer</SelectItem>
-                  <SelectItem value='BKASH'>Bkash</SelectItem>
-                  <SelectItem value='NAGAD'>Nagad</SelectItem>
-                </SelectContent>
-              </Select>
-
-              {/* Clear Filters */}
               <Button
-                variant='outline'
-                onClick={() => {
-                  setSearchTerm('');
-                  setStatusFilter('ALL');
-                  setSalaryTypeFilter('ALL');
-                  setPaymentTypeFilter('ALL');
-                }}
+                onClick={() => setOpenSalaryFilter(true)}
                 className='w-full sm:w-auto'
               >
-                Clear
+                <ListFilter /> Filter
               </Button>
             </div>
+          </div>
+          <div className='flex flex-wrap gap-2'>
+            {params.search && (
+              <div className='pl-3 pr-2 py-1 border flex gap-2 items-center rounded-full text-sm'>
+                {params.search}
+                <span
+                  onClick={() => {
+                    setParams((prev) => ({
+                      ...prev,
+                      search: '',
+                    }));
+                    setSearchQuery('');
+                  }}
+                >
+                  <X className='w-4 h-4 cursor-pointer' />
+                </span>
+              </div>
+            )}
+            {params.status && (
+              <div className='pl-3 pr-2 py-1 border flex gap-2 items-center rounded-full text-sm capitalize'>
+                Status:{' '}
+                {
+                  salaryStatusConvert[
+                    params.status as keyof typeof salaryStatusConvert
+                  ]
+                }
+                <span
+                  onClick={() => {
+                    setParams((prev) => ({
+                      ...prev,
+                      status: '',
+                    }));
+                  }}
+                >
+                  <X className='w-4 h-4 cursor-pointer' />
+                </span>
+              </div>
+            )}
+            {params.salary_type && (
+              <div className='pl-3 pr-2 py-1 border flex gap-2 items-center rounded-full text-sm capitalize'>
+                Salary Type:{' '}
+                {
+                  salaryTypeConvert[
+                    params.salary_type as keyof typeof salaryTypeConvert
+                  ]
+                }
+                <span
+                  onClick={() => {
+                    setParams((prev) => ({
+                      ...prev,
+                      salary_type: '',
+                    }));
+                  }}
+                >
+                  <X className='w-4 h-4 cursor-pointer' />
+                </span>
+              </div>
+            )}
+            {params.payment_type && (
+              <div className='pl-3 pr-2 py-1 border flex gap-2 items-center rounded-full text-sm capitalize'>
+                Payment Type:{' '}
+                {
+                  paymentTypeConvert[
+                    params.payment_type as keyof typeof paymentTypeConvert
+                  ]
+                }
+                <span
+                  onClick={() => {
+                    setParams((prev) => ({
+                      ...prev,
+                      payment_type: '',
+                    }));
+                  }}
+                >
+                  <X className='w-4 h-4 cursor-pointer' />
+                </span>
+              </div>
+            )}
+            {params.month && (
+              <div className='pl-3 pr-2 py-1 border flex gap-2 items-center rounded-full text-sm capitalize'>
+                Month :{' '}
+                {dayjs()
+                  .month(+params.month - 1)
+                  .format('MMMM')}
+                <span
+                  onClick={() => {
+                    setParams((prev) => ({
+                      ...prev,
+                      month: '',
+                    }));
+                  }}
+                >
+                  <X className='w-4 h-4 cursor-pointer' />
+                </span>
+              </div>
+            )}
+            {params.year && (
+              <div className='pl-3 pr-2 py-1 border flex gap-2 items-center rounded-full text-sm capitalize'>
+                Year : {params.year}
+                <span
+                  onClick={() => {
+                    setParams((prev) => ({
+                      ...prev,
+                      year: '',
+                    }));
+                  }}
+                >
+                  <X className='w-4 h-4 cursor-pointer' />
+                </span>
+              </div>
+            )}
+            {params.date && (
+              <div className='pl-3 pr-2 py-1 border flex gap-2 items-center rounded-full text-sm capitalize'>
+                Date : {params.date}
+                <span
+                  onClick={() => {
+                    setParams((prev) => ({
+                      ...prev,
+                      date: '',
+                    }));
+                  }}
+                >
+                  <X className='w-4 h-4 cursor-pointer' />
+                </span>
+              </div>
+            )}
           </div>
         </CardContent>
       </Card>
@@ -413,80 +581,204 @@ export default function SalariesPage() {
       ) : (
         <>
           {/* Desktop Table View */}
-          {viewMode === 'table' && (
-            <Card className='hidden sm:block'>
-              <CardContent className='p-0'>
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>ID</TableHead>
-                      <TableHead>Employee</TableHead>
-                      <TableHead>Amount</TableHead>
-                      <TableHead>Period</TableHead>
-                      <TableHead>Type</TableHead>
-                      <TableHead>Payment</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead>Reference</TableHead>
-                      <TableHead>Created</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {allSalaries?.data.map((salary) => (
-                      <TableRow key={salary.id}>
-                        <TableCell className='font-medium'>
-                          #{salary.id}
-                        </TableCell>
-                        <TableCell>
-                          <div>
-                            <div className='font-medium'>
-                              {salary.user.name}
-                            </div>
-                            <div className='text-xs text-muted-foreground'>
-                              {salary.user.email}
-                            </div>
-                          </div>
-                        </TableCell>
-                        <TableCell className='font-semibold text-green-600'>
-                          ৳ {salary.amount.toLocaleString()}
-                        </TableCell>
-                        <TableCell>
-                          {new Date(0, salary.month - 1).toLocaleString(
-                            'default',
-                            { month: 'short' }
-                          )}{' '}
-                          {salary.year}
-                        </TableCell>
-                        <TableCell>
-                          {getSalaryTypeBadge(salary.salaryType)}
-                        </TableCell>
-                        <TableCell>
-                          {getPaymentTypeBadge(salary.paymentType)}
-                        </TableCell>
-                        <TableCell>{getStatusBadge(salary.status)}</TableCell>
-                        <TableCell className='text-xs'>
-                          {salary.referenceNumber || '-'}
-                        </TableCell>
-                        <TableCell className='text-xs'>
-                          {dayjs(salary.createdAt).format('DD/MM/YY')}
-                        </TableCell>
+          {viewMode === 'table' &&
+            (!isLoading ? (
+              <Card className='hidden sm:block'>
+                <CardContent className='p-0'>
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>ID</TableHead>
+                        <TableHead>Employee</TableHead>
+                        <TableHead>Amount</TableHead>
+                        <TableHead>Period</TableHead>
+                        <TableHead>Type</TableHead>
+                        <TableHead>Payment</TableHead>
+                        <TableHead>Status</TableHead>
+                        <TableHead>Reference</TableHead>
+                        <TableHead>Created</TableHead>
+                        <TableHead>Action</TableHead>
                       </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </CardContent>
-            </Card>
-          )}
+                    </TableHeader>
+                    <TableBody>
+                      {allSalaries?.data.map((salary, index) => (
+                        <TableRow key={salary.id}>
+                          <TableCell className='font-medium'>
+                            #{index + 1}
+                          </TableCell>
+                          <TableCell>
+                            <div>
+                              <div className='font-medium'>
+                                {salary.user.name}
+                              </div>
+                              <div className='text-xs text-muted-foreground'>
+                                {salary.user.email}
+                              </div>
+                            </div>
+                          </TableCell>
+                          <TableCell className='font-semibold text-green-600'>
+                            ৳ {salary.amount.toLocaleString()}
+                          </TableCell>
+                          <TableCell>
+                            {new Date(0, salary.month - 1).toLocaleString(
+                              'default',
+                              { month: 'short' }
+                            )}{' '}
+                            {salary.year}
+                          </TableCell>
+                          <TableCell>
+                            {getSalaryTypeBadge(salary.salaryType)}
+                          </TableCell>
+                          <TableCell>
+                            {getPaymentTypeBadge(salary.paymentType)}
+                          </TableCell>
+                          <TableCell>{getStatusBadge(salary.status)}</TableCell>
+                          <TableCell className='text-xs'>
+                            {salary.referenceNumber || '-'}
+                          </TableCell>
+                          <TableCell className='text-xs'>
+                            {dayjs(salary.createdAt).format('DD/MM/YY')}
+                          </TableCell>
+                          <TableCell className='text-xs'>
+                            <div>
+                              <DropdownMenu>
+                                <DropdownMenuTrigger>
+                                  <EllipsisVertical className='w-5 h-5 text-gray-600' />
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align='end'>
+                                  <DropdownMenuLabel>Options</DropdownMenuLabel>
+                                  <DropdownMenuSeparator />
+
+                                  <DropdownMenuItem
+                                    onClick={() => {
+                                      setConfirmModal(true);
+                                      setDeletingSalaryId(salary.id);
+                                    }}
+                                    className='text-red-600'
+                                  >
+                                    Delete
+                                  </DropdownMenuItem>
+                                </DropdownMenuContent>
+                              </DropdownMenu>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </CardContent>
+              </Card>
+            ) : (
+              <Card className='hidden sm:block'>
+                <CardHeader>
+                  <Skeleton className='h-6 w-48' />
+                </CardHeader>
+                <CardContent className='p-0'>
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>ID</TableHead>
+                        <TableHead>Employee</TableHead>
+                        <TableHead>Amount</TableHead>
+                        <TableHead>Period</TableHead>
+                        <TableHead>Type</TableHead>
+                        <TableHead>Payment</TableHead>
+                        <TableHead>Status</TableHead>
+                        <TableHead>Reference</TableHead>
+                        <TableHead>Created</TableHead>
+                        <TableHead>Action</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
+                        <ExpenseTableRowSkeleton key={i} />
+                      ))}
+                    </TableBody>
+                  </Table>
+                </CardContent>
+              </Card>
+            ))}
 
           {/* Mobile Card View */}
-          {(viewMode === 'cards' || window.innerWidth < 640) && (
-            <div className='space-y-4'>
-              {allSalaries?.data.map((salary) => (
-                <SalaryCard key={salary.id} salary={salary} />
-              ))}
+          {(viewMode === 'cards' || window.innerWidth < 640) &&
+            (!isLoading ? (
+              <div className='space-y-4'>
+                {allSalaries?.data.map((salary, index) => (
+                  <SalaryCard key={salary.id} salary={salary} index={index} />
+                ))}
+              </div>
+            ) : (
+              <div className='space-y-4'>
+                <Skeleton className='h-6 w-48' />
+                {[1, 2, 3, 4, 5, 6].map((i) => (
+                  <ExpenseCardSkeleton key={i} />
+                ))}
+              </div>
+            ))}
+          {allSalaries && allSalaries?.meta.count > 0 && (
+            <div className='flex md:flex-row flex-col items-center md:justify-between justify-center gap-3 py-4'>
+              <div className='text-sm text-muted-foreground'>
+                {allSalaries &&
+                  ` Showing ${params.page} to ${
+                    allSalaries.meta.page * allSalaries.data.length
+                  } of ${allSalaries.meta.count} results`}
+              </div>
+              <div className='flex items-center space-x-2'>
+                <Button
+                  variant='outline'
+                  size='sm'
+                  onClick={() =>
+                    setParams((prev) => ({
+                      ...prev,
+                      page: (+params.page - 1).toString(),
+                    }))
+                  }
+                  disabled={+params.page === 1}
+                >
+                  <ChevronLeft className='h-4 w-4' />
+                  Previous
+                </Button>
+                <Button
+                  variant='outline'
+                  size='sm'
+                  onClick={() =>
+                    setParams((prev) => ({
+                      ...prev,
+                      page: (+params.page + 1).toString(),
+                    }))
+                  }
+                  disabled={
+                    +params.page ===
+                    (allSalaries && allSalaries.meta.totalPages)
+                  }
+                >
+                  Next
+                  <ChevronRight className='h-4 w-4' />
+                </Button>
+              </div>
             </div>
           )}
         </>
       )}
+      <Modal
+        isOpen={openSalaryFilter}
+        setIsOpen={setOpenSalaryFilter}
+        title='Filter Salary'
+        description=' '
+      >
+        <SalaryFilter
+          setParams={setParams}
+          params={params}
+          setOpenSalaryFilter={setOpenSalaryFilter}
+        />
+      </Modal>
+      <ConfirmModal
+        isOpen={confirmModal}
+        setIsOpen={setConfirmModal}
+        loading={isPending}
+        title='This action cannot be undone. This will permanently delete salary'
+        onClick={handleDeleteSalary}
+      />
     </div>
   );
 }

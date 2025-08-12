@@ -162,6 +162,7 @@ export const fetchAllSalaries = async (data?: string) => {
   const limit = 10;
   const status = params.get('status') || '';
   const salaryType = params.get('salary_type') || '';
+  const paymentType = params.get('payment_type') || '';
   const month = params.get('month') || '';
   const year = params.get('year') || '';
   const dateString = params.get('date') || '';
@@ -240,10 +241,20 @@ export const fetchAllSalaries = async (data?: string) => {
   if (
     salaryType &&
     salaryType !== 'ALL' &&
-    ['MONTHLY', 'BONUS', 'OVERTIME', 'DEDUCTION'].includes(salaryType)
+    ['MONTHLY', 'BONUS', 'OVERTIME'].includes(salaryType)
   ) {
     whereConditions.push({
       salaryType: salaryType as SalaryType,
+    });
+  }
+
+  if (
+    paymentType &&
+    paymentType !== 'ALL' &&
+    ['BANK_TRANSFER', 'BKASH', 'NAGAD'].includes(paymentType)
+  ) {
+    whereConditions.push({
+      paymentType: paymentType as PaymentType,
     });
   }
 
@@ -527,3 +538,205 @@ export async function deleteSalary(salaryId: number) {
     throw new Error('Failed to delete salary');
   }
 }
+
+export const fetchAllSalariesCalculation = async (data?: string) => {
+  const params = new URLSearchParams(data || '');
+  const search = params.get('search') || '';
+  const status = params.get('status') || '';
+  const salaryType = params.get('salary_type') || '';
+  const paymentType = params.get('payment_type') || '';
+  const month = params.get('month') || '';
+  const year = params.get('year') || '';
+  const dateString = params.get('date') || '';
+
+  let createdAtFilter: Prisma.DateTimeFilter | undefined;
+  if (dateString) {
+    const filterDate = new Date(dateString);
+    if (!isNaN(filterDate.getTime())) {
+      const start = new Date(
+        filterDate.getFullYear(),
+        filterDate.getMonth(),
+        filterDate.getDate(),
+        0,
+        0,
+        0,
+        0
+      );
+      const end = new Date(
+        filterDate.getFullYear(),
+        filterDate.getMonth(),
+        filterDate.getDate(),
+        23,
+        59,
+        59,
+        999
+      );
+      createdAtFilter = { gte: start, lte: end };
+    }
+  }
+
+  // Build where clause
+  const whereConditions: Prisma.SalaryWhereInput[] = [];
+
+  // Search conditions
+  if (search) {
+    whereConditions.push({
+      OR: [
+        {
+          referenceNumber: {
+            contains: search,
+            mode: 'insensitive',
+          },
+        },
+        {
+          user: {
+            name: {
+              contains: search,
+              mode: 'insensitive',
+            },
+          },
+        },
+        {
+          user: {
+            email: {
+              contains: search,
+              mode: 'insensitive',
+            },
+          },
+        },
+      ],
+    });
+  }
+
+  // Status filter
+  if (
+    status &&
+    status !== 'ALL' &&
+    ['PENDING', 'PAID', 'CANCELLED'].includes(status)
+  ) {
+    whereConditions.push({
+      status: status as SalaryStatus,
+    });
+  }
+
+  // Salary type filter
+  if (
+    salaryType &&
+    salaryType !== 'ALL' &&
+    ['MONTHLY', 'BONUS', 'OVERTIME'].includes(salaryType)
+  ) {
+    whereConditions.push({
+      salaryType: salaryType as SalaryType,
+    });
+  }
+
+  if (
+    paymentType &&
+    paymentType !== 'ALL' &&
+    ['BANK_TRANSFER', 'BKASH', 'NAGAD'].includes(paymentType)
+  ) {
+    whereConditions.push({
+      paymentType: paymentType as PaymentType,
+    });
+  }
+
+  // Month filter
+  if (month && parseInt(month) >= 1 && parseInt(month) <= 12) {
+    whereConditions.push({
+      month: parseInt(month),
+    });
+  }
+
+  // Year filter
+  if (year && parseInt(year) > 0) {
+    whereConditions.push({
+      year: parseInt(year),
+    });
+  }
+
+  // Date filter
+  if (createdAtFilter) {
+    whereConditions.push({
+      createdAt: createdAtFilter,
+    });
+  }
+
+  const where: Prisma.SalaryWhereInput =
+    whereConditions.length > 0 ? { AND: whereConditions } : {};
+
+  try {
+    // Get total count of all salaries
+    const totalSalaries = await prisma.salary.count({ where });
+
+    // Get count by status
+    const paidCount = await prisma.salary.count({
+      where: { ...where, status: 'PAID' },
+    });
+
+    const pendingCount = await prisma.salary.count({
+      where: { ...where, status: 'PENDING' },
+    });
+
+    const cancelledCount = await prisma.salary.count({
+      where: { ...where, status: 'CANCELLED' },
+    });
+
+    // Logic for total amount:
+    // If no status filter or status is 'ALL' -> show only PAID amount
+    // If specific status is filtered -> show amount for that status
+    let totalAmount = 0;
+
+    if (!status || status === 'ALL') {
+      // Default: show only PAID amount
+      const paidAmountResult = await prisma.salary.aggregate({
+        where: { ...where, status: 'PAID' },
+        _sum: {
+          amount: true,
+        },
+      });
+      totalAmount = paidAmountResult._sum.amount || 0;
+    } else {
+      // Show amount for the filtered status
+      const filteredAmountResult = await prisma.salary.aggregate({
+        where,
+        _sum: {
+          amount: true,
+        },
+      });
+      totalAmount = filteredAmountResult._sum.amount || 0;
+    }
+
+    const averageAmount = totalSalaries > 0 ? totalAmount / totalSalaries : 0;
+
+    return {
+      data: {
+        // Total counts
+        totalSalaries,
+        paidCount,
+        pendingCount,
+        cancelledCount,
+
+        // Total amount (PAID by default, filtered amount when status filter applied)
+        totalAmount,
+
+        // Average
+        averageAmount: Math.round(averageAmount * 100) / 100,
+
+        // Percentages
+        paidPercentage:
+          totalSalaries > 0 ? Math.round((paidCount / totalSalaries) * 100) : 0,
+        pendingPercentage:
+          totalSalaries > 0
+            ? Math.round((pendingCount / totalSalaries) * 100)
+            : 0,
+        cancelledPercentage:
+          totalSalaries > 0
+            ? Math.round((cancelledCount / totalSalaries) * 100)
+            : 0,
+      },
+    };
+  } catch (error) {
+    console.error('Error calculating salary statistics:', error);
+    throw new Error('Failed to calculate salary statistics');
+  }
+};

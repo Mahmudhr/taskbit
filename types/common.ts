@@ -175,3 +175,15 @@ export interface ExpenseCalculationType {
   totalAmount: number;
   averageAmount: number;
 }
+
+export interface SalaryCalculationType {
+  totalSalaries: number;
+  paidCount: number;
+  pendingCount: number;
+  cancelledCount: number;
+  totalAmount: number;
+  averageAmount: number;
+  paidPercentage: number;
+  pendingPercentage: number;
+  cancelledPercentage: number;
+}

@@ -8,7 +8,9 @@ import {
   fetchUserAllSalaries,
   fetchUserSalariesByEmail,
   deleteSalary,
+  fetchAllSalariesCalculation,
 } from '@/server/salary/salary';
+import { SalaryCalculationType } from '@/types/common';
 
 export function useSalary() {
   const queryClient = useQueryClient();
@@ -19,6 +21,7 @@ export function useSalary() {
       queryClient.invalidateQueries({ queryKey: ['salaries'] });
       queryClient.invalidateQueries({ queryKey: ['user-salaries'] });
       queryClient.invalidateQueries({ queryKey: ['user-salaries-by-email'] });
+      queryClient.invalidateQueries({ queryKey: ['salaries-calculations'] });
     },
   });
 
@@ -28,6 +31,7 @@ export function useSalary() {
       queryClient.invalidateQueries({ queryKey: ['salaries'] });
       queryClient.invalidateQueries({ queryKey: ['user-salaries'] });
       queryClient.invalidateQueries({ queryKey: ['user-salaries-by-email'] });
+      queryClient.invalidateQueries({ queryKey: ['salaries-calculations'] });
     },
   });
 
@@ -37,6 +41,7 @@ export function useSalary() {
       queryClient.invalidateQueries({ queryKey: ['salaries'] });
       queryClient.invalidateQueries({ queryKey: ['user-salaries'] });
       queryClient.invalidateQueries({ queryKey: ['user-salaries-by-email'] });
+      queryClient.invalidateQueries({ queryKey: ['salaries-calculations'] });
     },
   });
 
@@ -110,5 +115,12 @@ export function useDeleteSalary() {
       queryClient.invalidateQueries({ queryKey: ['user-salaries'] });
       queryClient.invalidateQueries({ queryKey: ['user-salaries-by-email'] });
     },
+  });
+}
+
+export function useFetchAllSalariesCalculations(searchParams?: string) {
+  return useQuery<{ data: SalaryCalculationType }>({
+    queryKey: ['salaries-calculations', searchParams],
+    queryFn: () => fetchAllSalariesCalculation(searchParams),
   });
 }
