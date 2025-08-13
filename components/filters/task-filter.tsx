@@ -72,7 +72,7 @@ export default function TaskFilter({
 
   return (
     <div className='space-y-5'>
-      <div className='flex gap-4'>
+      <div className='flex md:flex-row flex-col gap-4'>
         <Select
           value={params.payment_status}
           onValueChange={(value) => {
@@ -82,7 +82,7 @@ export default function TaskFilter({
             }));
           }}
         >
-          <SelectTrigger className='w-full'>
+          <SelectTrigger className='w-full text-start'>
             <SelectValue placeholder='Filter by payment status' />
           </SelectTrigger>
           <SelectContent className='z-[9999]'>
@@ -112,7 +112,7 @@ export default function TaskFilter({
           </SelectContent>
         </Select>
       </div>
-      <div className='flex gap-4'>
+      <div className='flex md:flex-row flex-col gap-4'>
         <Select
           value={params.paper_type}
           onValueChange={(value) => {

@@ -54,6 +54,7 @@ import Link from 'next/link';
 import Modal from '@/components/modal';
 import TaskDetailsView from '@/components/task-details-view';
 import TaskFilter from '@/components/filters/task-filter';
+import { Skeleton } from '@/components/ui/skeleton';
 
 export const getStatusBadge = (status: string) => {
   const variants = {
@@ -118,8 +119,12 @@ export default function TasksPage() {
   );
 
   const queryString = generateQueryString(params);
-  const { fetchTasks, fetchTasksMutation, deleteTaskAsync } =
-    useTask(queryString);
+  const {
+    fetchTasks,
+    fetchTasksMutation,
+    deleteTaskAsync,
+    fetchTasksCalculationMutation,
+  } = useTask(queryString);
 
   const handleDeleTask = () => {
     if (taskId === null) return;
@@ -165,6 +170,70 @@ export default function TasksPage() {
           <Plus className='mr-2 h-4 w-4' />
           Add Task
         </Button>
+      </div>
+      <div>
+        {!fetchTasksCalculationMutation.isLoading ? (
+          <div className='grid grid-cols-2 md:grid-cols-5 gap-4'>
+            <Card>
+              <CardContent className='p-4 text-center'>
+                <div className='text-2xl font-bold'>
+                  {fetchTasksCalculationMutation?.data?.totalTasks || ''}
+                </div>
+                <div className='text-xs text-muted-foreground'>
+                  Total Entries
+                </div>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardContent className='p-4 text-center'>
+                <div className='text-2xl font-bold text-green-600'>
+                  {fetchTasksCalculationMutation?.data?.completedCount}
+                </div>
+                <div className='text-xs text-muted-foreground'>Completed</div>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardContent className='p-4 text-center'>
+                <div className='text-2xl font-bold text-yellow-600'>
+                  {fetchTasksCalculationMutation?.data?.inProgressCount}
+                </div>
+                <div className='text-xs text-muted-foreground'>In Progress</div>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardContent className='p-4 text-center'>
+                <div className='text-2xl font-bold text-red-600'>
+                  {fetchTasksCalculationMutation?.data?.pendingCount}
+                </div>
+                <div className='text-xs text-muted-foreground'>Pending</div>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardContent className='p-4 text-center'>
+                <div className='text-lg font-bold text-green-600'>
+                  {fetchTasksCalculationMutation?.data?.submittedCount}
+                </div>
+                <div className='text-xs text-muted-foreground'>Submitted</div>
+              </CardContent>
+            </Card>
+          </div>
+        ) : (
+          <div className='grid grid-cols-1 md:grid-cols-4 gap-4'>
+            {[1, 2, 3, 4].map((i) => (
+              <Card key={i}>
+                <CardContent className='p-6'>
+                  <div className='flex items-center justify-between'>
+                    <div>
+                      <Skeleton className='h-4 w-24 mb-2' />
+                      <Skeleton className='h-8 w-16' />
+                    </div>
+                    <Skeleton className='h-8 w-8' />
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        )}
       </div>
 
       <Card>

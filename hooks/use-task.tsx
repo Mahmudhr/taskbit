@@ -1,11 +1,12 @@
 import {
   createTasks,
   deleteTask,
+  fetchAllTaskCalculation,
   fetchAllTasks,
   updateTask,
 } from '@/server/tasks/tasks';
 import { CreateTaskType } from '@/server/types/tasks-type';
-import { Meta, Response, TaskType } from '@/types/common';
+import { Meta, Response, TaskCalculationsType, TaskType } from '@/types/common';
 import {
   keepPreviousData,
   useMutation,
@@ -20,6 +21,7 @@ export function useTask(options?: string) {
     mutationFn: (data: CreateTaskType) => createTasks(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['tasks'] });
+      queryClient.invalidateQueries({ queryKey: ['tasks-calculation'] });
     },
   });
 
@@ -28,6 +30,7 @@ export function useTask(options?: string) {
       updateTask(id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['tasks'] });
+      queryClient.invalidateQueries({ queryKey: ['tasks-calculation'] });
     },
   });
 
@@ -40,10 +43,20 @@ export function useTask(options?: string) {
     placeholderData: keepPreviousData,
   });
 
+  const fetchTasksCalculationMutation = useQuery<TaskCalculationsType>({
+    queryKey: ['tasks-calculation', options],
+    queryFn: async () => {
+      const res = await fetchAllTaskCalculation(options);
+      return res;
+    },
+    placeholderData: keepPreviousData,
+  });
+
   const deleteTaskMutation = useMutation({
     mutationFn: (id: number) => deleteTask(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['tasks'] });
+      queryClient.invalidateQueries({ queryKey: ['tasks-calculation'] });
     },
   });
 
@@ -54,6 +67,8 @@ export function useTask(options?: string) {
     updateTaskMutationAsync: updateTaskMutation.mutateAsync,
     fetchTasksMutation,
     fetchTasks: fetchTasksMutation.data,
+    fetchTasksCalculationMutation,
+    fetchTasksCalculation: fetchTasksCalculationMutation.data,
     deleteTask: deleteTaskMutation.mutate,
     deleteTaskAsync: deleteTaskMutation.mutateAsync,
   };

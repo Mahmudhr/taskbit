@@ -228,12 +228,10 @@ export const fetchAllTasks = async (data?: string) => {
     whereConditions.push({ status: status as TaskStatus });
   }
 
-  // Paper type
   if (paper_type && paper_type !== 'ALL') {
     whereConditions.push({ paper_type: paper_type as PaperType });
   }
 
-  // -------- Due date filters (field: duration) --------
   let dueDateFilter: Prisma.DateTimeFilter | undefined;
   if (due_date) {
     const d = new Date(due_date);
@@ -534,3 +532,229 @@ export async function deleteTask(id: number) {
     throw new Error('Failed to delete task');
   }
 }
+
+export const fetchAllTaskCalculation = async (data?: string) => {
+  const params = new URLSearchParams(data || '');
+  const search = params.get('search') || '';
+  const status = params.get('status') || '';
+  const paper_type = params.get('paper_type') || '';
+  const client = params.get('client') || '';
+  // const paymentStatus = params.get('payment_status') || '';
+
+  // Due filters
+  const due_date = params.get('due_date') || '';
+  const due_month = params.get('due_month') || '';
+  const due_year = params.get('due_year') || '';
+
+  // Task create filters
+  const task_create = params.get('task_create') || '';
+  const task_create_month = params.get('task_create_month') || '';
+  const task_create_year = params.get('task_create_year') || '';
+
+  const monthToInt = (m: string) => {
+    const n = parseInt(m);
+    return Number.isFinite(n) && n >= 1 && n <= 12 ? n : undefined;
+  };
+
+  const buildDayRange = (d: Date): Prisma.DateTimeFilter => ({
+    gte: new Date(d.getFullYear(), d.getMonth(), d.getDate(), 0, 0, 0, 0),
+    lte: new Date(d.getFullYear(), d.getMonth(), d.getDate(), 23, 59, 59, 999),
+  });
+
+  const buildMonthRange = (y: number, m: number): Prisma.DateTimeFilter => ({
+    gte: new Date(y, m - 1, 1, 0, 0, 0, 0),
+    lte: new Date(y, m, 0, 23, 59, 59, 999),
+  });
+
+  // Find min/max year for a given field to build month-only OR ranges across actual data years
+  const getYearSpan = async (
+    field: 'duration' | 'createdAt'
+  ): Promise<{ start: number; end: number }> => {
+    if (field === 'duration') {
+      const minRec = await prisma.task.findFirst({
+        where: { NOT: { duration: null } },
+        orderBy: { duration: 'asc' },
+        select: { duration: true },
+      });
+
+      const maxRec = await prisma.task.findFirst({
+        where: { NOT: [{ duration: null }] },
+        orderBy: { duration: 'desc' },
+        select: { duration: true },
+      });
+
+      if (minRec?.duration && maxRec?.duration) {
+        return {
+          start: new Date(minRec.duration).getFullYear(),
+          end: new Date(maxRec.duration).getFullYear(),
+        };
+      }
+    } else {
+      const minRec = await prisma.task.findFirst({
+        orderBy: { createdAt: 'asc' },
+        select: { createdAt: true },
+      });
+      const maxRec = await prisma.task.findFirst({
+        orderBy: { createdAt: 'desc' },
+        select: { createdAt: true },
+      });
+      if (minRec?.createdAt && maxRec?.createdAt) {
+        return {
+          start: new Date(minRec.createdAt).getFullYear(),
+          end: new Date(maxRec.createdAt).getFullYear(),
+        };
+      }
+    }
+
+    // Fallback span if table is empty or all nulls
+    const nowY = new Date().getFullYear();
+    return { start: nowY - 10, end: nowY + 1 };
+  };
+
+  // Build where clause (same logic as fetchAllTasks)
+  const whereConditions: Prisma.TaskWhereInput[] = [{ isDeleted: false }];
+
+  // Search
+  if (search) {
+    whereConditions.push({
+      OR: [
+        { title: { contains: search, mode: 'insensitive' } },
+        { description: { contains: search, mode: 'insensitive' } },
+        { client: { name: { contains: search, mode: 'insensitive' } } },
+      ],
+    });
+  }
+
+  // Status filter (only if specific status is selected)
+  if (status && status !== 'ALL') {
+    whereConditions.push({ status: status as TaskStatus });
+  }
+
+  if (paper_type && paper_type !== 'ALL') {
+    whereConditions.push({ paper_type: paper_type as PaperType });
+  }
+
+  // Due date filtering
+  let dueDateFilter: Prisma.DateTimeFilter | undefined;
+  if (due_date) {
+    const d = new Date(due_date);
+    if (!isNaN(d.getTime())) dueDateFilter = buildDayRange(d);
+  } else if (due_month && due_year) {
+    const m = monthToInt(due_month);
+    const y = parseInt(due_year);
+    if (m && y > 0) dueDateFilter = buildMonthRange(y, m);
+  } else if (due_year) {
+    const y = parseInt(due_year);
+    if (y > 0)
+      dueDateFilter = {
+        gte: new Date(y, 0, 1, 0, 0, 0, 0),
+        lte: new Date(y, 11, 31, 23, 59, 59, 999),
+      };
+  }
+
+  if (dueDateFilter) {
+    whereConditions.push({ duration: dueDateFilter });
+  } else if (due_month && !due_year && !due_date) {
+    const m = monthToInt(due_month);
+    if (m) {
+      const span = await getYearSpan('duration');
+      const orRanges: Prisma.TaskWhereInput[] = [];
+      for (let y = span.start; y <= span.end; y++) {
+        orRanges.push({ duration: buildMonthRange(y, m) });
+      }
+      if (orRanges.length) whereConditions.push({ OR: orRanges });
+    }
+  }
+
+  // Task created filters
+  let taskCreateFilter: Prisma.DateTimeFilter | undefined;
+  if (task_create) {
+    const d = new Date(task_create);
+    if (!isNaN(d.getTime())) taskCreateFilter = buildDayRange(d);
+  } else if (task_create_month && task_create_year) {
+    const m = monthToInt(task_create_month);
+    const y = parseInt(task_create_year);
+    if (m && y > 0) taskCreateFilter = buildMonthRange(y, m);
+  } else if (task_create_year) {
+    const y = parseInt(task_create_year);
+    if (y > 0)
+      taskCreateFilter = {
+        gte: new Date(y, 0, 1, 0, 0, 0, 0),
+        lte: new Date(y, 11, 31, 23, 59, 59, 999),
+      };
+  }
+
+  if (taskCreateFilter) {
+    whereConditions.push({ createdAt: taskCreateFilter });
+  } else if (task_create_month && !task_create_year && !task_create) {
+    const m = monthToInt(task_create_month);
+    if (m) {
+      const span = await getYearSpan('createdAt');
+      const orRanges: Prisma.TaskWhereInput[] = [];
+      for (let y = span.start; y <= span.end; y++) {
+        orRanges.push({ createdAt: buildMonthRange(y, m) });
+      }
+      if (orRanges.length) whereConditions.push({ OR: orRanges });
+    }
+  }
+
+  // Client
+  if (client && client !== 'ALL') {
+    whereConditions.push({
+      client: { name: { contains: client, mode: 'insensitive' } },
+    });
+  }
+
+  const where: Prisma.TaskWhereInput =
+    whereConditions.length > 0 ? { AND: whereConditions } : {};
+
+  try {
+    // Get total task count
+    const totalTasks = await prisma.task.count({ where });
+
+    // Get count by status
+    const pendingCount = await prisma.task.count({
+      where: { ...where, status: 'PENDING' },
+    });
+
+    const inProgressCount = await prisma.task.count({
+      where: { ...where, status: 'IN_PROGRESS' },
+    });
+
+    const submittedCount = await prisma.task.count({
+      where: { ...where, status: 'SUBMITTED' },
+    });
+
+    const completedCount = await prisma.task.count({
+      where: { ...where, status: 'COMPLETED' },
+    });
+
+    // Calculate percentages
+    const pendingPercentage =
+      totalTasks > 0 ? Math.round((pendingCount / totalTasks) * 100) : 0;
+    const inProgressPercentage =
+      totalTasks > 0 ? Math.round((inProgressCount / totalTasks) * 100) : 0;
+    const submittedPercentage =
+      totalTasks > 0 ? Math.round((submittedCount / totalTasks) * 100) : 0;
+    const completedPercentage =
+      totalTasks > 0 ? Math.round((completedCount / totalTasks) * 100) : 0;
+
+    return {
+      // Total counts
+      totalTasks,
+      pendingCount,
+      inProgressCount,
+      submittedCount,
+      completedCount,
+
+      // Percentages
+      pendingPercentage,
+      inProgressPercentage,
+      submittedPercentage,
+      completedPercentage,
+    };
+  } catch (error) {
+    console.error('Error calculating task statistics:', error);
+    throw new Error('Failed to calculate task statistics');
+  }
+};

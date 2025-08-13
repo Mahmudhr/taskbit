@@ -187,3 +187,15 @@ export interface SalaryCalculationType {
   pendingPercentage: number;
   cancelledPercentage: number;
 }
+
+export interface TaskCalculationsType {
+  totalTasks: number;
+  completedCount: number;
+  completedPercentage: number;
+  inProgressCount: number;
+  inProgressPercentage: number;
+  pendingCount: number;
+  pendingPercentage: number;
+  submittedCount: number;
+  submittedPercentage: number;
+}
