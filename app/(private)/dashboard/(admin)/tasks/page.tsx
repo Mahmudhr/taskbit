@@ -4,13 +4,6 @@ import { useEffect, useState, useTransition } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import {
   Table,
   TableBody,
   TableCell,
@@ -26,7 +19,7 @@ import {
   ChevronRight,
   X,
   EllipsisVertical,
-  ChevronDownIcon,
+  ListFilter,
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import AlertModal from '@/components/alert-modal';
@@ -57,16 +50,10 @@ import ConfirmModal from '@/components/confirm-modal';
 import { toast } from 'sonner';
 import CreatePaymentForm from '@/components/forms/create-payment-form';
 import dayjs from 'dayjs';
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from '@/components/ui/popover';
-import { Calendar } from '@/components/ui/calendar';
-import { useClient } from '@/hooks/use-client';
 import Link from 'next/link';
 import Modal from '@/components/modal';
 import TaskDetailsView from '@/components/task-details-view';
+import TaskFilter from '@/components/filters/task-filter';
 
 export const getStatusBadge = (status: string) => {
   const variants = {
@@ -107,23 +94,24 @@ export default function TasksPage() {
   const [isPending, startTransition] = useTransition();
   const [taskId, setTaskId] = useState<number | null>(null);
   const [openPayment, setOpenPayment] = useState(false);
-  const [createdDateOpen, setCreatedDateOpen] = useState(false);
-  const [createdDate, setCreatedDate] = useState<Date | undefined>(undefined);
-  const [taskDateOpen, setTaskDateOpen] = useState(false);
-  const [taskDate, setTaskDate] = useState<Date | undefined>(undefined);
   const [viewTask, setViewTask] = useState<TaskType | null>(null);
   const [viewTaskModal, setViewTaskModal] = useState(false);
+  const [openSalaryFilter, setOpenSalaryFilter] = useState(false);
 
   const router = useRouter();
   const [params, setParams] = useState({
     search: searchParams.get('search') || '',
     page: searchParams.get('page') || '1',
     status: searchParams.get('status') || '',
-    due_date: searchParams.get('due_date') || '',
-    task_create: searchParams.get('task_create') || '',
     paper_type: searchParams.get('paper_type') || '',
     client: searchParams.get('client') || '',
     payment_status: searchParams.get('payment_status') || '',
+    due_date: searchParams.get('due_date') || '',
+    due_month: searchParams.get('due_month') || '',
+    due_year: searchParams.get('due_year') || '',
+    task_create: searchParams.get('task_create') || '',
+    task_create_year: searchParams.get('task_create_year') || '',
+    task_create_month: searchParams.get('task_create_month') || '',
   });
   const [searchQuery, setSearchQuery] = useState(
     searchParams.get('search') || ''
@@ -132,8 +120,6 @@ export default function TasksPage() {
   const queryString = generateQueryString(params);
   const { fetchTasks, fetchTasksMutation, deleteTaskAsync } =
     useTask(queryString);
-
-  const { fetchClientsSelectOptions } = useClient();
 
   const handleDeleTask = () => {
     if (taskId === null) return;
@@ -199,153 +185,12 @@ export default function TasksPage() {
                 className='pl-8'
               />
             </div>
-            <Select
-              value={params.client}
-              onValueChange={(value) => {
-                setParams((prev) => ({
-                  ...prev,
-                  client: value === 'ALL' ? '' : value,
-                }));
-              }}
+            <Button
+              onClick={() => setOpenSalaryFilter(true)}
+              className='w-full sm:w-auto'
             >
-              <SelectTrigger className='w-[180px]'>
-                <SelectValue placeholder='Filter by client' />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value='ALL'>All Status</SelectItem>
-                {fetchClientsSelectOptions?.map((client) => (
-                  <SelectItem key={client.id} value={String(client.name)}>
-                    {client.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <Select
-              value={params.payment_status}
-              onValueChange={(value) => {
-                setParams((prev) => ({
-                  ...prev,
-                  payment_status: value === 'ALL' ? '' : value,
-                }));
-              }}
-            >
-              <SelectTrigger className='w-[180px]'>
-                <SelectValue placeholder='Filter by payment status' />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value='ALL'>All Status</SelectItem>
-                <SelectItem value='paid'>Paid</SelectItem>
-                <SelectItem value='due'>Due</SelectItem>
-              </SelectContent>
-            </Select>
-            <Select
-              value={params.status}
-              onValueChange={(value) => {
-                setParams((prev) => ({
-                  ...prev,
-                  status: value === 'ALL' ? '' : value,
-                }));
-              }}
-            >
-              <SelectTrigger className='w-[180px]'>
-                <SelectValue placeholder='Filter by status' />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value='ALL'>All payment Status</SelectItem>
-                <SelectItem value='PENDING'>Pending</SelectItem>
-                <SelectItem value='IN_PROGRESS'>In Progress</SelectItem>
-                <SelectItem value='SUBMITTED'>Submitted</SelectItem>
-                <SelectItem value='COMPLETED'>Completed</SelectItem>
-              </SelectContent>
-            </Select>
-            <Select
-              value={params.paper_type}
-              onValueChange={(value) => {
-                setParams((prev) => ({
-                  ...prev,
-                  paper_type: value === 'ALL' ? '' : value,
-                }));
-              }}
-            >
-              <SelectTrigger className='w-[180px]'>
-                <SelectValue placeholder='Filter by paper type' />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value='ALL'>All Type</SelectItem>
-                <SelectItem value='CONFERENCE'>Conference</SelectItem>
-                <SelectItem value='SURVEY'>Survey</SelectItem>
-                <SelectItem value='JOURNAL'>Journal</SelectItem>
-              </SelectContent>
-            </Select>
-            <div className='flex flex-col gap-3'>
-              <Popover open={taskDateOpen} onOpenChange={setTaskDateOpen}>
-                <PopoverTrigger asChild>
-                  <Button
-                    variant='outline'
-                    id='date'
-                    className='w-48 justify-between font-normal'
-                  >
-                    {taskDate ? taskDate.toLocaleDateString() : 'Due date'}
-                    <ChevronDownIcon />
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent
-                  className='w-auto overflow-hidden p-0'
-                  align='start'
-                >
-                  <Calendar
-                    mode='single'
-                    selected={taskDate}
-                    captionLayout='dropdown'
-                    onSelect={(date) => {
-                      setTaskDate(date);
-                      setParams((prev) => ({
-                        ...prev,
-                        due_date: date ? dayjs(date).format('YYYY-MM-DD') : '',
-                      }));
-                      setTaskDateOpen(false);
-                    }}
-                  />
-                </PopoverContent>
-              </Popover>
-            </div>
-            <div className='flex flex-col gap-3'>
-              <Popover open={createdDateOpen} onOpenChange={setCreatedDateOpen}>
-                <PopoverTrigger asChild>
-                  <Button
-                    variant='outline'
-                    id='date'
-                    className='w-48 justify-between font-normal'
-                  >
-                    {createdDate
-                      ? createdDate.toLocaleDateString()
-                      : 'Task Create date'}
-                    <ChevronDownIcon />
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent
-                  className='w-auto overflow-hidden p-0'
-                  align='start'
-                >
-                  <Calendar
-                    mode='single'
-                    selected={createdDate}
-                    captionLayout='dropdown'
-                    onSelect={(date) => {
-                      setCreatedDate(date);
-                      setParams((prev) => ({
-                        ...prev,
-                        task_create: date
-                          ? dayjs(date).format('YYYY-MM-DD')
-                          : '',
-                      }));
-
-                      setCreatedDateOpen(false);
-                    }}
-                  />
-                </PopoverContent>
-              </Popover>
-            </div>
+              <ListFilter /> Filter
+            </Button>
           </div>
           <div className='flex flex-wrap gap-2'>
             {params.search && (
@@ -420,24 +265,6 @@ export default function TasksPage() {
                 </span>
               </div>
             )}
-            {params.task_create && (
-              <div className='pl-3 pr-2 py-1 border flex gap-2 items-center rounded-full text-sm'>
-                Task Create: {dayjs(params.task_create).format('DD-MM-YYYY')}
-                <span
-                  onClick={() => {
-                    setParams((prev) => ({
-                      ...prev,
-                      task_create: '',
-                      page: '1',
-                    }));
-                    setTaskDate(undefined);
-                    setCreatedDate(undefined);
-                  }}
-                >
-                  <X className='w-4 h-4 cursor-pointer' />
-                </span>
-              </div>
-            )}
 
             {params.due_date && (
               <div className='pl-3 pr-2 py-1 border flex gap-2 items-center rounded-full text-sm'>
@@ -449,7 +276,92 @@ export default function TasksPage() {
                       due_date: '',
                       page: '1',
                     }));
-                    setTaskDate(undefined);
+                  }}
+                >
+                  <X className='w-4 h-4 cursor-pointer' />
+                </span>
+              </div>
+            )}
+            {params.due_month && (
+              <div className='pl-3 pr-2 py-1 border flex gap-2 items-center rounded-full text-sm'>
+                Due Month:{' '}
+                {dayjs()
+                  .month(parseInt(params.due_month) - 1)
+                  .format('MMMM')}
+                <span
+                  onClick={() => {
+                    setParams((prev) => ({
+                      ...prev,
+                      due_month: '',
+                      page: '1',
+                    }));
+                  }}
+                >
+                  <X className='w-4 h-4 cursor-pointer' />
+                </span>
+              </div>
+            )}
+            {params.due_year && (
+              <div className='pl-3 pr-2 py-1 border flex gap-2 items-center rounded-full text-sm'>
+                Due Year: {params.due_year}
+                <span
+                  onClick={() => {
+                    setParams((prev) => ({
+                      ...prev,
+                      due_year: '',
+                      page: '1',
+                    }));
+                  }}
+                >
+                  <X className='w-4 h-4 cursor-pointer' />
+                </span>
+              </div>
+            )}
+            {params.task_create && (
+              <div className='pl-3 pr-2 py-1 border flex gap-2 items-center rounded-full text-sm'>
+                Task Create: {dayjs(params.task_create).format('DD-MM-YYYY')}
+                <span
+                  onClick={() => {
+                    setParams((prev) => ({
+                      ...prev,
+                      task_create: '',
+                      page: '1',
+                    }));
+                  }}
+                >
+                  <X className='w-4 h-4 cursor-pointer' />
+                </span>
+              </div>
+            )}
+            {params.task_create_month && (
+              <div className='pl-3 pr-2 py-1 border flex gap-2 items-center rounded-full text-sm'>
+                Create Month:{' '}
+                {dayjs()
+                  .month(parseInt(params.task_create_month) - 1)
+                  .format('MMMM')}
+                <span
+                  onClick={() => {
+                    setParams((prev) => ({
+                      ...prev,
+                      task_create_month: '',
+                      page: '1',
+                    }));
+                  }}
+                >
+                  <X className='w-4 h-4 cursor-pointer' />
+                </span>
+              </div>
+            )}
+            {params.task_create_year && (
+              <div className='pl-3 pr-2 py-1 border flex gap-2 items-center rounded-full text-sm'>
+                Create Year: {params.task_create_year}
+                <span
+                  onClick={() => {
+                    setParams((prev) => ({
+                      ...prev,
+                      task_create_year: '',
+                      page: '1',
+                    }));
                   }}
                 >
                   <X className='w-4 h-4 cursor-pointer' />
@@ -466,7 +378,6 @@ export default function TasksPage() {
                       payment_status: '',
                       page: '1',
                     }));
-                    setTaskDate(undefined);
                   }}
                 >
                   <X className='w-4 h-4 cursor-pointer' />
@@ -627,7 +538,7 @@ export default function TasksPage() {
                           </Button>
                           <Button
                             variant='outline'
-                            size='sm'
+      where: { id },                   size='sm'
                             onClick={() => handleEditTask(task)}
                           >
                             <Edit className='h-4 w-4' />
@@ -876,6 +787,18 @@ export default function TasksPage() {
         description=' '
       >
         {viewTask && <TaskDetailsView task={viewTask} />}
+      </Modal>
+      <Modal
+        isOpen={openSalaryFilter}
+        setIsOpen={setOpenSalaryFilter}
+        title='Filter Salary'
+        description=' '
+      >
+        <TaskFilter
+          setParams={setParams}
+          params={params}
+          setOpenTaskFilter={setOpenSalaryFilter}
+        />
       </Modal>
     </div>
   );
