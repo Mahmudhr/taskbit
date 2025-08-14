@@ -1,6 +1,13 @@
 'use client';
 
-import { CheckSquare, CreditCard, Users, User, Banknote } from 'lucide-react';
+import {
+  CheckSquare,
+  CreditCard,
+  Users,
+  User,
+  Banknote,
+  LayoutDashboard,
+} from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 
@@ -22,6 +29,11 @@ import { UserNav } from './user.nav';
 import { useSession } from 'next-auth/react';
 
 const adminMenuItems = [
+  {
+    title: 'Dashboard',
+    url: '/dashboard/dashboard',
+    icon: LayoutDashboard,
+  },
   {
     title: 'Tasks',
     url: '/dashboard/tasks',
