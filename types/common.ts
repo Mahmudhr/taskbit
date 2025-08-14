@@ -199,3 +199,18 @@ export interface TaskCalculationsType {
   submittedCount: number;
   submittedPercentage: number;
 }
+
+export type PaymentCalculationsType = Record<
+  | 'completedCount'
+  | 'completedPercentage'
+  | 'failedCount'
+  | 'failedPercentage'
+  | 'pendingCount'
+  | 'pendingPercentage'
+  | 'totalAllAmount'
+  | 'totalCompletedAmount'
+  | 'totalFailedAmount'
+  | 'totalPayments'
+  | 'totalPendingAmount',
+  number
+>;

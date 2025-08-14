@@ -4,13 +4,6 @@ import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import {
   Table,
   TableBody,
   TableCell,
@@ -24,16 +17,10 @@ import {
   Edit,
   ChevronLeft,
   ChevronRight,
-  ChevronDownIcon,
   X,
+  ListFilter,
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from '@/components/ui/popover';
-import { Calendar } from '@/components/ui/calendar';
 import { usePayment } from '@/hooks/use-payment';
 import { $Enums } from '@prisma/client';
 import TaskTableSkeleton from '@/components/skeletons/task-table-skeleton';
@@ -50,6 +37,8 @@ import dayjs from 'dayjs';
 import Modal from '@/components/modal';
 import UpdatePaymentForm from '@/components/forms/update-payment-form';
 import { PaymentTypes } from '@/types/common';
+import PaymentFilter from '@/components/filters/payment-filter';
+import { Skeleton } from '@/components/ui/skeleton';
 
 export const getStatusBadge = (status: $Enums.PaymentStatus) => {
   const variants = {
@@ -66,11 +55,10 @@ export const getStatusBadge = (status: $Enums.PaymentStatus) => {
 
 export default function PaymentsPage() {
   const searchParams = useSearchParams();
-  const [openDate, setDateOpen] = useState(false);
-  const [date, setDate] = useState<Date | undefined>(undefined);
   const [taskId, setTaskId] = useState<number | null>(null);
   const [paymentData, setPaymentData] = useState<PaymentTypes | null>(null);
   const [updatePaymentOpen, setUpdatePaymentOpen] = useState(false);
+  const [openPaymentFilter, setOpenPaymentFilter] = useState(false);
 
   const router = useRouter();
 
@@ -79,12 +67,19 @@ export default function PaymentsPage() {
     page: searchParams.get('page') || '1',
     status: searchParams.get('status') || '',
     date: searchParams.get('date') || '',
+    payment_type: searchParams.get('payment_type') || '',
+    month: searchParams.get('month') || '',
+    year: searchParams.get('year') || '',
   });
   const [searchQuery, setSearchQuery] = useState(
     searchParams.get('search') || ''
   );
   const queryString = generateQueryString(params);
-  const { fetchPayments, fetchPaymentsMutation } = usePayment(queryString);
+  const {
+    fetchPayments,
+    fetchPaymentsMutation,
+    fetchPaymentsCalculationMutation,
+  } = usePayment(queryString);
 
   const debounced = useDebouncedCallback((value) => {
     setParams((prevParams) => ({
@@ -103,7 +98,74 @@ export default function PaymentsPage() {
       <div className='flex items-center justify-between'>
         <h1 className='text-xl md:text-3xl font-bold'>Payments Management</h1>
       </div>
+      <div>
+        {!fetchPaymentsCalculationMutation.isLoading ? (
+          <div className='grid grid-cols-2 md:grid-cols-5 gap-4'>
+            <Card>
+              <CardContent className='p-4 text-center'>
+                <div className='text-2xl font-bold'>
+                  {fetchPaymentsCalculationMutation?.data?.totalPayments || ''}
+                </div>
+                <div className='text-xs text-muted-foreground'>
+                  Total Entries
+                </div>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardContent className='p-4 text-center'>
+                <div className='text-2xl font-bold text-green-600'>
+                  {fetchPaymentsCalculationMutation?.data?.completedCount}
+                </div>
+                <div className='text-xs text-muted-foreground'>Completed</div>
+              </CardContent>
+            </Card>
 
+            <Card>
+              <CardContent className='p-4 text-center'>
+                <div className='text-2xl font-bold text-yellow-600'>
+                  {fetchPaymentsCalculationMutation?.data?.pendingCount}
+                </div>
+                <div className='text-xs text-muted-foreground'>Pending</div>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardContent className='p-4 text-center'>
+                <div className='text-2xl font-bold text-red-600'>
+                  {fetchPaymentsCalculationMutation?.data?.failedCount}
+                </div>
+                <div className='text-xs text-muted-foreground'>Failed</div>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardContent className='p-4 text-center'>
+                <div className='text-2xl font-bold text-green-600'>
+                  ৳{' '}
+                  {fetchPaymentsCalculationMutation?.data?.totalCompletedAmount}
+                </div>
+                <div className='text-xs text-muted-foreground'>
+                  Total Amount
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        ) : (
+          <div className='grid grid-cols-1 md:grid-cols-5 gap-4'>
+            {[1, 2, 3, 4, 5].map((i) => (
+              <Card key={i}>
+                <CardContent className='p-6'>
+                  <div className='flex items-center justify-between'>
+                    <div>
+                      <Skeleton className='h-4 w-24 mb-2' />
+                      <Skeleton className='h-8 w-16' />
+                    </div>
+                    <Skeleton className='h-8 w-8' />
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        )}
+      </div>
       <Card>
         <CardHeader>
           <CardTitle>Search & Filters</CardTitle>
@@ -122,57 +184,13 @@ export default function PaymentsPage() {
                 className='pl-8'
               />
             </div>
-            <Select
-              value={params.status}
-              onValueChange={(value) => {
-                setParams((prev) => ({
-                  ...prev,
-                  status: value === 'ALL' ? '' : value,
-                }));
-              }}
+
+            <Button
+              onClick={() => setOpenPaymentFilter(true)}
+              className='w-full sm:w-auto'
             >
-              <SelectTrigger className='w-[180px]'>
-                <SelectValue placeholder='Filter payments' />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value='ALL'>All Payments</SelectItem>
-                <SelectItem value='PENDING'>Pending</SelectItem>
-                <SelectItem value='COMPLETED'>Completed</SelectItem>
-                <SelectItem value='FAILED'>Failed</SelectItem>
-              </SelectContent>
-            </Select>
-            <div className='flex flex-col gap-3'>
-              <Popover open={openDate} onOpenChange={setDateOpen}>
-                <PopoverTrigger asChild>
-                  <Button
-                    variant='outline'
-                    id='date'
-                    className='w-48 justify-between font-normal'
-                  >
-                    {date ? date.toLocaleDateString() : 'Select date'}
-                    <ChevronDownIcon />
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent
-                  className='w-auto overflow-hidden p-0'
-                  align='start'
-                >
-                  <Calendar
-                    mode='single'
-                    selected={date}
-                    captionLayout='dropdown'
-                    onSelect={(date) => {
-                      setDate(date);
-                      setParams((prev) => ({
-                        ...prev,
-                        date: date ? dayjs(date).format('YYYY-MM-DD') : '',
-                      }));
-                      setDateOpen(false);
-                    }}
-                  />
-                </PopoverContent>
-              </Popover>
-            </div>
+              <ListFilter /> Filter
+            </Button>
           </div>
           <div className='flex flex-wrap gap-2'>
             {params.search && (
@@ -396,6 +414,18 @@ export default function PaymentsPage() {
             data={paymentData}
           />
         )}
+      </Modal>
+      <Modal
+        isOpen={openPaymentFilter}
+        setIsOpen={setOpenPaymentFilter}
+        title='Filter Salary'
+        description=' '
+      >
+        <PaymentFilter
+          setParams={setParams}
+          params={params}
+          setOpenPaymentFilter={setOpenPaymentFilter}
+        />
       </Modal>
     </div>
   );
