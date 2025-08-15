@@ -24,7 +24,6 @@ import { useTransition } from 'react';
 import { toast } from 'sonner';
 import { usePayment } from '@/hooks/use-payment';
 import { useSession } from 'next-auth/react';
-import { getErrorMessage } from '@/lib/utils';
 import { Loader2Icon } from 'lucide-react';
 
 const paymentTypes = [
@@ -96,7 +95,15 @@ export default function CreatePaymentForm({
           setIsOpen(false);
           return res.message || 'Successfully Created Payment';
         },
-        error: (err) => getErrorMessage(err),
+        error: (err) => {
+          const errorMessage = err.message || 'Failed to create payment';
+
+          if (errorMessage.includes('cannot exceed remaining')) {
+            return 'Payment amount exceeds the remaining task amount. Please check the due amount and try again.';
+          }
+
+          return errorMessage;
+        },
       });
     });
   }

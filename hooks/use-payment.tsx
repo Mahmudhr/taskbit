@@ -23,25 +23,34 @@ import {
 
 export function usePayment(options?: string) {
   const queryClient = useQueryClient();
+
   const createPaymentMutation = useMutation({
-    mutationFn: ({
+    mutationFn: async ({
       paymentType,
       referenceNumber,
       amount,
       status,
       userId,
       taskId,
-    }: CreatePayment) =>
-      createPayment({
+    }: CreatePayment) => {
+      const result = await createPayment({
         paymentType,
         referenceNumber,
         amount,
         status,
         userId,
         taskId,
-      }),
+      });
+
+      if (!result.success) {
+        throw new Error(result.message || 'Failed to create payment');
+      }
+
+      return result;
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['payments'] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard'] });
       queryClient.invalidateQueries({ queryKey: ['tasks'] });
       queryClient.invalidateQueries({ queryKey: ['payments-calculation'] });
     },
@@ -80,6 +89,7 @@ export function usePayment(options?: string) {
       updatePaymentByUser({ paymentId, status, paymentType, referenceNumber }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['payments'] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard'] });
       queryClient.invalidateQueries({ queryKey: ['payments-calculation'] });
       queryClient.invalidateQueries({ queryKey: ['tasks'] });
     },

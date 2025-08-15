@@ -22,6 +22,7 @@ export function useSalary() {
       queryClient.invalidateQueries({ queryKey: ['user-salaries'] });
       queryClient.invalidateQueries({ queryKey: ['user-salaries-by-email'] });
       queryClient.invalidateQueries({ queryKey: ['salaries-calculations'] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard'] });
     },
   });
 
@@ -32,6 +33,7 @@ export function useSalary() {
       queryClient.invalidateQueries({ queryKey: ['user-salaries'] });
       queryClient.invalidateQueries({ queryKey: ['user-salaries-by-email'] });
       queryClient.invalidateQueries({ queryKey: ['salaries-calculations'] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard'] });
     },
   });
 
@@ -42,6 +44,7 @@ export function useSalary() {
       queryClient.invalidateQueries({ queryKey: ['user-salaries'] });
       queryClient.invalidateQueries({ queryKey: ['user-salaries-by-email'] });
       queryClient.invalidateQueries({ queryKey: ['salaries-calculations'] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard'] });
     },
   });
 
@@ -101,6 +104,7 @@ export function useUpdateSalary() {
       queryClient.invalidateQueries({ queryKey: ['salaries'] });
       queryClient.invalidateQueries({ queryKey: ['user-salaries'] });
       queryClient.invalidateQueries({ queryKey: ['user-salaries-by-email'] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard'] });
     },
   });
 }
@@ -114,6 +118,7 @@ export function useDeleteSalary() {
       queryClient.invalidateQueries({ queryKey: ['salaries'] });
       queryClient.invalidateQueries({ queryKey: ['user-salaries'] });
       queryClient.invalidateQueries({ queryKey: ['user-salaries-by-email'] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard'] });
     },
   });
 }

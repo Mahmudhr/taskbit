@@ -18,7 +18,6 @@ export async function createPayment({
   userId: string;
   taskId: number;
 }) {
-  // First, get the current task to check its amount and existing payments
   try {
     const task = await prisma.task.findUnique({
       where: { id: +taskId },
@@ -36,7 +35,11 @@ export async function createPayment({
     });
 
     if (!task) {
-      throw new Error('Task not found');
+      return {
+        success: false,
+        error: 'TASK_NOT_FOUND',
+        message: 'Task not found',
+      };
     }
 
     // Calculate total amount already paid
@@ -48,7 +51,17 @@ export async function createPayment({
 
     // Check if new payment amount exceeds remaining amount
     if (amount > remainingAmount) {
-      throw new Error('Payment amount cannot exceed remaining task amount');
+      return {
+        success: false,
+        error: 'PAYMENT_EXCEEDS_REMAINING',
+        message: 'Payment amount cannot exceed remaining task amount',
+        data: {
+          requestedAmount: amount,
+          remainingAmount: remainingAmount,
+          taskAmount: task.amount,
+          totalPaid: totalPaid,
+        },
+      };
     }
 
     const result = await prisma.$transaction(async (tx) => {
@@ -64,24 +77,21 @@ export async function createPayment({
         },
       });
 
-      // const updatedTask = await tx.task.update({
-      //   where: { id: +taskId },
-      //   data: {
-      //     amount: {
-      //       decrement: amount,
-      //     },
-      //   },
-      // });
-
       return { payment };
     });
 
     return {
+      success: true,
       message: 'Payment created successfully',
       payment: result.payment,
     };
   } catch (e) {
-    throw new Error((e as Error)?.message || 'Failed to create payment');
+    console.error('Payment creation error:', e);
+    return {
+      success: false,
+      error: 'PAYMENT_CREATION_FAILED',
+      message: 'Failed to create payment',
+    };
   }
 }
 
