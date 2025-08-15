@@ -525,6 +525,237 @@ export const fetchUserAllSalaries = async (userId?: string, data?: string) => {
   }
 };
 
+export const fetchUserAllSalariesCalculation = async (
+  userId?: string,
+  data?: string
+) => {
+  const params = new URLSearchParams(data || '');
+  const search = params.get('search') || '';
+  const status = params.get('status') || '';
+  const salaryType = params.get('salary_type') || '';
+  const month = params.get('month') || '';
+  const year = params.get('year') || '';
+  const dateString = params.get('date') || '';
+
+  if (!userId) throw new Error('User Id is required');
+
+  let createdAtFilter: Prisma.DateTimeFilter | undefined;
+  if (dateString) {
+    const filterDate = new Date(dateString);
+    if (!isNaN(filterDate.getTime())) {
+      const start = new Date(
+        filterDate.getFullYear(),
+        filterDate.getMonth(),
+        filterDate.getDate(),
+        0,
+        0,
+        0,
+        0
+      );
+      const end = new Date(
+        filterDate.getFullYear(),
+        filterDate.getMonth(),
+        filterDate.getDate(),
+        23,
+        59,
+        59,
+        999
+      );
+      createdAtFilter = { gte: start, lte: end };
+    }
+  }
+
+  // Build where clause with user filter
+  const whereConditions: Prisma.SalaryWhereInput[] = [{ userId: +userId }];
+
+  // Search conditions
+  if (search) {
+    whereConditions.push({
+      OR: [
+        {
+          referenceNumber: {
+            contains: search,
+            mode: 'insensitive',
+          },
+        },
+        {
+          note: {
+            contains: search,
+            mode: 'insensitive',
+          },
+        },
+      ],
+    });
+  }
+
+  // Status filter
+  if (
+    status &&
+    status !== 'ALL' &&
+    ['PENDING', 'PAID', 'CANCELLED'].includes(status)
+  ) {
+    whereConditions.push({
+      status: status as SalaryStatus,
+    });
+  }
+
+  // Salary type filter
+  if (
+    salaryType &&
+    salaryType !== 'ALL' &&
+    ['MONTHLY', 'BONUS', 'OVERTIME', 'DEDUCTION'].includes(salaryType)
+  ) {
+    whereConditions.push({
+      salaryType: salaryType as SalaryType,
+    });
+  }
+
+  // Month filter
+  if (month && parseInt(month) >= 1 && parseInt(month) <= 12) {
+    whereConditions.push({
+      month: parseInt(month),
+    });
+  }
+
+  // Year filter
+  if (year && parseInt(year) > 0) {
+    whereConditions.push({
+      year: parseInt(year),
+    });
+  }
+
+  // Date filter
+  if (createdAtFilter) {
+    whereConditions.push({
+      createdAt: createdAtFilter,
+    });
+  }
+
+  const where: Prisma.SalaryWhereInput = { AND: whereConditions };
+
+  try {
+    // Get total count of all user salaries
+    const totalSalaries = await prisma.salary.count({ where });
+
+    // Get count by status
+    const paidCount = await prisma.salary.count({
+      where: { ...where, status: 'PAID' },
+    });
+
+    const pendingCount = await prisma.salary.count({
+      where: { ...where, status: 'PENDING' },
+    });
+
+    const cancelledCount = await prisma.salary.count({
+      where: { ...where, status: 'CANCELLED' },
+    });
+
+    // Get amounts by status
+    const paidAmountResult = await prisma.salary.aggregate({
+      where: { ...where, status: 'PAID' },
+      _sum: {
+        amount: true,
+      },
+    });
+
+    const pendingAmountResult = await prisma.salary.aggregate({
+      where: { ...where, status: 'PENDING' },
+      _sum: {
+        amount: true,
+      },
+    });
+
+    const cancelledAmountResult = await prisma.salary.aggregate({
+      where: { ...where, status: 'CANCELLED' },
+      _sum: {
+        amount: true,
+      },
+    });
+
+    // Get total amount based on filter
+    let totalAmount = 0;
+    if (!status || status === 'ALL') {
+      // Default: show only PAID amount
+      totalAmount = paidAmountResult._sum.amount || 0;
+    } else {
+      // Show amount for the filtered status
+      const filteredAmountResult = await prisma.salary.aggregate({
+        where,
+        _sum: {
+          amount: true,
+        },
+      });
+      totalAmount = filteredAmountResult._sum.amount || 0;
+    }
+
+    const paidAmount = paidAmountResult._sum.amount || 0;
+    const pendingAmount = pendingAmountResult._sum.amount || 0;
+    const cancelledAmount = cancelledAmountResult._sum.amount || 0;
+
+    const averageAmount = totalSalaries > 0 ? totalAmount / totalSalaries : 0;
+
+    // Get salary type breakdown
+    const monthlyCount = await prisma.salary.count({
+      where: { ...where, salaryType: 'MONTHLY' },
+    });
+
+    const bonusCount = await prisma.salary.count({
+      where: { ...where, salaryType: 'BONUS' },
+    });
+
+    const overtimeCount = await prisma.salary.count({
+      where: { ...where, salaryType: 'OVERTIME' },
+    });
+
+    return {
+      data: {
+        // User info
+        userId: +userId,
+
+        // Total counts
+        totalSalaries,
+        paidCount,
+        pendingCount,
+        cancelledCount,
+
+        // Amounts
+        totalAmount,
+        paidAmount,
+        pendingAmount,
+        cancelledAmount,
+
+        // Average
+        averageAmount: Math.round(averageAmount * 100) / 100,
+
+        // Percentages
+        paidPercentage:
+          totalSalaries > 0 ? Math.round((paidCount / totalSalaries) * 100) : 0,
+        pendingPercentage:
+          totalSalaries > 0
+            ? Math.round((pendingCount / totalSalaries) * 100)
+            : 0,
+        cancelledPercentage:
+          totalSalaries > 0
+            ? Math.round((cancelledCount / totalSalaries) * 100)
+            : 0,
+
+        // Salary type breakdown
+        salaryTypeBreakdown: {
+          monthly: monthlyCount,
+          bonus: bonusCount,
+          overtime: overtimeCount,
+        },
+
+        // Net salary calculation (paid - deductions)
+        netSalary: paidAmount - cancelledAmount,
+      },
+    };
+  } catch (error) {
+    console.error('Error calculating user salary statistics:', error);
+    throw new Error('Failed to calculate user salary statistics');
+  }
+};
+
 export async function deleteSalary(salaryId: number) {
   try {
     await prisma.salary.delete({

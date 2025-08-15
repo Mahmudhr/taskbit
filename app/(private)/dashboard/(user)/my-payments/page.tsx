@@ -2,8 +2,8 @@
 
 import { useState, useEffect } from 'react';
 import {
-  useFetchAllSalariesCalculations,
   useFetchUserSalaries,
+  useFetchUserSalariesCalculations,
 } from '@/hooks/use-salary';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -238,6 +238,9 @@ export default function MyPayments() {
     error,
   } = useFetchUserSalaries(session?.user.id, queryString);
 
+  const { data: userSalariesCalc, isLoading: isLoadingSalariesCalc } =
+    useFetchUserSalariesCalculations(session?.user.id, queryString);
+
   const debounced = useDebouncedCallback((value) => {
     setParams((prevParams) => ({
       ...prevParams,
@@ -251,9 +254,6 @@ export default function MyPayments() {
   //   isLoading,
   //   error,
   // } = useFetchAllSalaries(queryString);
-
-  const { data: allSalariesCalc, isLoading: isLoadingAllSalariesCalc } =
-    useFetchAllSalariesCalculations(queryString);
 
   useEffect(() => {
     router.push(queryString);
@@ -334,12 +334,12 @@ export default function MyPayments() {
       </div>
 
       {/* Stats Cards */}
-      {!isLoadingAllSalariesCalc ? (
+      {!isLoadingSalariesCalc ? (
         <div className='grid grid-cols-2 md:grid-cols-5 gap-4'>
           <Card>
             <CardContent className='p-4 text-center'>
               <div className='text-2xl font-bold'>
-                {allSalariesCalc?.data.totalSalaries}
+                {userSalariesCalc?.data.totalSalaries}
               </div>
               <div className='text-xs text-muted-foreground'>Total Entries</div>
             </CardContent>
@@ -347,7 +347,7 @@ export default function MyPayments() {
           <Card>
             <CardContent className='p-4 text-center'>
               <div className='text-2xl font-bold text-green-600'>
-                {allSalariesCalc?.data.paidCount}
+                {userSalariesCalc?.data.paidCount}
               </div>
               <div className='text-xs text-muted-foreground'>Paid</div>
             </CardContent>
@@ -355,7 +355,7 @@ export default function MyPayments() {
           <Card>
             <CardContent className='p-4 text-center'>
               <div className='text-2xl font-bold text-yellow-600'>
-                {allSalariesCalc?.data.pendingCount}
+                {userSalariesCalc?.data.pendingCount}
               </div>
               <div className='text-xs text-muted-foreground'>Pending</div>
             </CardContent>
@@ -363,7 +363,7 @@ export default function MyPayments() {
           <Card>
             <CardContent className='p-4 text-center'>
               <div className='text-2xl font-bold text-red-600'>
-                {allSalariesCalc?.data.cancelledCount}
+                {userSalariesCalc?.data.cancelledCount}
               </div>
               <div className='text-xs text-muted-foreground'>Cancelled</div>
             </CardContent>
@@ -371,7 +371,7 @@ export default function MyPayments() {
           <Card>
             <CardContent className='p-4 text-center'>
               <div className='text-lg font-bold text-green-600'>
-                ৳ {allSalariesCalc?.data.totalAmount}
+                ৳ {userSalariesCalc?.data.totalAmount}
               </div>
               <div className='text-xs text-muted-foreground'>Total Paid</div>
             </CardContent>

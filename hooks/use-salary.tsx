@@ -9,6 +9,7 @@ import {
   fetchUserSalariesByEmail,
   deleteSalary,
   fetchAllSalariesCalculation,
+  fetchUserAllSalariesCalculation,
 } from '@/server/salary/salary';
 import { SalaryCalculationType } from '@/types/common';
 
@@ -66,6 +67,17 @@ export function useFetchUserSalaries(userId?: string, searchParams?: string) {
   return useQuery({
     queryKey: ['user-salaries', userId, searchParams],
     queryFn: () => fetchUserAllSalaries(userId, searchParams),
+    enabled: !!userId,
+  });
+}
+
+export function useFetchUserSalariesCalculations(
+  userId?: string,
+  searchParams?: string
+) {
+  return useQuery({
+    queryKey: ['user-salaries-calculations', userId, searchParams],
+    queryFn: () => fetchUserAllSalariesCalculation(userId, searchParams),
     enabled: !!userId,
   });
 }
