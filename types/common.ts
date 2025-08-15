@@ -88,15 +88,12 @@ export type UserTaskType = {
   description?: string | null;
   note?: string | null;
   link?: string | null;
-  amount: number;
   status: $Enums.TaskStatus;
   createdAt: Date;
   updatedAt: Date;
   assignedToId?: number | null;
   duration: Date | null;
   paper_type: $Enums.PaperType;
-  paid?: number;
-  payments: FlatPaymentType[];
 };
 
 export type PaymentTypes = {

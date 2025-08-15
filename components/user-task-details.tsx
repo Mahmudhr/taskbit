@@ -137,8 +137,6 @@ const DetailItem = ({
 };
 
 export default function UserTaskDetails({ task }: { task: UserTaskType }) {
-  const remainingAmount = task.amount - (task.paid || 0);
-
   return (
     <div className='space-y-4'>
       {/* Task Title */}
@@ -162,25 +160,6 @@ export default function UserTaskDetails({ task }: { task: UserTaskType }) {
             <div className='mt-1'>{getPaperTypeBadge(task.paper_type)}</div>
           </div>
         </div>
-      </div>
-
-      {/* Financial Information */}
-      <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4'>
-        <DetailItem
-          label='Total Amount'
-          value={`৳ ${task.amount}`}
-          fieldName='Total Amount'
-        />
-        <DetailItem
-          label='Paid Amount'
-          value={`৳ ${task.paid || 0}`}
-          fieldName='Paid Amount'
-        />
-        <DetailItem
-          label='Due Amount'
-          value={`৳ ${remainingAmount}`}
-          fieldName='Due Amount'
-        />
       </div>
 
       {/* Payment Status */}

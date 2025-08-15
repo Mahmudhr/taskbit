@@ -4,13 +4,6 @@ import { useSession } from 'next-auth/react';
 import { useEffect, useState } from 'react';
 import { Input } from '@/components/ui/input';
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import {
   Table,
   TableBody,
   TableCell,
@@ -24,9 +17,9 @@ import {
   Search,
   ChevronLeft,
   ChevronRight,
-  ChevronDownIcon,
   X,
   EllipsisVertical,
+  ListFilter,
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useUserTask } from '@/hooks/use-user-task';
@@ -41,14 +34,7 @@ import { useDebouncedCallback } from 'use-debounce';
 import { UserTaskType } from '@/types/common';
 import TaskTableSkeleton from '@/components/skeletons/task-table-skeleton';
 import TaskCardSkeleton from '@/components/skeletons/task-card-skeleton';
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from '@/components/ui/popover';
-import { Calendar } from '@/components/ui/calendar';
 import dayjs from 'dayjs';
-import { getPaymentStatusBadge } from '../../(admin)/tasks/page';
 import Link from 'next/link';
 import {
   DropdownMenu,
@@ -62,6 +48,7 @@ import AlertModal from '@/components/alert-modal';
 import CreateTaskDeliveryForm from '@/components/forms/create-task-delivery-form';
 import Modal from '@/components/modal';
 import UsersTaskDetails from '@/components/users-task-details';
+import MyTasksFilter from '@/components/filters/my-tasks-filter';
 
 const getStatusBadge = (status: string) => {
   const variants = {
@@ -81,14 +68,11 @@ export default function MyTasksPage() {
   const searchParams = useSearchParams();
   const { data: session } = useSession();
   const email = session?.user?.email || undefined;
-  const [taskDateOpen, setTaskDateOpen] = useState(false);
-  const [taskDate, setTaskDate] = useState<Date | undefined>(undefined);
-  const [createdDateOpen, setCreatedDateOpen] = useState(false);
-  const [createdDate, setCreatedDate] = useState<Date | undefined>(undefined);
   // const [taskId, setTaskId] = useState<number | null>(null);
   const [selectedTask, setSelectedTask] = useState<UserTaskType | null>(null);
   const [openTask, setOpenTask] = useState(false);
   const [openTaskDetails, setOpenTaskDetails] = useState(false);
+  const [myTaskFilterOpen, setMyTaskFilterOpen] = useState(false);
 
   const router = useRouter();
   const [params, setParams] = useState({
@@ -96,9 +80,12 @@ export default function MyTasksPage() {
     page: searchParams.get('page') || '1',
     status: searchParams.get('status') || '',
     due_date: searchParams.get('due_date') || '',
+    due_month: searchParams.get('due_month') || '',
+    due_year: searchParams.get('due_year') || '',
     task_create: searchParams.get('task_create') || '',
+    task_create_month: searchParams.get('task_create_month') || '',
+    task_create_year: searchParams.get('task_create_year') || '',
     paper_type: searchParams.get('paper_type') || '',
-    payment_status: searchParams.get('payment_status') || '',
   });
   const [searchQuery, setSearchQuery] = useState(
     searchParams.get('search') || ''
@@ -147,132 +134,12 @@ export default function MyTasksPage() {
                 className='pl-8'
               />
             </div>
-            <Select
-              value={params.status}
-              onValueChange={(value) => {
-                setParams((prev) => ({
-                  ...prev,
-                  status: value === 'ALL' ? '' : value,
-                }));
-              }}
+            <Button
+              onClick={() => setMyTaskFilterOpen(true)}
+              className='w-full sm:w-auto'
             >
-              <SelectTrigger className='w-[180px]'>
-                <SelectValue placeholder='Filter by status' />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value='ALL'>All Status</SelectItem>
-                <SelectItem value='PENDING'>Pending</SelectItem>
-                <SelectItem value='IN_PROGRESS'>In Progress</SelectItem>
-                <SelectItem value='SUBMITTED'>Submitted</SelectItem>
-                <SelectItem value='COMPLETED'>Completed</SelectItem>
-              </SelectContent>
-            </Select>
-            <Select
-              value={params.payment_status}
-              onValueChange={(value) => {
-                setParams((prev) => ({
-                  ...prev,
-                  payment_status: value === 'ALL' ? '' : value,
-                }));
-              }}
-            >
-              <SelectTrigger className='w-[180px]'>
-                <SelectValue placeholder='Filter by payment status' />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value='ALL'>All Status</SelectItem>
-                <SelectItem value='paid'>Paid</SelectItem>
-                <SelectItem value='due'>Due</SelectItem>
-              </SelectContent>
-            </Select>
-            <Select
-              value={params.paper_type}
-              onValueChange={(value) => {
-                setParams((prev) => ({
-                  ...prev,
-                  paper_type: value === 'ALL' ? '' : value,
-                }));
-              }}
-            >
-              <SelectTrigger className='w-[180px]'>
-                <SelectValue placeholder='Filter by paper type' />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value='ALL'>All Type</SelectItem>
-                <SelectItem value='CONFERENCE'>Conference</SelectItem>
-                <SelectItem value='SURVEY'>Survey</SelectItem>
-                <SelectItem value='JOURNAL'>Journal</SelectItem>
-              </SelectContent>
-            </Select>
-            <div className='flex flex-col gap-3'>
-              <Popover open={taskDateOpen} onOpenChange={setTaskDateOpen}>
-                <PopoverTrigger asChild>
-                  <Button
-                    variant='outline'
-                    id='date'
-                    className='w-48 justify-between font-normal'
-                  >
-                    {taskDate ? taskDate.toLocaleDateString() : 'Due date'}
-                    <ChevronDownIcon />
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent
-                  className='w-auto overflow-hidden p-0'
-                  align='start'
-                >
-                  <Calendar
-                    mode='single'
-                    selected={taskDate}
-                    captionLayout='dropdown'
-                    onSelect={(date) => {
-                      setTaskDate(date);
-                      setParams((prev) => ({
-                        ...prev,
-                        due_date: date ? dayjs(date).format('YYYY-MM-DD') : '',
-                      }));
-                      setTaskDateOpen(false);
-                    }}
-                  />
-                </PopoverContent>
-              </Popover>
-            </div>
-            <div className='flex flex-col gap-3'>
-              <Popover open={createdDateOpen} onOpenChange={setCreatedDateOpen}>
-                <PopoverTrigger asChild>
-                  <Button
-                    variant='outline'
-                    id='date'
-                    className='w-48 justify-between font-normal'
-                  >
-                    {createdDate
-                      ? createdDate.toLocaleDateString()
-                      : 'Task Create date'}
-                    <ChevronDownIcon />
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent
-                  className='w-auto overflow-hidden p-0'
-                  align='start'
-                >
-                  <Calendar
-                    mode='single'
-                    selected={createdDate}
-                    captionLayout='dropdown'
-                    onSelect={(date) => {
-                      setCreatedDate(date);
-                      setParams((prev) => ({
-                        ...prev,
-                        task_create: date
-                          ? dayjs(date).format('YYYY-MM-DD')
-                          : '',
-                      }));
-
-                      setCreatedDateOpen(false);
-                    }}
-                  />
-                </PopoverContent>
-              </Popover>
-            </div>
+              <ListFilter /> Filter
+            </Button>
           </div>
           <div className='flex flex-wrap gap-2'>
             {params.search && (
@@ -342,8 +209,6 @@ export default function MyTasksPage() {
                       task_create: '',
                       page: '1',
                     }));
-                    setTaskDate(undefined);
-                    setCreatedDate(undefined);
                   }}
                 >
                   <X className='w-4 h-4 cursor-pointer' />
@@ -360,24 +225,6 @@ export default function MyTasksPage() {
                       due_date: '',
                       page: '1',
                     }));
-                    setTaskDate(undefined);
-                  }}
-                >
-                  <X className='w-4 h-4 cursor-pointer' />
-                </span>
-              </div>
-            )}
-            {params.payment_status && (
-              <div className='pl-3 pr-2 py-1 border flex gap-2 items-center rounded-full text-sm capitalize'>
-                Payment Status: {params.payment_status}
-                <span
-                  onClick={() => {
-                    setParams((prev) => ({
-                      ...prev,
-                      payment_status: '',
-                      page: '1',
-                    }));
-                    setTaskDate(undefined);
                   }}
                 >
                   <X className='w-4 h-4 cursor-pointer' />
@@ -401,9 +248,6 @@ export default function MyTasksPage() {
                   <TableHead>Task Title</TableHead>
                   <TableHead>Due Date</TableHead>
                   <TableHead>Link</TableHead>
-                  <TableHead>Amount</TableHead>
-                  <TableHead>Due Amount</TableHead>
-                  <TableHead>Paid Amount</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>Paper Type</TableHead>
                   <TableHead>Created At</TableHead>
@@ -443,20 +287,7 @@ export default function MyTasksPage() {
                           '-'
                         )}
                       </TableCell>
-                      <TableCell>৳ {task.amount}</TableCell>
-                      <TableCell>
-                        <div className='flex items-center gap-2'>
-                          ৳ {task.paid ? task.amount - task.paid : task.amount}
-                          {getPaymentStatusBadge(
-                            task.paid ? task.amount - task.paid : task.amount
-                          )}
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <div className='flex items-center gap-2'>
-                          ৳ {task.paid}
-                        </div>
-                      </TableCell>
+
                       <TableCell>{getStatusBadge(task.status)}</TableCell>
                       <TableCell>
                         {
@@ -563,25 +394,6 @@ export default function MyTasksPage() {
                           : '-'}
                       </span>
                     </div>
-                    <div className='flex justify-between text-xs'>
-                      <span className='text-muted-foreground'>Amount:</span>
-                      <span className='font-medium'>৳ {task.amount}</span>
-                    </div>
-                    <div className='flex justify-between text-xs'>
-                      <span className='text-muted-foreground'>Due Amount:</span>
-                      <span className='font-medium'>
-                        ৳ {task.paid ? task.amount - task.paid : task.amount}{' '}
-                        {getPaymentStatusBadge(
-                          task.paid ? task.amount - task.paid : task.amount
-                        )}
-                      </span>
-                    </div>
-                    <div className='flex justify-between text-xs'>
-                      <span className='text-muted-foreground'>
-                        Paid Amount:
-                      </span>
-                      <span className='font-medium'>৳ {task.paid}</span>
-                    </div>
                     <div className='flex justify-between items-center text-xs'>
                       <span className='text-muted-foreground'>Status:</span>
                       {getStatusBadge(task.status)}
@@ -671,10 +483,22 @@ export default function MyTasksPage() {
       <Modal
         isOpen={openTaskDetails}
         setIsOpen={setOpenTaskDetails}
-        title='Delivered your task'
+        title='Task Details'
         description=' '
       >
         {selectedTask && <UsersTaskDetails data={selectedTask} />}
+      </Modal>
+      <Modal
+        isOpen={myTaskFilterOpen}
+        setIsOpen={setMyTaskFilterOpen}
+        title='Filter Salary'
+        description=' '
+      >
+        <MyTasksFilter
+          setParams={setParams}
+          params={params}
+          setOpenTaskFilter={setMyTaskFilterOpen}
+        />
       </Modal>
     </div>
   );
