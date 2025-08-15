@@ -23,18 +23,8 @@ export default withAuth(
     const role = (req.nextauth?.token as any)?.user?.role;
     const path = req.nextUrl.pathname;
 
-    console.log({
-      role,
-      path,
-      isAdminPath: ADMIN_PATHS.some((adminPath) => path.startsWith(adminPath)),
-      isUserAllowedPath: USER_ALLOWED_PATHS.some((userPath) =>
-        path.startsWith(userPath)
-      ),
-    });
-
     if (role === 'USER') {
       if (ADMIN_PATHS.some((adminPath) => path.startsWith(adminPath))) {
-        console.log(`USER blocked from admin path: ${path}`);
         return NextResponse.redirect(new URL('/dashboard/my-tasks', req.url));
       }
 
@@ -43,7 +33,6 @@ export default withAuth(
       );
 
       if (!isAllowedPath) {
-        console.log(`USER redirected from unauthorized path: ${path}`);
         return NextResponse.redirect(new URL('/dashboard/my-tasks', req.url));
       }
     }
@@ -53,7 +42,6 @@ export default withAuth(
     }
 
     if (!role) {
-      console.log('No role found, redirecting to signin');
       return NextResponse.redirect(new URL('/signin', req.url));
     }
 

@@ -104,7 +104,7 @@ export default function PaymentsPage() {
             <Card>
               <CardContent className='p-4 text-center'>
                 <div className='text-2xl font-bold'>
-                  {fetchPaymentsCalculationMutation?.data?.totalPayments || ''}
+                  {fetchPaymentsCalculationMutation?.data?.totalPayments || 0}
                 </div>
                 <div className='text-xs text-muted-foreground'>
                   Total Entries

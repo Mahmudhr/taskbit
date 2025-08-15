@@ -419,7 +419,7 @@ export default function SalariesPage() {
           </Card>
           <Card>
             <CardContent className='p-4 text-center'>
-              <div className='text-lg font-bold text-green-600'>
+              <div className='text-2xl font-bold text-green-600'>
                 ৳ {allSalariesCalc?.data.totalAmount}
               </div>
               <div className='text-xs text-muted-foreground'>Total Paid</div>

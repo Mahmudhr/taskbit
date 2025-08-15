@@ -177,7 +177,7 @@ export default function TasksPage() {
             <Card>
               <CardContent className='p-4 text-center'>
                 <div className='text-2xl font-bold'>
-                  {fetchTasksCalculationMutation?.data?.totalTasks || ''}
+                  {fetchTasksCalculationMutation?.data?.totalTasks || 0}
                 </div>
                 <div className='text-xs text-muted-foreground'>
                   Total Entries
@@ -210,7 +210,7 @@ export default function TasksPage() {
             </Card>
             <Card>
               <CardContent className='p-4 text-center'>
-                <div className='text-lg font-bold text-green-600'>
+                <div className='text-2xl font-bold text-green-600'>
                   {fetchTasksCalculationMutation?.data?.submittedCount}
                 </div>
                 <div className='text-xs text-muted-foreground'>Submitted</div>
