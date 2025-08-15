@@ -62,7 +62,7 @@ export function useFetchAllSalaries(searchParams?: string) {
   });
 }
 
-export function useFetchUserSalaries(userId: string, searchParams?: string) {
+export function useFetchUserSalaries(userId?: string, searchParams?: string) {
   return useQuery({
     queryKey: ['user-salaries', userId, searchParams],
     queryFn: () => fetchUserAllSalaries(userId, searchParams),

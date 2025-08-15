@@ -62,18 +62,6 @@ const getPaperTypeBadge = (paperType: string) => {
   );
 };
 
-const getPaymentStatusBadge = (paidAmount: number, totalAmount: number) => {
-  const remaining = totalAmount - paidAmount;
-
-  if (remaining <= 0) {
-    return <Badge variant='default'>Fully Paid</Badge>;
-  } else if (paidAmount > 0) {
-    return <Badge variant='secondary'>Partially Paid</Badge>;
-  } else {
-    return <Badge variant='destructive'>Unpaid</Badge>;
-  }
-};
-
 const DetailItem = ({
   label,
   value,
@@ -158,18 +146,6 @@ export default function UserTaskDetails({ task }: { task: UserTaskType }) {
               Paper Type
             </label>
             <div className='mt-1'>{getPaperTypeBadge(task.paper_type)}</div>
-          </div>
-        </div>
-      </div>
-
-      {/* Payment Status */}
-      <div className='flex items-center justify-between p-3 border rounded-lg'>
-        <div>
-          <label className='text-sm font-medium text-muted-foreground'>
-            Payment Status
-          </label>
-          <div className='mt-1'>
-            {getPaymentStatusBadge(task.paid || 0, task.amount)}
           </div>
         </div>
       </div>

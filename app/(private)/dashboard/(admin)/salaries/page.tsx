@@ -104,9 +104,13 @@ const getPaymentTypeBadge = (type: $Enums.PaymentType) => {
 const SalaryCard = ({
   salary,
   index,
+  setConfirmModal,
+  setDeletingSalaryId,
 }: {
   salary: Omit<SalaryType, 'user'> & { user: Partial<UserType> };
   index: number;
+  setConfirmModal: (open: boolean) => void;
+  setDeletingSalaryId: (id: number | null) => void;
 }) => {
   const [copiedField, setCopiedField] = useState<string | null>(null);
 
@@ -141,16 +145,39 @@ const SalaryCard = ({
       <CardHeader className='pb-3'>
         <div className='flex items-center justify-between'>
           <CardTitle className='text-lg'>Salary #{index + 1}</CardTitle>
-          <div className='text-right'>
-            <div className='text-lg font-semibold text-green-600'>
-              ৳ {salary.amount.toLocaleString()}
+          <div className='flex gap-2'>
+            <div className='text-right'>
+              <div className='text-lg font-semibold text-green-600'>
+                ৳ {salary.amount.toLocaleString()}
+              </div>
+              <div className='text-xs text-muted-foreground'>
+                {monthNames[salary.month - 1]} {salary.year}
+              </div>
             </div>
-            <div className='text-xs text-muted-foreground'>
-              {monthNames[salary.month - 1]} {salary.year}
+            <div>
+              <DropdownMenu>
+                <DropdownMenuTrigger>
+                  <EllipsisVertical className='w-5 h-5 text-gray-600' />
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align='end'>
+                  <DropdownMenuLabel>Options</DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+
+                  <DropdownMenuItem
+                    onClick={() => {
+                      setConfirmModal(true);
+                      setDeletingSalaryId(salary.id);
+                    }}
+                    className='text-red-600'
+                  >
+                    Delete
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
           </div>
         </div>
-        <div className='flex flex-wrap gap-2 mt-2'>
+        <div className='flex flex-wrap gap-2 mt-3'>
           {getStatusBadge(salary.status)}
           {getSalaryTypeBadge(salary.salaryType)}
           {getPaymentTypeBadge(salary.paymentType)}
@@ -225,6 +252,7 @@ export default function SalariesPage() {
   const [isPending, startTransition] = useTransition();
   const [deletingSalaryId, setDeletingSalaryId] = useState<number | null>(null);
   const [openSalaryFilter, setOpenSalaryFilter] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
 
   const [params, setParams] = useState({
     search: searchParams.get('search') || '',
@@ -290,6 +318,15 @@ export default function SalariesPage() {
       });
     });
   };
+
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth < 640);
+    };
+    handleResize(); // Set initial value
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   // if (isLoading) {
   //   return (
@@ -700,11 +737,17 @@ export default function SalariesPage() {
             ))}
 
           {/* Mobile Card View */}
-          {(viewMode === 'cards' || window.innerWidth < 640) &&
+          {(viewMode === 'cards' || isMobile) &&
             (!isLoading ? (
               <div className='space-y-4'>
                 {allSalaries?.data.map((salary, index) => (
-                  <SalaryCard key={salary.id} salary={salary} index={index} />
+                  <SalaryCard
+                    key={salary.id}
+                    salary={salary}
+                    index={index}
+                    setConfirmModal={setConfirmModal}
+                    setDeletingSalaryId={setDeletingSalaryId}
+                  />
                 ))}
               </div>
             ) : (

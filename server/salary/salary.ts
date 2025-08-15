@@ -424,7 +424,7 @@ export const fetchUserSalariesByEmail = async (
   }
 };
 
-export const fetchUserAllSalaries = async (userId: string, data?: string) => {
+export const fetchUserAllSalaries = async (userId?: string, data?: string) => {
   const params = new URLSearchParams(data || '');
   const search = params.get('search') || '';
   const page = parseInt(params.get('page') ?? '1') || 1;
@@ -434,6 +434,7 @@ export const fetchUserAllSalaries = async (userId: string, data?: string) => {
   const month = params.get('month') || '';
   const year = params.get('year') || '';
 
+  if (!userId) throw new Error('User Id is required');
   // Build where clause
   const whereConditions: Prisma.SalaryWhereInput[] = [{ userId: +userId }];
 

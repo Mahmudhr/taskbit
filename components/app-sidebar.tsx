@@ -72,11 +72,11 @@ const userMenuItems = [
     url: '/dashboard/my-tasks',
     icon: User,
   },
-  // {
-  //   title: 'My Payments',
-  //   url: '/dashboard/my-payments',
-  //   icon: CreditCard,
-  // },
+  {
+    title: 'My Payments',
+    url: '/dashboard/my-payments',
+    icon: CreditCard,
+  },
 ];
 
 const MenuSkeleton = () => (
