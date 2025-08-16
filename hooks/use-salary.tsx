@@ -20,6 +20,7 @@ export function useSalary() {
     mutationFn: createSalary,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['salaries'] });
+      queryClient.invalidateQueries({ queryKey: ['users'] });
       queryClient.invalidateQueries({ queryKey: ['user-salaries'] });
       queryClient.invalidateQueries({ queryKey: ['user-salaries-by-email'] });
       queryClient.invalidateQueries({ queryKey: ['salaries-calculations'] });
@@ -31,6 +32,7 @@ export function useSalary() {
     mutationFn: updateSalary,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['salaries'] });
+      queryClient.invalidateQueries({ queryKey: ['users'] });
       queryClient.invalidateQueries({ queryKey: ['user-salaries'] });
       queryClient.invalidateQueries({ queryKey: ['user-salaries-by-email'] });
       queryClient.invalidateQueries({ queryKey: ['salaries-calculations'] });
@@ -42,6 +44,7 @@ export function useSalary() {
     mutationFn: deleteSalary,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['salaries'] });
+      queryClient.invalidateQueries({ queryKey: ['users'] });
       queryClient.invalidateQueries({ queryKey: ['user-salaries'] });
       queryClient.invalidateQueries({ queryKey: ['user-salaries-by-email'] });
       queryClient.invalidateQueries({ queryKey: ['salaries-calculations'] });
