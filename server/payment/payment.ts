@@ -287,13 +287,6 @@ export const fetchAllPayments = async (data?: string) => {
             id: true,
             title: true,
             amount: true,
-            assignedTo: {
-              select: {
-                id: true,
-                name: true,
-                email: true,
-              },
-            },
             client: {
               select: {
                 id: true,
