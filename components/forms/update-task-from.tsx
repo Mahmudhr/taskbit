@@ -32,12 +32,13 @@ import {
   taskStatusConvert,
 } from '@/lib/utils';
 import { useTask } from '@/hooks/use-task';
-import { Loader2Icon, X } from 'lucide-react';
+import { Loader2Icon, X, Users } from 'lucide-react';
 import { PaperType, TaskStatus } from '@prisma/client';
 import { TaskType } from '@/types/common';
 import { useSession } from 'next-auth/react';
 import { SearchClientOption, useClient } from '@/hooks/use-client';
 import { Textarea } from '../ui/textarea';
+import { Badge } from '../ui/badge';
 
 const FormSchema = z.object({
   title: z.string().min(2, { message: 'Title must be at least 2 characters.' }),
@@ -52,9 +53,7 @@ const FormSchema = z.object({
     .min(1, { message: 'Amount must be greater than 0' }),
   status: z.nativeEnum(TaskStatus),
   paper_type: z.nativeEnum(PaperType),
-  assignedToId: z.coerce
-    .number()
-    .min(1, { message: 'Please select a user to assign' }),
+  assignedUserIds: z.array(z.number()).optional(),
   clientId: z.coerce.number().optional(),
   duration: z.string().optional(),
   startDate: z.date().optional(),
@@ -71,9 +70,7 @@ export default function UpdateTaskForm({
 }: UpdateTaskFormProps) {
   const [isPending, startTransition] = useTransition();
   const { updateTaskMutationAsync } = useTask();
-  const [selectedUser, setSelectedUser] = useState<SearchUserOption | null>(
-    null
-  );
+  const [selectedUsers, setSelectedUsers] = useState<SearchUserOption[]>([]);
   const [selectedClient, setSelectedClient] =
     useState<SearchClientOption | null>(null);
   const { data: session } = useSession();
@@ -88,7 +85,7 @@ export default function UpdateTaskForm({
       link: data?.link || '',
       amount: data?.amount || 0,
       status: data?.status || TaskStatus.PENDING,
-      assignedToId: data?.assignedToId || 0,
+      assignedUserIds: [],
       clientId: data?.clientId || 0,
       duration: data?.duration
         ? new Date(data.duration).toISOString().split('T')[0]
@@ -99,32 +96,53 @@ export default function UpdateTaskForm({
   });
 
   useEffect(() => {
-    if (data?.assignedTo) {
-      setSelectedUser({
-        label: `${data.assignedTo.name} (${data.assignedTo.email})`,
-        value: data.assignedTo.id,
-        user: data.assignedTo,
-      });
+    if (
+      data?.assignedUsers &&
+      Array.isArray(data.assignedUsers) &&
+      data.assignedUsers.length > 0
+    ) {
+      const usersToSelect: SearchUserOption[] = data.assignedUsers.map(
+        (user) => ({
+          label: `${user.name} (${user.email})`,
+          value: user.id,
+          user: user,
+        })
+      );
+      setSelectedUsers(usersToSelect);
+      const userIds = usersToSelect.map((u) => u.value);
+      form.setValue('assignedUserIds', userIds);
     }
-  }, [data]);
+  }, [data, form]);
+
+  // Initialize selected client
   useEffect(() => {
     if (data?.client) {
       setSelectedClient({
-        label: `${data.client.name} (${data.client.email})`,
+        label: `${data.client.name} (${data.client.email || ''})`,
         value: data.client.id,
         user: data.client,
       });
     }
   }, [data]);
-  useEffect(() => {
-    if (data?.assignedTo) {
-      setSelectedUser({
-        label: `${data.assignedTo.name} (${data.assignedTo.email})`,
-        value: data.assignedTo.id,
-        user: data.assignedTo,
-      });
+
+  const addUser = (user: SearchUserOption) => {
+    const isAlreadySelected = selectedUsers.some((u) => u.value === user.value);
+    if (!isAlreadySelected) {
+      const newSelectedUsers = [...selectedUsers, user];
+      setSelectedUsers(newSelectedUsers);
+
+      const userIds = newSelectedUsers.map((u) => u.value);
+      form.setValue('assignedUserIds', userIds);
     }
-  }, [data]);
+  };
+
+  const removeUser = (userId: number) => {
+    const newSelectedUsers = selectedUsers.filter((u) => u.value !== userId);
+    setSelectedUsers(newSelectedUsers);
+
+    const userIds = newSelectedUsers.map((u) => u.value);
+    form.setValue('assignedUserIds', userIds);
+  };
 
   function onSubmit(formData: z.infer<typeof FormSchema>) {
     if (!data?.id) return;
@@ -135,6 +153,7 @@ export default function UpdateTaskForm({
         ...formData,
         clientId: formData.clientId === 0 ? undefined : formData.clientId,
         duration: formData.duration ? new Date(formData.duration) : new Date(),
+        assignedUserIds: formData.assignedUserIds || [],
       },
     };
 
@@ -170,6 +189,7 @@ export default function UpdateTaskForm({
             </FormItem>
           )}
         />
+
         <FormField
           control={form.control}
           name='description'
@@ -187,40 +207,79 @@ export default function UpdateTaskForm({
             </FormItem>
           )}
         />
-        <FormField
-          control={form.control}
-          name='assignedToId'
-          render={({ field }) => (
-            <FormItem>
-              <ReactAsyncSelect<SearchUserOption>
-                label='Assign To'
-                name='assignedToId'
-                loadOptions={async (inputValue: string) => {
-                  const options = await search(inputValue);
-                  const currentUserEmail = session?.user?.email;
-                  return options.filter(
-                    (option) => option.user.email !== currentUserEmail
-                  );
-                }}
-                onChange={(option) => {
-                  field.onChange(option ? option.value : '');
-                  setSelectedUser(option);
-                }}
-                isClearable
-                placeholder='Search user by name or email...'
-              />
-              <FormMessage />
-              {selectedUser && (
-                <Card className='mt-4 p-4 text-wrap w-full text-left'>
-                  <div className='font-semibold '>{selectedUser.user.name}</div>
-                  <div className='text-xs text-gray-600 break-all'>
-                    {selectedUser.user.email}
-                  </div>
-                </Card>
-              )}
-            </FormItem>
+
+        <FormItem>
+          <FormLabel className='flex items-center gap-2'>
+            <Users className='h-4 w-4' />
+            Assign To Users
+          </FormLabel>
+
+          {/* User Search */}
+          <ReactAsyncSelect<SearchUserOption>
+            label=''
+            name='userSearch'
+            loadOptions={async (inputValue: string) => {
+              const options = await search(inputValue);
+              const currentUserEmail = session?.user?.email;
+              return options.filter(
+                (option) =>
+                  option.user.email !== currentUserEmail &&
+                  !selectedUsers.some((u) => u.value === option.value)
+              );
+            }}
+            onChange={(option) => {
+              if (option) {
+                addUser(option);
+              }
+            }}
+            value={null} // Always null to allow multiple selections
+            isClearable
+            placeholder='Search user by name or email...'
+          />
+
+          <FormMessage />
+
+          {/* Selected Users Display */}
+          {selectedUsers.length > 0 && (
+            <div className='mt-4 space-y-2'>
+              <div className='text-sm font-medium text-gray-700'>
+                Selected Users ({selectedUsers.length}):
+              </div>
+              <div className='flex flex-wrap gap-2'>
+                {selectedUsers.map((user) => (
+                  <Badge
+                    key={user.value}
+                    variant='secondary'
+                    className='flex items-center gap-2 px-3 py-1'
+                  >
+                    <div className='flex flex-col items-start'>
+                      <span className='font-medium'>{user.user.name}</span>
+                      <span className='text-xs opacity-70'>
+                        {user.user.email}
+                      </span>
+                    </div>
+                    <Button
+                      type='button'
+                      variant='ghost'
+                      size='sm'
+                      className='h-4 w-4 p-0 hover:bg-destructive hover:text-destructive-foreground'
+                      onClick={() => removeUser(user.value)}
+                    >
+                      <X className='h-3 w-3' />
+                    </Button>
+                  </Badge>
+                ))}
+              </div>
+            </div>
           )}
-        />
+
+          {/* Empty State */}
+          {selectedUsers.length === 0 && (
+            <div className='mt-2 text-sm text-gray-500 italic'>
+              No users assigned yet. Search and select users above.
+            </div>
+          )}
+        </FormItem>
         <FormField
           control={form.control}
           name='clientId'
@@ -255,8 +314,8 @@ export default function UpdateTaskForm({
                   <div
                     onClick={() => {
                       setSelectedClient(null);
-                      field.onChange(0); // Set to 0 to match the default value
-                      form.setValue('clientId', 0); // Also update the form value
+                      field.onChange(0);
+                      form.setValue('clientId', 0);
                     }}
                   >
                     <X className='w-4 h-4 cursor-pointer' />
@@ -266,6 +325,7 @@ export default function UpdateTaskForm({
             </FormItem>
           )}
         />
+
         <FormField
           control={form.control}
           name='amount'
@@ -284,6 +344,7 @@ export default function UpdateTaskForm({
             </FormItem>
           )}
         />
+
         <FormField
           control={form.control}
           name='status'
@@ -312,6 +373,7 @@ export default function UpdateTaskForm({
             </FormItem>
           )}
         />
+
         <FormField
           control={form.control}
           name='paper_type'
@@ -340,6 +402,7 @@ export default function UpdateTaskForm({
             </FormItem>
           )}
         />
+
         <FormField
           control={form.control}
           name='duration'
@@ -354,11 +417,11 @@ export default function UpdateTaskForm({
                   {...field}
                 />
               </FormControl>
-
               <FormMessage />
             </FormItem>
           )}
         />
+
         <FormField
           control={form.control}
           name='startDate'

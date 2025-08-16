@@ -3,14 +3,13 @@ import bcrypt from 'bcryptjs';
 import NextAuth, { SessionStrategy, User } from 'next-auth';
 import CredentialsProvider from 'next-auth/providers/credentials';
 
-// Extend NextAuth's User type to include additional fields
 declare module 'next-auth' {
   interface User {
-    id: string; // NextAuth expects id as string
+    id: string;
     name: string | null;
     email: string | null;
-    role: string; // Add role from your UserType
-    phone?: string | null; // Add other fields as needed
+    role: string;
+    phone?: string | null;
     whatsapp?: string | null;
     bkashNumber?: string | null;
     nagadNumber?: string | null;
@@ -65,9 +64,8 @@ const authOptions = {
           return null;
         }
 
-        // Map Prisma user to NextAuth User type
         return {
-          id: user.id.toString(), // Convert number to string
+          id: user.id.toString(),
           email: user.email,
           name: user.name,
           role: user.role,
@@ -102,7 +100,7 @@ const authOptions = {
     }) {
       if (user) {
         token.user = {
-          id: user.id, // Already a string
+          id: user.id,
           email: user.email,
           name: user.name,
           role: user.role,

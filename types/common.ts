@@ -36,8 +36,7 @@ export type UserType = {
   createdAt?: Date;
   updatedAt?: Date;
   tasks?: TaskType[];
-  createdTasks?: TaskType[];
-  payments?: FlatPaymentType[];
+  salary: number | null;
   salaries: {
     id: number; // changed from string
     month: number;

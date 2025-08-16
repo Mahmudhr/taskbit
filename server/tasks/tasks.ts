@@ -303,30 +303,47 @@ export async function updateTask(id: number, data: CreateTaskType) {
         },
       });
 
-      // Handle user assignments if provided
-      if (assignedUserIds && Array.isArray(assignedUserIds)) {
-        // Remove all existing assignments
-        await tx.taskAssignment.updateMany({
+      if (assignedUserIds !== undefined && Array.isArray(assignedUserIds)) {
+        const currentAssignments = await tx.taskAssignment.findMany({
           where: { taskId: id, status: 'ACTIVE' },
-          data: { status: 'REMOVED' },
+          select: { userId: true },
         });
 
-        // Add new assignments if any users specified
-        if (assignedUserIds.length > 0) {
-          const userIdsToAssign = assignedUserIds.map((userId) => +userId);
+        const currentUserIds = currentAssignments.map((a) => a.userId);
+        const newUserIds = assignedUserIds.map((userId) => +userId);
 
-          // Validate users exist
+        const usersToRemove = currentUserIds.filter(
+          (userId) => !newUserIds.includes(userId)
+        );
+
+        const usersToAdd = newUserIds.filter(
+          (userId) => !currentUserIds.includes(userId)
+        );
+
+        if (usersToRemove.length > 0) {
+          await tx.taskAssignment.updateMany({
+            where: {
+              taskId: id,
+              userId: { in: usersToRemove },
+              status: 'ACTIVE',
+            },
+            data: { status: 'REMOVED' },
+          });
+        }
+
+        if (usersToAdd.length > 0) {
           const existingUsers = await tx.user.findMany({
             where: {
-              id: { in: userIdsToAssign },
+              id: { in: usersToAdd },
               isDeleted: false,
               status: 'ACTIVE',
             },
+            select: { id: true },
           });
 
-          if (existingUsers.length !== userIdsToAssign.length) {
+          if (existingUsers.length !== usersToAdd.length) {
             const foundIds = existingUsers.map((u) => u.id);
-            const missingIds = userIdsToAssign.filter(
+            const missingIds = usersToAdd.filter(
               (id) => !foundIds.includes(id)
             );
             throw new Error(
@@ -334,16 +351,48 @@ export async function updateTask(id: number, data: CreateTaskType) {
             );
           }
 
-          // Create new assignments
-          const taskAssignments = userIdsToAssign.map((userId) => ({
-            taskId: id,
-            userId: userId,
-            status: 'ACTIVE' as const,
-          }));
-
-          await tx.taskAssignment.createMany({
-            data: taskAssignments,
+          const existingAssignments = await tx.taskAssignment.findMany({
+            where: {
+              taskId: id,
+              userId: { in: usersToAdd },
+            },
+            select: { userId: true, status: true },
           });
+
+          const existingAssignmentUserIds = existingAssignments.map(
+            (a) => a.userId
+          );
+          const removedAssignments = existingAssignments.filter(
+            (a) => a.status === 'REMOVED'
+          );
+          const removedUserIds = removedAssignments.map((a) => a.userId);
+
+          if (removedUserIds.length > 0) {
+            await tx.taskAssignment.updateMany({
+              where: {
+                taskId: id,
+                userId: { in: removedUserIds },
+                status: 'REMOVED',
+              },
+              data: { status: 'ACTIVE' },
+            });
+          }
+
+          const completelyNewUsers = usersToAdd.filter(
+            (userId) => !existingAssignmentUserIds.includes(userId)
+          );
+
+          if (completelyNewUsers.length > 0) {
+            const newTaskAssignments = completelyNewUsers.map((userId) => ({
+              taskId: id,
+              userId: userId,
+              status: 'ACTIVE' as const,
+            }));
+
+            await tx.taskAssignment.createMany({
+              data: newTaskAssignments,
+            });
+          }
         }
       }
 
@@ -355,7 +404,10 @@ export async function updateTask(id: number, data: CreateTaskType) {
     };
   } catch (error) {
     console.error('Error updating task:', error);
-    throw error;
+    if (error instanceof Error) {
+      throw new Error(error.message);
+    }
+    throw new Error('Failed to update task');
   }
 }
 
@@ -475,19 +527,6 @@ export const fetchAllTasks = async (data?: string) => {
         { title: { contains: search, mode: 'insensitive' } },
         { description: { contains: search, mode: 'insensitive' } },
         { client: { name: { contains: search, mode: 'insensitive' } } },
-        {
-          taskAssignments: {
-            some: {
-              status: 'ACTIVE',
-              user: {
-                OR: [
-                  { name: { contains: search, mode: 'insensitive' } },
-                  { email: { contains: search, mode: 'insensitive' } },
-                ],
-              },
-            },
-          },
-        },
       ],
     });
   }
@@ -605,6 +644,7 @@ export const fetchAllTasks = async (data?: string) => {
         },
         client: { select: { id: true, name: true, email: true } },
         payments: { where: { status: 'COMPLETED' } },
+        createdBy: { select: { id: true, name: true, email: true } },
       },
     });
 
@@ -633,6 +673,7 @@ export const fetchAllTasks = async (data?: string) => {
         assignedUsers, // New field: all assigned users
         payments: task.payments,
         note: task.note,
+        createdBy: task.createdBy,
         paid,
       };
     });

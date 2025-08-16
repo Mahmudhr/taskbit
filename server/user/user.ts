@@ -3,6 +3,7 @@
 import { prisma } from '@/prisma/db';
 import { CreateUserType } from '../types/user-type';
 import bcrypt from 'bcryptjs';
+import { $Enums } from '@prisma/client';
 
 export async function createUser(data: CreateUserType) {
   const { email, password, name, phone, role } = data;
@@ -114,6 +115,7 @@ export const fetchAllUser = async (data?: string) => {
         status: true,
         createdAt: true,
         updatedAt: true,
+        salary: true,
         salaries: {
           select: {
             id: true,
@@ -127,16 +129,7 @@ export const fetchAllUser = async (data?: string) => {
             createdAt: true,
           },
         },
-        tasks: {
-          include: {
-            payments: true,
-          },
-        },
-        createdTasks: {
-          include: {
-            payments: true,
-          },
-        },
+
         payments: true,
       },
     });
@@ -177,18 +170,31 @@ export const UpdateUser = async ({
 }) => {
   const hashedPassword = await bcrypt.hash(data.password, 10);
 
+  const payload: {
+    name: string;
+    email: string;
+    password?: string;
+    role: $Enums.Role;
+    phone: string;
+    status: $Enums.UserStatus;
+    updatedAt: Date;
+  } = {
+    name: data.name,
+    email: data.email,
+    role: data.role,
+    phone: data.phone,
+    status: data.status,
+    updatedAt: new Date(),
+  };
+
+  if (data.password) {
+    payload.password = hashedPassword;
+  }
+
   try {
     const updateUser = await prisma.user.update({
       where: { id },
-      data: {
-        name: data.name,
-        email: data.email,
-        password: data.password && hashedPassword,
-        role: data.role,
-        phone: data.phone,
-        status: data.status,
-        updatedAt: new Date(),
-      },
+      data: payload,
     });
     return {
       ...updateUser,

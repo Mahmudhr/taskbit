@@ -4,5 +4,5 @@ export type CreateUserType = {
   name: string;
   phone: string;
   role: 'ADMIN' | 'USER';
-  status?: 'ACTIVE' | 'INACTIVE';
+  status: 'ACTIVE' | 'INACTIVE';
 };
