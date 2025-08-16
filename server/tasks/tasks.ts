@@ -677,6 +677,7 @@ export const fetchAllTasks = async (data?: string) => {
         target_date: task.targetDate,
         startDate: task.startDate,
         assignedUsers,
+        client: task.client,
         payments: task.payments,
         note: task.note,
         createdBy: task.createdBy,

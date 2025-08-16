@@ -3,14 +3,6 @@
 import { useEffect, useState, useTransition } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import {
   Plus,
@@ -20,6 +12,19 @@ import {
   X,
   EllipsisVertical,
   ListFilter,
+  Calendar,
+  DollarSign,
+  User,
+  Clock,
+  FileText,
+  ExternalLink,
+  Eye,
+  Edit,
+  Trash2,
+  CreditCard,
+  AlertCircle,
+  CheckCircle,
+  Users,
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import AlertModal from '@/components/alert-modal';
@@ -36,8 +41,6 @@ import { useTask } from '@/hooks/use-task';
 import { useDebouncedCallback } from 'use-debounce';
 import UpdateTaskForm from '@/components/forms/update-task-from';
 import { TaskType } from '@/types/common';
-import TaskTableSkeleton from '@/components/skeletons/task-table-skeleton';
-import TaskCardSkeleton from '@/components/skeletons/task-card-skeleton';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -59,10 +62,14 @@ import TaskAssignee from '@/components/task-assignee';
 
 export const getStatusBadge = (status: string) => {
   const variants = {
-    PENDING: 'bg-gray-100 text-gray-800 hover:bg-gray-200',
-    IN_PROGRESS: 'bg-blue-100 text-blue-800 hover:bg-blue-200',
-    SUBMITTED: 'bg-amber-100 text-amber-800 hover:bg-amber-200',
-    COMPLETED: 'bg-green-100 text-green-800 hover:bg-green-200',
+    PENDING:
+      'bg-gray-100 text-gray-800 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-200 dark:hover:bg-gray-700',
+    IN_PROGRESS:
+      'bg-blue-100 text-blue-800 hover:bg-blue-200 dark:bg-blue-900/30 dark:text-blue-300 dark:hover:bg-blue-900/50',
+    SUBMITTED:
+      'bg-amber-100 text-amber-800 hover:bg-amber-200 dark:bg-amber-900/30 dark:text-amber-300 dark:hover:bg-amber-900/50',
+    COMPLETED:
+      'bg-green-100 text-green-800 hover:bg-green-200 dark:bg-green-900/30 dark:text-green-300 dark:hover:bg-green-900/50',
   } as const;
   return (
     <Badge className={cn(variants[status as keyof typeof variants], 'text-xs')}>
@@ -75,17 +82,618 @@ export const getPaymentStatusBadge = (amount: number) => {
   if (amount > 0) {
     return (
       <Badge variant='destructive' className='text-xs'>
+        <AlertCircle className='w-3 h-3 mr-1' />
         Due
       </Badge>
     );
   } else {
     return (
-      <Badge className='bg-green-100 text-green-800 hover:bg-green-200text-xs'>
+      <Badge className='bg-green-100 text-green-800 hover:bg-green-200 dark:bg-green-900/30 dark:text-green-300 dark:hover:bg-green-900/50 text-xs'>
+        <CheckCircle className='w-3 h-3 mr-1' />
         Paid
       </Badge>
     );
   }
 };
+
+// ✅ Mobile TaskCard Component
+const TaskCard = ({
+  task,
+  index,
+  onEdit,
+  onView,
+  onDelete,
+  onPayment,
+}: {
+  task: TaskType;
+  index: number;
+  onEdit: () => void;
+  onView: () => void;
+  onDelete: () => void;
+  onPayment: () => void;
+}) => {
+  const dueAmount = task.paid ? task.amount - task.paid : task.amount;
+
+  return (
+    <Card className='hover:shadow-lg transition-all duration-200 border-l-4 border-l-blue-500 dark:border-l-blue-400 h-full dark:bg-gray-800/50'>
+      <CardHeader className='pb-3'>
+        <div className='flex items-start justify-between'>
+          <div className='flex items-center gap-3 flex-1'>
+            <div className='bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-300 rounded-full w-10 h-10 flex items-center justify-center text-sm font-semibold'>
+              #{index + 1}
+            </div>
+            <div className='flex-1 min-w-0'>
+              <h3
+                className='font-semibold text-lg truncate mb-1 dark:text-gray-100'
+                title={task.title}
+              >
+                {task.title}
+              </h3>
+              <div className='flex items-center gap-2 flex-wrap'>
+                {getStatusBadge(task.status)}
+                <Badge
+                  variant='outline'
+                  className='text-xs dark:border-gray-600 dark:text-gray-300'
+                >
+                  {
+                    paperTypeConvert[
+                      task.paper_type as keyof typeof paperTypeConvert
+                    ]
+                  }
+                </Badge>
+              </div>
+            </div>
+          </div>
+          <div className='flex items-center gap-2'>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant='ghost'
+                  size='sm'
+                  className='h-8 w-8 p-0 dark:hover:bg-gray-700'
+                >
+                  <EllipsisVertical className='w-4 h-4' />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent
+                align='end'
+                className='w-48 dark:bg-gray-800 dark:border-gray-700'
+              >
+                <DropdownMenuLabel className='dark:text-gray-200'>
+                  Actions
+                </DropdownMenuLabel>
+                <DropdownMenuSeparator className='dark:border-gray-700' />
+                <DropdownMenuItem
+                  onClick={onView}
+                  className='cursor-pointer dark:hover:bg-gray-700 dark:text-gray-200'
+                >
+                  <Eye className='mr-2 h-4 w-4' />
+                  View Details
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={onEdit}
+                  className='cursor-pointer dark:hover:bg-gray-700 dark:text-gray-200'
+                >
+                  <Edit className='mr-2 h-4 w-4' />
+                  Edit Task
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={onPayment}
+                  disabled={task.amount === 0}
+                  className='cursor-pointer dark:hover:bg-gray-700 dark:text-gray-200'
+                >
+                  <CreditCard className='mr-2 h-4 w-4' />
+                  Make Payment
+                </DropdownMenuItem>
+                <DropdownMenuSeparator className='dark:border-gray-700' />
+                <DropdownMenuItem
+                  onClick={onDelete}
+                  className='cursor-pointer text-red-600 focus:text-red-600 dark:text-red-400 dark:focus:text-red-400'
+                >
+                  <Trash2 className='mr-2 h-4 w-4' />
+                  Delete Task
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+        </div>
+      </CardHeader>
+
+      <CardContent className='space-y-4 flex-1'>
+        {/* Client and Assignee Section */}
+        <div className='space-y-3'>
+          <div className='flex items-center gap-3'>
+            <div className='bg-purple-50 dark:bg-purple-900/30 p-2 rounded-lg'>
+              <User className='w-4 h-4 text-purple-600 dark:text-purple-400' />
+            </div>
+            <div className='flex-1 min-w-0'>
+              <p className='text-xs text-muted-foreground dark:text-gray-400'>
+                Client
+              </p>
+              <p className='font-medium text-sm truncate dark:text-gray-200'>
+                {task.client?.name || 'No Client'}
+              </p>
+            </div>
+          </div>
+
+          <div className='flex items-center gap-3'>
+            <div className='bg-green-50 dark:bg-green-900/30 p-2 rounded-lg'>
+              <Users className='w-4 h-4 text-green-600 dark:text-green-400' />
+            </div>
+            <div className='flex-1 min-w-0'>
+              <p className='text-xs text-muted-foreground dark:text-gray-400'>
+                Assigned To
+              </p>
+              <div className='mt-1'>
+                <TaskAssignee data={task.assignedUsers} />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Dates Section */}
+        <div className='grid grid-cols-1 gap-3'>
+          <div className='flex items-center gap-3'>
+            <div className='bg-blue-50 dark:bg-blue-900/30 p-2 rounded-lg'>
+              <Calendar className='w-4 h-4 text-blue-600 dark:text-blue-400' />
+            </div>
+            <div className='flex-1'>
+              <p className='text-xs text-muted-foreground dark:text-gray-400'>
+                Start Date
+              </p>
+              <p className='font-medium text-sm dark:text-gray-200'>
+                {task.startDate
+                  ? dayjs(task.startDate).format('DD MMM YYYY')
+                  : 'Not Set'}
+              </p>
+            </div>
+          </div>
+
+          <div className='flex items-center gap-3'>
+            <div className='bg-orange-50 dark:bg-orange-900/30 p-2 rounded-lg'>
+              <Clock className='w-4 h-4 text-orange-600 dark:text-orange-400' />
+            </div>
+            <div className='flex-1'>
+              <p className='text-xs text-muted-foreground dark:text-gray-400'>
+                Due Date
+              </p>
+              <p className='font-medium text-sm dark:text-gray-200'>
+                {task.duration
+                  ? dayjs(task.duration).format('DD MMM YYYY')
+                  : 'Not Set'}
+              </p>
+            </div>
+          </div>
+
+          <div className='flex items-center gap-3'>
+            <div className='bg-gray-50 dark:bg-gray-700/50 p-2 rounded-lg'>
+              <Calendar className='w-4 h-4 text-gray-600 dark:text-gray-400' />
+            </div>
+            <div className='flex-1'>
+              <p className='text-xs text-muted-foreground dark:text-gray-400'>
+                Created
+              </p>
+              <p className='font-medium text-sm dark:text-gray-200'>
+                {dayjs(task.createdAt).format('DD MMM YYYY')}
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* Payment Information */}
+        <div className='bg-gray-50 dark:bg-gray-700/50 rounded-lg p-4'>
+          <div className='flex items-center justify-between mb-3'>
+            <div className='flex items-center gap-2'>
+              <DollarSign className='w-4 h-4 text-green-600 dark:text-green-400' />
+              <span className='font-medium text-sm dark:text-gray-200'>
+                Payment Status
+              </span>
+            </div>
+            {getPaymentStatusBadge(dueAmount)}
+          </div>
+
+          <div className='grid grid-cols-3 gap-2 text-sm'>
+            <div className='text-center'>
+              <p className='text-muted-foreground dark:text-gray-400 text-xs'>
+                Total
+              </p>
+              <p className='font-bold text-base dark:text-gray-200'>
+                ৳{task.amount}
+              </p>
+            </div>
+            <div className='text-center'>
+              <p className='text-muted-foreground dark:text-gray-400 text-xs'>
+                Paid
+              </p>
+              <p className='font-bold text-base text-green-600 dark:text-green-400'>
+                ৳{task.paid || 0}
+              </p>
+            </div>
+            <div className='text-center'>
+              <p className='text-muted-foreground dark:text-gray-400 text-xs'>
+                Due
+              </p>
+              <p
+                className={`font-bold text-base ${
+                  dueAmount > 0
+                    ? 'text-red-600 dark:text-red-400'
+                    : 'text-green-600 dark:text-green-400'
+                }`}
+              >
+                ৳{dueAmount}
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* Links and Description */}
+        <div className='space-y-3'>
+          {task.link && (
+            <div className='flex items-center gap-2'>
+              <ExternalLink className='w-4 h-4 text-blue-600 dark:text-blue-400' />
+              <Link
+                href={task.link}
+                target='_blank'
+                rel='noopener noreferrer'
+                className='text-blue-600 dark:text-blue-400 hover:underline text-sm font-medium truncate'
+              >
+                View Task Link
+              </Link>
+            </div>
+          )}
+
+          {task.description && (
+            <div className='space-y-1'>
+              <div className='flex items-center gap-2'>
+                <FileText className='w-4 h-4 text-gray-600 dark:text-gray-400' />
+                <span className='text-xs text-muted-foreground dark:text-gray-400'>
+                  Description
+                </span>
+              </div>
+              <p className='text-sm text-gray-600 dark:text-gray-300 line-clamp-3 pl-6'>
+                {task.description}
+              </p>
+            </div>
+          )}
+        </div>
+      </CardContent>
+    </Card>
+  );
+};
+
+// ✅ Desktop TaskRow Component
+const TaskRow = ({
+  task,
+  index,
+  onEdit,
+  onView,
+  onDelete,
+  onPayment,
+}: {
+  task: TaskType;
+  index: number;
+  onEdit: () => void;
+  onView: () => void;
+  onDelete: () => void;
+  onPayment: () => void;
+}) => {
+  const dueAmount = task.paid ? task.amount - task.paid : task.amount;
+
+  return (
+    <div className='bg-white dark:bg-gray-800/50 border dark:border-gray-700 rounded-lg hover:shadow-md dark:hover:shadow-lg transition-all duration-200 p-4'>
+      {/* Top Row - Title and Actions */}
+      <div className='flex items-start justify-between mb-3'>
+        <div className='flex items-center gap-3 flex-1'>
+          <div className='bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-300 rounded-full w-8 h-8 flex items-center justify-center text-sm font-semibold'>
+            #{index + 1}
+          </div>
+          <div className='flex-1 min-w-0'>
+            <h3
+              className='font-semibold text-lg truncate mb-1 dark:text-gray-100'
+              title={task.title}
+            >
+              {task.title}
+            </h3>
+            <div className='flex items-center gap-2'>
+              {getStatusBadge(task.status)}
+              <Badge
+                variant='outline'
+                className='text-xs dark:border-gray-600 dark:text-gray-300'
+              >
+                {
+                  paperTypeConvert[
+                    task.paper_type as keyof typeof paperTypeConvert
+                  ]
+                }
+              </Badge>
+            </div>
+          </div>
+        </div>
+        <div className='flex items-center gap-2'>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant='ghost'
+                size='sm'
+                className='h-8 w-8 p-0 dark:hover:bg-gray-700'
+              >
+                <EllipsisVertical className='w-4 h-4' />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent
+              align='end'
+              className='w-48 dark:bg-gray-800 dark:border-gray-700'
+            >
+              <DropdownMenuLabel className='dark:text-gray-200'>
+                Actions
+              </DropdownMenuLabel>
+              <DropdownMenuSeparator className='dark:border-gray-700' />
+              <DropdownMenuItem
+                onClick={onView}
+                className='cursor-pointer dark:hover:bg-gray-700 dark:text-gray-200'
+              >
+                <Eye className='mr-2 h-4 w-4' />
+                View Details
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={onEdit}
+                className='cursor-pointer dark:hover:bg-gray-700 dark:text-gray-200'
+              >
+                <Edit className='mr-2 h-4 w-4' />
+                Edit Task
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={onPayment}
+                disabled={task.amount === 0}
+                className='cursor-pointer dark:hover:bg-gray-700 dark:text-gray-200'
+              >
+                <CreditCard className='mr-2 h-4 w-4' />
+                Make Payment
+              </DropdownMenuItem>
+              <DropdownMenuSeparator className='dark:border-gray-700' />
+              <DropdownMenuItem
+                onClick={onDelete}
+                className='cursor-pointer text-red-600 focus:text-red-600 dark:text-red-400 dark:focus:text-red-400'
+              >
+                <Trash2 className='mr-2 h-4 w-4' />
+                Delete Task
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+      </div>
+
+      {/* Middle Row - Main Information */}
+      <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-3'>
+        {/* Client */}
+        <div className='flex items-center gap-3'>
+          <div className='bg-purple-50 dark:bg-purple-900/30 p-2 rounded-lg'>
+            <User className='w-4 h-4 text-purple-600 dark:text-purple-400' />
+          </div>
+          <div className='flex-1 min-w-0'>
+            <p className='text-xs text-muted-foreground dark:text-gray-400'>
+              Client
+            </p>
+            <p className='font-medium text-sm truncate dark:text-gray-200'>
+              {task.client?.name || 'No Client'}
+            </p>
+          </div>
+        </div>
+
+        {/* Assigned Users */}
+        <div className='flex items-center gap-3'>
+          <div className='bg-green-50 dark:bg-green-900/30 p-2 rounded-lg'>
+            <Users className='w-4 h-4 text-green-600 dark:text-green-400' />
+          </div>
+          <div className='flex-1 min-w-0'>
+            <p className='text-xs text-muted-foreground dark:text-gray-400'>
+              Assigned To
+            </p>
+            <div className='mt-1'>
+              <TaskAssignee data={task.assignedUsers} />
+            </div>
+          </div>
+        </div>
+
+        {/* Start Date */}
+        <div className='flex items-center gap-3'>
+          <div className='bg-blue-50 dark:bg-blue-900/30 p-2 rounded-lg'>
+            <Calendar className='w-4 h-4 text-blue-600 dark:text-blue-400' />
+          </div>
+          <div>
+            <p className='text-xs text-muted-foreground dark:text-gray-400'>
+              Start Date
+            </p>
+            <p className='font-medium text-sm dark:text-gray-200'>
+              {task.startDate
+                ? dayjs(task.startDate).format('DD MMM')
+                : 'Not Set'}
+            </p>
+          </div>
+        </div>
+
+        {/* Due Date */}
+        <div className='flex items-center gap-3'>
+          <div className='bg-orange-50 dark:bg-orange-900/30 p-2 rounded-lg'>
+            <Clock className='w-4 h-4 text-orange-600 dark:text-orange-400' />
+          </div>
+          <div>
+            <p className='text-xs text-muted-foreground dark:text-gray-400'>
+              Due Date
+            </p>
+            <p className='font-medium text-sm dark:text-gray-200'>
+              {task.duration
+                ? dayjs(task.duration).format('DD MMM')
+                : 'Not Set'}
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {/* Bottom Row - Payment Information */}
+      <div className='bg-gray-50 dark:bg-gray-700/50 rounded-lg p-3'>
+        <div className='flex items-center justify-between'>
+          {/* Payment Details */}
+          <div className='flex items-center gap-6'>
+            <div className='flex items-center gap-2'>
+              <DollarSign className='w-4 h-4 text-green-600 dark:text-green-400' />
+              <span className='font-medium text-sm dark:text-gray-200'>
+                Payment:
+              </span>
+            </div>
+
+            <div className='flex items-center gap-4 text-sm'>
+              <div className='text-center'>
+                <p className='text-muted-foreground dark:text-gray-400 text-xs'>
+                  Total
+                </p>
+                <p className='font-bold dark:text-gray-200'>৳{task.amount}</p>
+              </div>
+              <div className='text-center'>
+                <p className='text-muted-foreground dark:text-gray-400 text-xs'>
+                  Paid
+                </p>
+                <p className='font-bold text-green-600 dark:text-green-400'>
+                  ৳{task.paid || 0}
+                </p>
+              </div>
+              <div className='text-center'>
+                <p className='text-muted-foreground dark:text-gray-400 text-xs'>
+                  Due
+                </p>
+                <p
+                  className={`font-bold ${
+                    dueAmount > 0
+                      ? 'text-red-600 dark:text-red-400'
+                      : 'text-green-600 dark:text-green-400'
+                  }`}
+                >
+                  ৳{dueAmount}
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* Payment Status & Links */}
+          <div className='flex items-center gap-3'>
+            {getPaymentStatusBadge(dueAmount)}
+
+            {task.link && (
+              <Link
+                href={task.link}
+                target='_blank'
+                rel='noopener noreferrer'
+                className='flex items-center gap-1 text-blue-600 dark:text-blue-400 hover:underline text-sm font-medium'
+              >
+                <ExternalLink className='w-3 h-3' />
+                Link
+              </Link>
+            )}
+
+            <div className='text-xs text-muted-foreground dark:text-gray-400'>
+              Created: {dayjs(task.createdAt).format('DD MMM')}
+            </div>
+          </div>
+        </div>
+
+        {/* Description Row (if exists) */}
+        {task.description && (
+          <div className='mt-3 pt-3 border-t border-gray-200 dark:border-gray-600'>
+            <div className='flex items-start gap-2'>
+              <FileText className='w-4 h-4 text-gray-600 dark:text-gray-400 mt-0.5 flex-shrink-0' />
+              <p className='text-sm text-gray-600 dark:text-gray-300 line-clamp-2'>
+                {task.description}
+              </p>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
+// ✅ Mobile Card Skeleton
+const TaskCardSkeleton = () => (
+  <Card className='h-96 border-l-4 border-l-gray-200 dark:border-l-gray-600 dark:bg-gray-800/50'>
+    <CardHeader>
+      <div className='flex items-start justify-between'>
+        <div className='flex items-center gap-3 flex-1'>
+          <Skeleton className='w-10 h-10 rounded-full dark:bg-gray-700' />
+          <div className='flex-1'>
+            <Skeleton className='h-5 w-3/4 mb-2 dark:bg-gray-700' />
+            <div className='flex gap-2'>
+              <Skeleton className='h-4 w-16 dark:bg-gray-700' />
+              <Skeleton className='h-4 w-20 dark:bg-gray-700' />
+            </div>
+          </div>
+        </div>
+        <Skeleton className='w-8 h-8 dark:bg-gray-700' />
+      </div>
+    </CardHeader>
+    <CardContent className='space-y-4'>
+      <div className='space-y-3'>
+        {[...Array(2)].map((_, i) => (
+          <div key={i} className='flex items-center gap-3'>
+            <Skeleton className='w-8 h-8 rounded-lg dark:bg-gray-700' />
+            <div className='flex-1'>
+              <Skeleton className='h-3 w-12 mb-1 dark:bg-gray-700' />
+              <Skeleton className='h-4 w-24 dark:bg-gray-700' />
+            </div>
+          </div>
+        ))}
+      </div>
+      <div className='space-y-3'>
+        {[...Array(3)].map((_, i) => (
+          <div key={i} className='flex items-center gap-3'>
+            <Skeleton className='w-8 h-8 rounded-lg dark:bg-gray-700' />
+            <div className='flex-1'>
+              <Skeleton className='h-3 w-16 mb-1 dark:bg-gray-700' />
+              <Skeleton className='h-4 w-20 dark:bg-gray-700' />
+            </div>
+          </div>
+        ))}
+      </div>
+      <div className='bg-gray-50 dark:bg-gray-700/50 rounded-lg p-4'>
+        <Skeleton className='h-16 w-full dark:bg-gray-700' />
+      </div>
+    </CardContent>
+  </Card>
+);
+
+// ✅ Desktop Row Skeleton
+const TaskRowSkeleton = () => (
+  <div className='bg-white dark:bg-gray-800/50 border dark:border-gray-700 rounded-lg p-4 mb-3'>
+    <div className='flex items-start justify-between mb-3'>
+      <div className='flex items-center gap-3 flex-1'>
+        <Skeleton className='w-8 h-8 rounded-full dark:bg-gray-700' />
+        <div>
+          <Skeleton className='h-5 w-48 mb-2 dark:bg-gray-700' />
+          <div className='flex gap-2'>
+            <Skeleton className='h-4 w-16 dark:bg-gray-700' />
+            <Skeleton className='h-4 w-20 dark:bg-gray-700' />
+          </div>
+        </div>
+      </div>
+      <Skeleton className='w-8 h-8 dark:bg-gray-700' />
+    </div>
+
+    <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-3'>
+      {[...Array(4)].map((_, i) => (
+        <div key={i} className='flex items-center gap-3'>
+          <Skeleton className='w-8 h-8 rounded-lg dark:bg-gray-700' />
+          <div>
+            <Skeleton className='h-3 w-12 mb-1 dark:bg-gray-700' />
+            <Skeleton className='h-4 w-20 dark:bg-gray-700' />
+          </div>
+        </div>
+      ))}
+    </div>
+
+    <div className='bg-gray-50 dark:bg-gray-700/50 rounded-lg p-3'>
+      <Skeleton className='h-16 w-full dark:bg-gray-700' />
+    </div>
+  </div>
+);
 
 export default function TasksPage() {
   const searchParams = useSearchParams();
@@ -131,7 +739,7 @@ export default function TasksPage() {
     if (taskId === null) return;
     startTransition(() => {
       toast.promise(deleteTaskAsync(taskId), {
-        loading: 'Deleting user...',
+        loading: 'Deleting task...',
         success: () => {
           setConfirmModal(false);
           return 'Successfully Task Deleted';
@@ -163,74 +771,87 @@ export default function TasksPage() {
     router.push(queryString);
   }, [queryString, router]);
 
-  console.log({ fetchTasks });
-
   return (
     <div className='space-y-6'>
       <div className='flex items-center justify-between'>
-        <h1 className='text-xl md:text-3xl font-bold'>All Tasks</h1>
+        <h1 className='text-xl md:text-3xl font-bold dark:text-gray-100'>
+          All Tasks
+        </h1>
         <Button onClick={() => setTaskOpen(true)}>
           <Plus className='mr-2 h-4 w-4' />
           Add Task
         </Button>
       </div>
+
+      {/* Statistics Cards */}
       <div>
         {!fetchTasksCalculationMutation.isLoading ? (
           <div className='grid grid-cols-2 md:grid-cols-5 gap-4'>
-            <Card>
+            <Card className='dark:bg-gray-800/50 dark:border-gray-700'>
               <CardContent className='p-4 text-center'>
-                <div className='text-2xl font-bold'>
+                <div className='text-2xl font-bold dark:text-gray-100'>
                   {fetchTasksCalculationMutation?.data?.totalTasks || 0}
                 </div>
-                <div className='text-xs text-muted-foreground'>
+                <div className='text-xs text-muted-foreground dark:text-gray-400'>
                   Total Entries
                 </div>
               </CardContent>
             </Card>
-            <Card>
+            <Card className='dark:bg-gray-800/50 dark:border-gray-700'>
               <CardContent className='p-4 text-center'>
-                <div className='text-2xl font-bold text-green-600'>
+                <div className='text-2xl font-bold text-green-600 dark:text-green-400'>
                   {fetchTasksCalculationMutation?.data?.completedCount}
                 </div>
-                <div className='text-xs text-muted-foreground'>Completed</div>
+                <div className='text-xs text-muted-foreground dark:text-gray-400'>
+                  Completed
+                </div>
               </CardContent>
             </Card>
-            <Card>
+            <Card className='dark:bg-gray-800/50 dark:border-gray-700'>
               <CardContent className='p-4 text-center'>
-                <div className='text-2xl font-bold text-yellow-600'>
+                <div className='text-2xl font-bold text-yellow-600 dark:text-yellow-400'>
                   {fetchTasksCalculationMutation?.data?.inProgressCount}
                 </div>
-                <div className='text-xs text-muted-foreground'>In Progress</div>
+                <div className='text-xs text-muted-foreground dark:text-gray-400'>
+                  In Progress
+                </div>
               </CardContent>
             </Card>
-            <Card>
+            <Card className='dark:bg-gray-800/50 dark:border-gray-700'>
               <CardContent className='p-4 text-center'>
-                <div className='text-2xl font-bold text-red-600'>
+                <div className='text-2xl font-bold text-red-600 dark:text-red-400'>
                   {fetchTasksCalculationMutation?.data?.pendingCount}
                 </div>
-                <div className='text-xs text-muted-foreground'>Pending</div>
+                <div className='text-xs text-muted-foreground dark:text-gray-400'>
+                  Pending
+                </div>
               </CardContent>
             </Card>
-            <Card>
+            <Card className='dark:bg-gray-800/50 dark:border-gray-700'>
               <CardContent className='p-4 text-center'>
-                <div className='text-2xl font-bold text-green-600'>
+                <div className='text-2xl font-bold text-green-600 dark:text-green-400'>
                   {fetchTasksCalculationMutation?.data?.submittedCount}
                 </div>
-                <div className='text-xs text-muted-foreground'>Submitted</div>
+                <div className='text-xs text-muted-foreground dark:text-gray-400'>
+                  Submitted
+                </div>
               </CardContent>
             </Card>
           </div>
         ) : (
           <div className='grid grid-cols-1 md:grid-cols-4 gap-4'>
             {[1, 2, 3, 4].map((i) => (
-              <Card key={i}>
+              <Card
+                key={i}
+                className='dark:bg-gray-800/50 dark:border-gray-700'
+              >
                 <CardContent className='p-6'>
                   <div className='flex items-center justify-between'>
                     <div>
-                      <Skeleton className='h-4 w-24 mb-2' />
-                      <Skeleton className='h-8 w-16' />
+                      <Skeleton className='h-4 w-24 mb-2 dark:bg-gray-700' />
+                      <Skeleton className='h-8 w-16 dark:bg-gray-700' />
                     </div>
-                    <Skeleton className='h-8 w-8' />
+                    <Skeleton className='h-8 w-8 dark:bg-gray-700' />
                   </div>
                 </CardContent>
               </Card>
@@ -239,14 +860,15 @@ export default function TasksPage() {
         )}
       </div>
 
-      <Card>
+      {/* Search & Filters */}
+      <Card className='dark:bg-gray-800/50 dark:border-gray-700'>
         <CardHeader>
-          <CardTitle>Search & Filters</CardTitle>
+          <CardTitle className='dark:text-gray-100'>Search & Filters</CardTitle>
         </CardHeader>
         <CardContent className='space-y-2'>
           <div className='flex flex-col gap-4 md:flex-row md:items-center'>
             <div className='relative flex-1'>
-              <Search className='absolute left-2 top-2.5 h-4 w-4 text-muted-foreground' />
+              <Search className='absolute left-2 top-2.5 h-4 w-4 text-muted-foreground dark:text-gray-400' />
               <Input
                 placeholder='Search tasks...'
                 value={searchQuery}
@@ -254,19 +876,20 @@ export default function TasksPage() {
                   debounced(e.target.value);
                   setSearchQuery(e.target.value);
                 }}
-                className='pl-8'
+                className='pl-8 dark:bg-gray-700/50 dark:border-gray-600 dark:text-gray-100 dark:placeholder-gray-400'
               />
             </div>
             <Button
               onClick={() => setOpenSalaryFilter(true)}
               className='w-full sm:w-auto'
             >
-              <ListFilter /> Filter
+              <ListFilter className='mr-2 h-4 w-4' />
+              Filter
             </Button>
           </div>
           <div className='flex flex-wrap gap-2'>
             {params.search && (
-              <div className='pl-3 pr-2 py-1 border flex gap-2 items-center rounded-full text-sm'>
+              <div className='pl-3 pr-2 py-1 border dark:border-gray-600 dark:bg-gray-700/50 flex gap-2 items-center rounded-full text-sm dark:text-gray-200'>
                 {params.search}
                 <span
                   onClick={() => {
@@ -282,7 +905,7 @@ export default function TasksPage() {
               </div>
             )}
             {params.client && (
-              <div className='pl-3 pr-2 py-1 border flex gap-2 items-center rounded-full text-sm'>
+              <div className='pl-3 pr-2 py-1 border dark:border-gray-600 dark:bg-gray-700/50 flex gap-2 items-center rounded-full text-sm dark:text-gray-200'>
                 Client: {params.client}
                 <span
                   onClick={() => {
@@ -297,7 +920,7 @@ export default function TasksPage() {
               </div>
             )}
             {params.status && (
-              <div className='pl-3 pr-2 py-1 border flex gap-2 items-center rounded-full text-sm'>
+              <div className='pl-3 pr-2 py-1 border dark:border-gray-600 dark:bg-gray-700/50 flex gap-2 items-center rounded-full text-sm dark:text-gray-200'>
                 Status:{' '}
                 {params.status !== 'ALL'
                   ? taskStatusConvert[
@@ -317,7 +940,7 @@ export default function TasksPage() {
               </div>
             )}
             {params.paper_type && (
-              <div className='pl-3 pr-2 py-1 border flex gap-2 items-center rounded-full text-sm'>
+              <div className='pl-3 pr-2 py-1 border dark:border-gray-600 dark:bg-gray-700/50 flex gap-2 items-center rounded-full text-sm dark:text-gray-200'>
                 Paper Type:{' '}
                 {
                   paperTypeConvert[
@@ -339,7 +962,7 @@ export default function TasksPage() {
             )}
 
             {params.due_date && (
-              <div className='pl-3 pr-2 py-1 border flex gap-2 items-center rounded-full text-sm'>
+              <div className='pl-3 pr-2 py-1 border dark:border-gray-600 dark:bg-gray-700/50 flex gap-2 items-center rounded-full text-sm dark:text-gray-200'>
                 Due Date: {dayjs(params.due_date).format('DD-MM-YYYY')}
                 <span
                   onClick={() => {
@@ -355,7 +978,7 @@ export default function TasksPage() {
               </div>
             )}
             {params.due_month && (
-              <div className='pl-3 pr-2 py-1 border flex gap-2 items-center rounded-full text-sm'>
+              <div className='pl-3 pr-2 py-1 border dark:border-gray-600 dark:bg-gray-700/50 flex gap-2 items-center rounded-full text-sm dark:text-gray-200'>
                 Due Month:{' '}
                 {dayjs()
                   .month(parseInt(params.due_month) - 1)
@@ -374,7 +997,7 @@ export default function TasksPage() {
               </div>
             )}
             {params.due_year && (
-              <div className='pl-3 pr-2 py-1 border flex gap-2 items-center rounded-full text-sm'>
+              <div className='pl-3 pr-2 py-1 border dark:border-gray-600 dark:bg-gray-700/50 flex gap-2 items-center rounded-full text-sm dark:text-gray-200'>
                 Due Year: {params.due_year}
                 <span
                   onClick={() => {
@@ -390,7 +1013,7 @@ export default function TasksPage() {
               </div>
             )}
             {params.task_create && (
-              <div className='pl-3 pr-2 py-1 border flex gap-2 items-center rounded-full text-sm'>
+              <div className='pl-3 pr-2 py-1 border dark:border-gray-600 dark:bg-gray-700/50 flex gap-2 items-center rounded-full text-sm dark:text-gray-200'>
                 Task Create: {dayjs(params.task_create).format('DD-MM-YYYY')}
                 <span
                   onClick={() => {
@@ -406,7 +1029,7 @@ export default function TasksPage() {
               </div>
             )}
             {params.task_create_month && (
-              <div className='pl-3 pr-2 py-1 border flex gap-2 items-center rounded-full text-sm'>
+              <div className='pl-3 pr-2 py-1 border dark:border-gray-600 dark:bg-gray-700/50 flex gap-2 items-center rounded-full text-sm dark:text-gray-200'>
                 Create Month:{' '}
                 {dayjs()
                   .month(parseInt(params.task_create_month) - 1)
@@ -425,7 +1048,7 @@ export default function TasksPage() {
               </div>
             )}
             {params.task_create_year && (
-              <div className='pl-3 pr-2 py-1 border flex gap-2 items-center rounded-full text-sm'>
+              <div className='pl-3 pr-2 py-1 border dark:border-gray-600 dark:bg-gray-700/50 flex gap-2 items-center rounded-full text-sm dark:text-gray-200'>
                 Create Year: {params.task_create_year}
                 <span
                   onClick={() => {
@@ -441,7 +1064,7 @@ export default function TasksPage() {
               </div>
             )}
             {params.payment_status && (
-              <div className='pl-3 pr-2 py-1 border flex gap-2 items-center rounded-full text-sm capitalize'>
+              <div className='pl-3 pr-2 py-1 border dark:border-gray-600 dark:bg-gray-700/50 flex gap-2 items-center rounded-full text-sm capitalize dark:text-gray-200'>
                 Payment Status: {params.payment_status}
                 <span
                   onClick={() => {
@@ -460,328 +1083,81 @@ export default function TasksPage() {
         </CardContent>
       </Card>
 
-      <Card>
+      {/* Tasks List */}
+      <Card className='dark:bg-gray-800/50 dark:border-gray-700'>
         <CardHeader>
-          <CardTitle>Tasks List</CardTitle>
+          <CardTitle className='dark:text-gray-100'>Tasks List</CardTitle>
         </CardHeader>
         <CardContent>
-          {/* Desktop Table View */}
-          <div className='hidden md:block'>
-            {!fetchTasksMutation.isLoading ? (
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Serial</TableHead>
-                    <TableHead>Task Title</TableHead>
-                    <TableHead>Link</TableHead>
-                    <TableHead>Start Date</TableHead>
-                    <TableHead>Due Date</TableHead>
-                    <TableHead>Delivery Date</TableHead>
-                    <TableHead>Total Amount</TableHead>
-                    <TableHead>Due Amount</TableHead>
-                    {/* <TableHead>Due Amount</TableHead> */}
-                    <TableHead>Paid Amount</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Assignee</TableHead>
-                    <TableHead>Client</TableHead>
-                    <TableHead>Paper Type</TableHead>
-                    <TableHead>Created At</TableHead>
-                    <TableHead className='text-center'>Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody className='text-xs'>
+          {!fetchTasksMutation.isLoading ? (
+            <>
+              {/* ✅ Mobile View: Cards */}
+              <div className='flex flex-col md:hidden gap-5'>
+                {fetchTasks &&
+                  fetchTasks.data.map((task, index) => (
+                    <TaskCard
+                      key={task.id}
+                      task={task}
+                      index={index}
+                      onEdit={() => handleEditTask(task)}
+                      onView={() => handleViewTask(task)}
+                      onDelete={() => {
+                        setTaskId(task.id);
+                        setConfirmModal(true);
+                      }}
+                      onPayment={() => {
+                        setOpenPayment(true);
+                        setTaskId(task.id);
+                      }}
+                    />
+                  ))}
+              </div>
+
+              {/* ✅ Desktop View: Rows */}
+              <div className='hidden md:block'>
+                <div className='flex flex-col gap-5'>
                   {fetchTasks &&
                     fetchTasks.data.map((task, index) => (
-                      <TableRow key={task.id}>
-                        <TableCell>{index + 1}</TableCell>
-                        <TableCell className='font-medium'>
-                          {task.title}
-                        </TableCell>
-                        <TableCell className='font-medium'>
-                          {task.link ? (
-                            <Link
-                              href={task.link || '#'}
-                              className='text-blue-600 hover:underline'
-                              target='_blank'
-                              rel='noopener noreferrer'
-                            >
-                              View Link
-                            </Link>
-                          ) : (
-                            '-'
-                          )}
-                        </TableCell>
-                        <TableCell>
-                          {task.startDate
-                            ? dayjs(task.startDate).format('DD-MM-YYYY')
-                            : '-'}
-                        </TableCell>
-                        <TableCell>
-                          {task.duration
-                            ? dayjs(task.duration).format('DD-MM-YYYY')
-                            : '-'}
-                        </TableCell>
-                        <TableCell>
-                          {task.target_date
-                            ? dayjs(task.target_date).format('DD-MM-YYYY')
-                            : '-'}
-                        </TableCell>
-                        <TableCell>
-                          <div className='flex items-center gap-2'>
-                            <span>৳ {task.amount}</span>
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <div className='flex items-center gap-2'>
-                            ৳{' '}
-                            {task.paid ? task.amount - task.paid : task.amount}
-                            {getPaymentStatusBadge(
-                              task.paid ? task.amount - task.paid : task.amount
-                            )}
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <div className='flex items-center gap-2'>
-                            ৳ {task.paid}
-                          </div>
-                        </TableCell>
-                        <TableCell>{getStatusBadge(task.status)}</TableCell>
-                        <TableCell>
-                          <TaskAssignee data={task.assignedUsers} />
-                        </TableCell>
-                        <TableCell>
-                          {task.client?.name ? (
-                            task.client.name.length > 20 ? (
-                              task.client.name.slice(0, 20) + '...'
-                            ) : (
-                              task.client.name
-                            )
-                          ) : (
-                            <div>-</div>
-                          )}
-                        </TableCell>
-                        <TableCell>
-                          {
-                            paperTypeConvert[
-                              task.paper_type as keyof typeof paperTypeConvert
-                            ]
-                          }
-                        </TableCell>
-                        <TableCell>
-                          {dayjs(task.createdAt).format('DD-MM-YYYY')}
-                        </TableCell>
-                        <TableCell className='flex gap-2 justify-center'>
-                          <div>
-                            <DropdownMenu>
-                              <DropdownMenuTrigger>
-                                <EllipsisVertical className='w-5 h-5 text-gray-600' />
-                              </DropdownMenuTrigger>
-                              <DropdownMenuContent align='end'>
-                                <DropdownMenuLabel>Options</DropdownMenuLabel>
-                                <DropdownMenuSeparator />
-                                <DropdownMenuItem
-                                  onClick={() => handleViewTask(task)}
-                                >
-                                  Details
-                                </DropdownMenuItem>
-                                <DropdownMenuItem
-                                  onClick={() => {
-                                    setOpenPayment(true);
-                                    setTaskId(task.id);
-                                  }}
-                                  disabled={task.amount === 0}
-                                >
-                                  Make Payment
-                                </DropdownMenuItem>
-                                <DropdownMenuItem
-                                  onClick={() => handleEditTask(task)}
-                                >
-                                  Edit
-                                </DropdownMenuItem>
-                                <DropdownMenuItem
-                                  onClick={() => {
-                                    setTaskId(task.id);
-                                    setConfirmModal(true);
-                                  }}
-                                >
-                                  Delete
-                                </DropdownMenuItem>
-                              </DropdownMenuContent>
-                            </DropdownMenu>
-                          </div>
-                          {/* <Button variant='outline' size='sm'>
-                            <Eye className='h-4 w-4' />
-                          </Button>
-                          <Button
-                            variant='outline'
-      where: { id },                   size='sm'
-                            onClick={() => handleEditTask(task)}
-                          >
-                            <Edit className='h-4 w-4' />
-                          </Button> */}
-                        </TableCell>
-                      </TableRow>
+                      <TaskRow
+                        key={task.id}
+                        task={task}
+                        index={index}
+                        onEdit={() => handleEditTask(task)}
+                        onView={() => handleViewTask(task)}
+                        onDelete={() => {
+                          setTaskId(task.id);
+                          setConfirmModal(true);
+                        }}
+                        onPayment={() => {
+                          setOpenPayment(true);
+                          setTaskId(task.id);
+                        }}
+                      />
                     ))}
-                </TableBody>
-              </Table>
-            ) : (
-              <TaskTableSkeleton />
-            )}
-          </div>
+                </div>
+              </div>
+            </>
+          ) : (
+            <>
+              {/* ✅ Mobile Loading: Card Skeletons */}
+              <div className='grid grid-cols-1 md:hidden gap-6'>
+                {[...Array(4)].map((_, i) => (
+                  <TaskCardSkeleton key={i} />
+                ))}
+              </div>
 
-          {/* Mobile Card View */}
-          <div className='md:hidden space-y-4'>
-            {!fetchTasksMutation.isLoading ? (
-              fetchTasks &&
-              fetchTasks.data.map((task, index) => (
-                <Card key={task.id} className='p-4'>
-                  <div className='flex justify-between items-start mb-3'>
-                    <div className='flex items-center gap-2'>
-                      <span className='text-sm text-muted-foreground'>
-                        #{index + 1}
-                      </span>
-                      <h3 className='font-medium'>{task.title}</h3>
-                    </div>
-                    <div className='flex gap-2'>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger>
-                          <EllipsisVertical className='w-5 h-5 text-gray-600' />
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align='end'>
-                          <DropdownMenuLabel>Options</DropdownMenuLabel>
-                          <DropdownMenuSeparator />
-                          <DropdownMenuItem
-                            onClick={() => handleViewTask(task)}
-                          >
-                            Details
-                          </DropdownMenuItem>
-                          <DropdownMenuItem
-                            onClick={() => {
-                              setOpenPayment(true);
-                              setTaskId(task.id);
-                            }}
-                            disabled={task.amount === 0}
-                          >
-                            Make Payment
-                          </DropdownMenuItem>
-                          <DropdownMenuItem
-                            onClick={() => handleEditTask(task)}
-                          >
-                            Edit
-                          </DropdownMenuItem>
-                          <DropdownMenuItem
-                            onClick={() => {
-                              setTaskId(task.id);
-                              setConfirmModal(true);
-                            }}
-                          >
-                            Delete
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </div>
-                  </div>
-                  <div className='space-y-2 text-sm'>
-                    <div className='flex justify-between text-xs'>
-                      <span className='text-muted-foreground'>Start Date:</span>
-                      <span>
-                        {task.startDate
-                          ? dayjs(task.startDate).format('DD-MM-YYYY')
-                          : ''}
-                      </span>
-                    </div>
-                    <div className='flex justify-between text-xs'>
-                      <span className='text-muted-foreground'>Due Date:</span>
-                      <span>
-                        {task.duration
-                          ? dayjs(task.duration).format('DD-MM-YYYY')
-                          : ''}
-                      </span>
-                    </div>
-                    <div className='flex justify-between text-xs'>
-                      <span className='text-muted-foreground'>Link:</span>
-                      {task.link ? (
-                        <Link
-                          href={task.link || '#'}
-                          className='text-blue-600 hover:underline'
-                          target='_blank'
-                          rel='noopener noreferrer'
-                        >
-                          View Link
-                        </Link>
-                      ) : (
-                        '-'
-                      )}
-                    </div>
-                    <div className='flex justify-between items-center text-xs'>
-                      <span className='text-muted-foreground'>Amount:</span>
-                      <div className='flex items-center gap-2'>
-                        <span className='font-medium'>৳ {task.amount}</span>
-                      </div>
-                    </div>
-                    <div className='flex justify-between items-center text-xs'>
-                      <span className='text-muted-foreground'>Due Amount:</span>
-                      <div className='flex items-center gap-2'>
-                        <span className='font-medium'>
-                          ৳ {task.paid ? task.amount - task.paid : task.amount}
-                        </span>
-                        {getPaymentStatusBadge(
-                          task.paid ? task.amount - task.paid : task.amount
-                        )}
-                      </div>
-                    </div>
-                    <div className='flex justify-between items-center text-xs'>
-                      <span className='text-muted-foreground'>
-                        Paid Amount:
-                      </span>
-                      <div className='flex items-center gap-2'>
-                        <span className='font-medium'>৳ {task.paid}</span>
-                      </div>
-                    </div>
-                    <div className='flex justify-between text-xs'>
-                      <span className='text-muted-foreground'>Assignee:</span>
-                      <span>
-                        <TaskAssignee data={task.assignedUsers} />
-                      </span>
-                    </div>
-                    <div className='flex justify-between items-center text-xs'>
-                      <span className='text-muted-foreground'>Status:</span>
-                      {getStatusBadge(task.status)}
-                    </div>
-                    <div className='flex justify-between items-center text-xs'>
-                      <span className='text-muted-foreground'>Client:</span>
-                      {task.client?.name ? (
-                        task.client.name.length > 20 ? (
-                          task.client.name.slice(0, 20) + '...'
-                        ) : (
-                          task.client.name
-                        )
-                      ) : (
-                        <div>-</div>
-                      )}
-                    </div>
-                    <div className='flex justify-between items-center text-xs'>
-                      <span className='text-muted-foreground'>Paper Type:</span>
-                      {
-                        paperTypeConvert[
-                          task.paper_type as keyof typeof paperTypeConvert
-                        ]
-                      }
-                    </div>
-                    <div className='flex justify-between items-center text-xs'>
-                      <span className='text-muted-foreground'>Created At:</span>
-                      {dayjs(task.createdAt).format('DD-MM-YYYY')}
-                    </div>
-                  </div>
-                </Card>
-              ))
-            ) : (
-              <TaskCardSkeleton />
-            )}
-          </div>
+              {/* ✅ Desktop Loading: Row Skeletons */}
+              <div className='hidden md:block space-y-0'>
+                {[...Array(6)].map((_, i) => (
+                  <TaskRowSkeleton key={i} />
+                ))}
+              </div>
+            </>
+          )}
+
           {fetchTasks && fetchTasks?.meta.count > 0 && (
-            <div className='flex md:flex-row flex-col items-center md:justify-between justify-center gap-3 py-4'>
-              <div className='text-sm text-muted-foreground'>
+            <div className='flex md:flex-row flex-col items-center md:justify-between justify-center gap-3 py-4 mt-6'>
+              <div className='text-sm text-muted-foreground dark:text-gray-400'>
                 Showing 1 to {fetchTasks?.data.length} of{' '}
                 {fetchTasks?.meta.count} results
               </div>
@@ -821,6 +1197,8 @@ export default function TasksPage() {
           )}
         </CardContent>
       </Card>
+
+      {/* Modals */}
       <AlertModal
         isOpen={taskOpen}
         setIsOpen={setTaskOpen}
@@ -841,7 +1219,7 @@ export default function TasksPage() {
         isOpen={confirmModal}
         setIsOpen={setConfirmModal}
         loading={isPending}
-        title='This action cannot be undone. This will permanently delete your user '
+        title='This action cannot be undone. This will permanently delete your task '
         onClick={handleDeleTask}
       />
       <AlertModal
