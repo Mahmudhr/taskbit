@@ -18,10 +18,10 @@ export async function createTasks(data: CreateTaskType) {
     paper_type,
     startDate,
     assignedUserIds,
+    targetDate,
   } = data;
 
   try {
-    // ✅ Fixed: Properly type the taskData object
     const taskData: {
       title: string;
       description?: string;
@@ -30,7 +30,8 @@ export async function createTasks(data: CreateTaskType) {
       paper_type: PaperType;
       duration?: Date;
       startDate: Date | null;
-      clientId?: number; // Added this property
+      clientId?: number;
+      targetDate: Date | null;
     } = {
       title,
       description,
@@ -39,10 +40,11 @@ export async function createTasks(data: CreateTaskType) {
       paper_type,
       duration,
       startDate: startDate ? new Date(startDate) : null,
+      targetDate: targetDate ? new Date(targetDate) : null,
     };
 
     if (clientId) {
-      taskData.clientId = clientId; // ✅ Now this works without type error
+      taskData.clientId = clientId;
     }
 
     let userIdsToAssign: number[] = [];
@@ -283,6 +285,7 @@ export async function updateTask(id: number, data: CreateTaskType) {
     clientId,
     startDate,
     assignedUserIds,
+    targetDate,
   } = data;
 
   try {
@@ -300,6 +303,7 @@ export async function updateTask(id: number, data: CreateTaskType) {
           updatedAt: new Date(),
           clientId: clientId || null,
           startDate: startDate ? new Date(startDate) : null,
+          targetDate,
         },
       });
 
@@ -670,7 +674,9 @@ export const fetchAllTasks = async (data?: string) => {
         clientId: task.clientId,
         createdById: task.createdById,
         amount: task.amount,
-        assignedUsers, // New field: all assigned users
+        target_date: task.targetDate,
+        startDate: task.startDate,
+        assignedUsers,
         payments: task.payments,
         note: task.note,
         createdBy: task.createdBy,

@@ -57,6 +57,7 @@ const FormSchema = z.object({
   clientId: z.coerce.number().optional(),
   duration: z.string().optional(),
   startDate: z.date().optional(),
+  targetDate: z.date().optional(),
 });
 
 type UpdateTaskFormProps = {
@@ -92,6 +93,7 @@ export default function UpdateTaskForm({
         : '',
       paper_type: data?.paper_type || 'CONFERENCE',
       startDate: data?.startDate || undefined,
+      targetDate: data?.target_date || undefined,
     },
   });
 
@@ -428,6 +430,33 @@ export default function UpdateTaskForm({
           render={({ field }) => (
             <FormItem>
               <FormLabel>Start Date</FormLabel>
+              <FormControl>
+                <Input
+                  className='w-full'
+                  type='date'
+                  placeholder='Select start date'
+                  value={formatDateToString(field.value)}
+                  onChange={(e) => {
+                    const dateValue = e.target.value
+                      ? new Date(e.target.value)
+                      : null;
+                    field.onChange(dateValue);
+                  }}
+                  onBlur={field.onBlur}
+                  name={field.name}
+                  ref={field.ref}
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name='targetDate'
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Delivery Date</FormLabel>
               <FormControl>
                 <Input
                   className='w-full'

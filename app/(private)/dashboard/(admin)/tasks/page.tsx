@@ -163,6 +163,8 @@ export default function TasksPage() {
     router.push(queryString);
   }, [queryString, router]);
 
+  console.log({ fetchTasks });
+
   return (
     <div className='space-y-6'>
       <div className='flex items-center justify-between'>
@@ -474,6 +476,7 @@ export default function TasksPage() {
                     <TableHead>Link</TableHead>
                     <TableHead>Start Date</TableHead>
                     <TableHead>Due Date</TableHead>
+                    <TableHead>Delivery Date</TableHead>
                     <TableHead>Total Amount</TableHead>
                     <TableHead>Due Amount</TableHead>
                     {/* <TableHead>Due Amount</TableHead> */}
@@ -514,7 +517,14 @@ export default function TasksPage() {
                             : '-'}
                         </TableCell>
                         <TableCell>
-                          {dayjs(task.duration).format('DD-MM-YYYY')}
+                          {task.duration
+                            ? dayjs(task.duration).format('DD-MM-YYYY')
+                            : '-'}
+                        </TableCell>
+                        <TableCell>
+                          {task.target_date
+                            ? dayjs(task.target_date).format('DD-MM-YYYY')
+                            : '-'}
                         </TableCell>
                         <TableCell>
                           <div className='flex items-center gap-2'>

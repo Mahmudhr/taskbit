@@ -425,6 +425,12 @@ export default function UsersPage() {
                         </span>
                       </div>
                       <div className='flex justify-between'>
+                        <span className='text-muted-foreground'>Salary:</span>
+                        <span className='capitalize'>
+                          {user.salary ? `৳ ${user.salary}` : '-'}
+                        </span>
+                      </div>
+                      <div className='flex justify-between'>
                         <span className='text-muted-foreground'>Email:</span>
                         <span>
                           {user.email.length > 25

@@ -11,6 +11,7 @@ export type CreateTaskType = {
   updatedAt?: Date;
   startDate?: Date | null;
   assignedUserIds?: number[];
+  targetDate?: Date | null;
 };
 
 export type UpdateUserTaskDeliveryType = {

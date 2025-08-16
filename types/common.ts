@@ -65,6 +65,7 @@ export type TaskType = {
   clientId?: number | null;
   paper_type: $Enums.PaperType;
   paid?: number;
+  target_date: Date | null;
   client?: {
     id: number;
     name: string;

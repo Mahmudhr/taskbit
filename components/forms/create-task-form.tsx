@@ -53,9 +53,10 @@ const FormSchema = z.object({
     .min(1, { message: 'Amount must be greater than 0' }),
   status: z.nativeEnum(TaskStatus),
   paper_type: z.nativeEnum(PaperType),
-  assignedUserIds: z.array(z.number()).optional(), // Changed from assignedToId
+  assignedUserIds: z.array(z.number()).optional(),
   clientId: z.coerce.number().optional(),
   duration: z.string().optional(),
+  targetDate: z.date().optional().nullable(),
   startDate: z.date().optional().nullable(),
 });
 
@@ -66,7 +67,7 @@ type CreateTaskFormProps = {
 export default function CreateTaskForm({ setIsOpen }: CreateTaskFormProps) {
   const [isPending, startTransition] = useTransition();
   const { createTaskMutationAsync } = useTask();
-  const [selectedUsers, setSelectedUsers] = useState<SearchUserOption[]>([]); // Array of users
+  const [selectedUsers, setSelectedUsers] = useState<SearchUserOption[]>([]);
   const [selectedClient, setSelectedClient] =
     useState<SearchClientOption | null>(null);
   const { search } = useSearchUser();
@@ -80,9 +81,10 @@ export default function CreateTaskForm({ setIsOpen }: CreateTaskFormProps) {
       description: '',
       amount: 0,
       status: TaskStatus.PENDING,
-      assignedUserIds: [], // Empty array for multiple users
+      assignedUserIds: [],
       clientId: 0,
       duration: '',
+      targetDate: null,
       startDate: null,
     },
   });
@@ -115,7 +117,7 @@ export default function CreateTaskForm({ setIsOpen }: CreateTaskFormProps) {
       ...data,
       clientId: data.clientId === 0 ? undefined : data.clientId,
       duration: data.duration ? new Date(data.duration) : new Date(),
-      assignedUserIds: data.assignedUserIds || [], // Ensure it's an array
+      assignedUserIds: data.assignedUserIds || [],
     };
 
     startTransition(() => {
@@ -393,6 +395,33 @@ export default function CreateTaskForm({ setIsOpen }: CreateTaskFormProps) {
                   type='date'
                   placeholder='Select date'
                   {...field}
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name='targetDate'
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Delivery Date</FormLabel>
+              <FormControl>
+                <Input
+                  className='w-full'
+                  type='date'
+                  placeholder='Select start date'
+                  value={formatDateToString(field.value)}
+                  onChange={(e) => {
+                    const dateValue = e.target.value
+                      ? new Date(e.target.value)
+                      : null;
+                    field.onChange(dateValue);
+                  }}
+                  onBlur={field.onBlur}
+                  name={field.name}
+                  ref={field.ref}
                 />
               </FormControl>
               <FormMessage />
