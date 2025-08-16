@@ -20,11 +20,15 @@ model User {
   branchName      String?   @map("branch_name")
   bankName        String?   @map("bank_name")
   swiftCode       String?   @map("swift_code")
+  salary          Float?    // Added salary field
   role            Role      @default(USER)
   status          UserStatus @default(ACTIVE)
   createdAt       DateTime  @default(now()) @map("created_at")
   updatedAt       DateTime  @updatedAt @map("updated_at")
-  tasks           Task[]    @relation("AssignedTasks")
+  
+  // Many-to-many relationship with tasks through TaskAssignment
+  taskAssignments TaskAssignment[] @relation("UserTaskAssignments")
+  
   createdTasks    Task[]    @relation("CreatedTasks")
   payments        Payment[] @relation("UserPayments")
   salaries        Salary[]  @relation("UserSalaries")
@@ -62,16 +66,34 @@ model Task {
   updatedAt       DateTime  @updatedAt @map("updated_at")
   duration        DateTime?
   startDate       DateTime? @map("start_date")
-  assignedTo      User?     @relation("AssignedTasks", fields: [assignedToId], references: [id])
-  assignedToId    Int?      @map("assigned_to_id")
+  
+  // Many-to-many relationship with users through TaskAssignment
+  taskAssignments TaskAssignment[] @relation("TaskAssignments")
+  
   payments        Payment[] @relation("TaskPayments")
   createdBy       User?     @relation("CreatedTasks", fields: [createdById], references: [id])
   createdById     Int?      @map("created_by_id")
   client          Client?   @relation("ClientTasks", fields: [clientId], references: [id])
   clientId        Int?      @map("client_id")
-  
 
   @@map("tasks")
+}
+
+// Junction table for many-to-many relationship between Task and User
+model TaskAssignment {
+  id          Int      @id @default(autoincrement())
+  taskId      Int      @map("task_id")
+  userId      Int      @map("user_id")
+  assignedAt  DateTime @default(now()) @map("assigned_at")
+  status      TaskAssignmentStatus @default(ACTIVE)
+  
+  // Relations
+  task        Task     @relation("TaskAssignments", fields: [taskId], references: [id], onDelete: Cascade)
+  user        User     @relation("UserTaskAssignments", fields: [userId], references: [id], onDelete: Cascade)
+  
+  // Composite unique constraint to prevent duplicate assignments
+  @@unique([taskId, userId])
+  @@map("task_assignments")
 }
 
 model Payment {
@@ -162,9 +184,18 @@ enum PaperType {
   CONFERENCE
   SURVEY
   JOURNAL
+  Journal_Q1
+  THESIS
+  Bicent_RESEARCH
 }
 
 enum ClientStatus {
   ACTIVE
   INACTIVE
+}
+
+// New enum for task assignment status
+enum TaskAssignmentStatus {
+  ACTIVE
+  REMOVED
 }

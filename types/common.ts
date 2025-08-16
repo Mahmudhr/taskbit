@@ -59,10 +59,8 @@ export type TaskType = {
   link?: string | null;
   amount: number;
   status: $Enums.TaskStatus;
-  isDeleted: boolean;
   createdAt: Date;
   updatedAt: Date;
-  assignedToId?: number | null;
   duration: Date | null;
   createdById?: number | null;
   clientId?: number | null;
@@ -73,13 +71,15 @@ export type TaskType = {
     name: string;
     email: string | null;
   } | null;
-  assignedTo?: {
-    id: number;
-    name: string;
-    email: string;
-  } | null;
+
   payments: FlatPaymentType[];
   startDate?: Date | null;
+  assignedUsers:
+    | {
+        id: number;
+        name: string;
+        email: string;
+      }[];
 };
 
 export type UserTaskType = {

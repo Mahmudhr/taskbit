@@ -55,6 +55,7 @@ import Modal from '@/components/modal';
 import TaskDetailsView from '@/components/task-details-view';
 import TaskFilter from '@/components/filters/task-filter';
 import { Skeleton } from '@/components/ui/skeleton';
+import TaskAssignee from '@/components/task-assignee';
 
 export const getStatusBadge = (status: string) => {
   const variants = {
@@ -536,11 +537,7 @@ export default function TasksPage() {
                         </TableCell>
                         <TableCell>{getStatusBadge(task.status)}</TableCell>
                         <TableCell>
-                          {task.assignedTo?.name
-                            ? task.assignedTo.name.length > 20
-                              ? task.assignedTo.name.slice(0, 20) + '...'
-                              : task.assignedTo.name
-                            : ''}
+                          <TaskAssignee data={task.assignedUsers} />
                         </TableCell>
                         <TableCell>
                           {task.client?.name ? (
@@ -734,11 +731,7 @@ export default function TasksPage() {
                     <div className='flex justify-between text-xs'>
                       <span className='text-muted-foreground'>Assignee:</span>
                       <span>
-                        {task.assignedTo?.name
-                          ? task.assignedTo.name.length > 20
-                            ? task.assignedTo.name.slice(0, 20) + '...'
-                            : task.assignedTo.name
-                          : ''}
+                        <TaskAssignee data={task.assignedUsers} />
                       </span>
                     </div>
                     <div className='flex justify-between items-center text-xs'>

@@ -17,10 +17,21 @@ export async function createTasks(data: CreateTaskType) {
     clientId,
     paper_type,
     startDate,
-    assignedToId,
+    assignedUserIds,
   } = data;
+
   try {
-    const payload: CreateTaskType = {
+    // ✅ Fixed: Properly type the taskData object
+    const taskData: {
+      title: string;
+      description?: string;
+      amount: number;
+      status: TaskStatus;
+      paper_type: PaperType;
+      duration?: Date;
+      startDate: Date | null;
+      clientId?: number; // Added this property
+    } = {
       title,
       description,
       amount,
@@ -30,20 +41,233 @@ export async function createTasks(data: CreateTaskType) {
       startDate: startDate ? new Date(startDate) : null,
     };
 
-    if (assignedToId) {
-      payload.assignedToId = +assignedToId;
+    if (clientId) {
+      taskData.clientId = clientId; // ✅ Now this works without type error
     }
 
-    if (clientId) {
-      payload.clientId = clientId;
+    let userIdsToAssign: number[] = [];
+
+    if (assignedUserIds && Array.isArray(assignedUserIds)) {
+      userIdsToAssign = assignedUserIds.map((id) => +id);
     }
-    await prisma.task.create({
-      data: payload,
+
+    const result = await prisma.$transaction(async (tx) => {
+      const newTask = await tx.task.create({
+        data: taskData,
+      });
+
+      if (userIdsToAssign.length > 0) {
+        const existingUsers = await tx.user.findMany({
+          where: {
+            id: { in: userIdsToAssign },
+            isDeleted: false,
+            status: 'ACTIVE',
+          },
+          select: { id: true, name: true },
+        });
+
+        if (existingUsers.length !== userIdsToAssign.length) {
+          const foundIds = existingUsers.map((u) => u.id);
+          const missingIds = userIdsToAssign.filter(
+            (id) => !foundIds.includes(id)
+          );
+          throw new Error(
+            `Users not found or inactive: ${missingIds.join(', ')}`
+          );
+        }
+
+        const taskAssignments = userIdsToAssign.map((userId) => ({
+          taskId: newTask.id,
+          userId: userId,
+          status: 'ACTIVE' as const,
+        }));
+
+        await tx.taskAssignment.createMany({
+          data: taskAssignments,
+        });
+      }
+
+      return newTask;
     });
+
     return {
-      message: 'Task Created Successfully',
+      message: `Task created successfully and assigned to ${userIdsToAssign.length} user(s)`,
+      taskId: result.id,
+      assignedUsers: userIdsToAssign.length,
     };
   } catch (error) {
+    console.error('Error creating task:', error);
+    if (error instanceof Error) {
+      throw new Error(error.message);
+    }
+    throw new Error('Failed to create task');
+  }
+}
+
+// Updated type definition - add this to your types file
+// filepath: e:\Frontend\task-management-system\server\types\tasks-type.ts
+// export interface CreateTaskType {
+//   title: string;
+//   description?: string;
+//   amount: number;
+//   status: TaskStatus;
+//   duration?: Date;
+//   clientId?: number;
+//   paper_type: PaperType;
+//   startDate?: Date | null;
+//   assignedToId?: number | string | number[]; // Backward compatibility
+//   assignedUserIds?: number[]; // New preferred way
+// }
+
+// Helper function to add users to existing task
+export async function assignUsersToTask(taskId: number, userIds: number[]) {
+  try {
+    const result = await prisma.$transaction(async (tx) => {
+      const task = await tx.task.findUnique({
+        where: { id: taskId, isDeleted: false },
+      });
+
+      if (!task) {
+        throw new Error('Task not found');
+      }
+
+      const existingUsers = await tx.user.findMany({
+        where: {
+          id: { in: userIds },
+          isDeleted: false,
+          status: 'ACTIVE',
+        },
+      });
+
+      if (existingUsers.length !== userIds.length) {
+        const foundIds = existingUsers.map((u) => u.id);
+        const missingIds = userIds.filter((id) => !foundIds.includes(id));
+        throw new Error(
+          `Users not found or inactive: ${missingIds.join(', ')}`
+        );
+      }
+
+      const existingAssignments = await tx.taskAssignment.findMany({
+        where: {
+          taskId: taskId,
+          userId: { in: userIds },
+          status: 'ACTIVE',
+        },
+      });
+
+      const alreadyAssignedIds = existingAssignments.map((a) => a.userId);
+      const newAssignments = userIds.filter(
+        (id) => !alreadyAssignedIds.includes(id)
+      );
+
+      if (newAssignments.length === 0) {
+        return {
+          message: 'All users are already assigned to this task',
+          newAssignments: 0,
+        };
+      }
+
+      const taskAssignments = newAssignments.map((userId) => ({
+        taskId: taskId,
+        userId: userId,
+        status: 'ACTIVE' as const,
+      }));
+
+      await tx.taskAssignment.createMany({
+        data: taskAssignments,
+      });
+
+      return {
+        message: `${newAssignments.length} user(s) assigned to task`,
+        newAssignments: newAssignments.length,
+      };
+    });
+
+    return result;
+  } catch (error) {
+    console.error('Error assigning users to task:', error);
+    throw error;
+  }
+}
+
+// Helper function to remove users from task
+export async function removeUsersFromTask(taskId: number, userIds: number[]) {
+  try {
+    const result = await prisma.taskAssignment.updateMany({
+      where: {
+        taskId: taskId,
+        userId: { in: userIds },
+        status: 'ACTIVE',
+      },
+      data: {
+        status: 'REMOVED',
+      },
+    });
+
+    return {
+      message: `${result.count} user(s) removed from task`,
+      removedCount: result.count,
+    };
+  } catch (error) {
+    console.error('Error removing users from task:', error);
+    throw error;
+  }
+}
+
+// Helper function to get task with assigned users
+export async function getTaskWithUsers(taskId: number) {
+  try {
+    const task = await prisma.task.findUnique({
+      where: { id: taskId, isDeleted: false },
+      include: {
+        taskAssignments: {
+          where: { status: 'ACTIVE' },
+          include: {
+            user: {
+              select: {
+                id: true,
+                name: true,
+                email: true,
+                phone: true,
+              },
+            },
+          },
+        },
+        client: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+          },
+        },
+        payments: {
+          where: { status: 'COMPLETED' },
+          select: {
+            id: true,
+            amount: true,
+            user: {
+              select: {
+                id: true,
+                name: true,
+              },
+            },
+          },
+        },
+      },
+    });
+
+    if (!task) {
+      throw new Error('Task not found');
+    }
+
+    const paid = task.payments.reduce((total, p) => total + p.amount, 0);
+
+    return {
+      ...task,
+      paid,
+    };
+  } catch (error) {
+    console.error('Error fetching task with users:', error);
     throw error;
   }
 }
@@ -58,42 +282,79 @@ export async function updateTask(id: number, data: CreateTaskType) {
     paper_type,
     clientId,
     startDate,
-    assignedToId,
+    assignedUserIds,
   } = data;
 
   try {
-    const payload: {
-      title: string;
-      description?: string;
-      amount: number;
-      status: TaskStatus;
-      assignedToId: number | null;
-      paper_type: PaperType;
-      duration?: Date;
-      updatedAt: Date;
-      clientId: number | null;
-      startDate?: Date | null;
-    } = {
-      title,
-      description,
-      amount,
-      status,
-      assignedToId: assignedToId || null,
-      paper_type,
-      duration,
-      updatedAt: new Date(),
-      clientId: clientId || null,
-      startDate: startDate ? new Date(startDate) : null,
-    };
+    await prisma.$transaction(async (tx) => {
+      // Update the task
+      const updatedTask = await tx.task.update({
+        where: { id },
+        data: {
+          title,
+          description,
+          amount,
+          status,
+          paper_type,
+          duration,
+          updatedAt: new Date(),
+          clientId: clientId || null,
+          startDate: startDate ? new Date(startDate) : null,
+        },
+      });
 
-    await prisma.task.update({
-      where: { id },
-      data: payload,
+      // Handle user assignments if provided
+      if (assignedUserIds && Array.isArray(assignedUserIds)) {
+        // Remove all existing assignments
+        await tx.taskAssignment.updateMany({
+          where: { taskId: id, status: 'ACTIVE' },
+          data: { status: 'REMOVED' },
+        });
+
+        // Add new assignments if any users specified
+        if (assignedUserIds.length > 0) {
+          const userIdsToAssign = assignedUserIds.map((userId) => +userId);
+
+          // Validate users exist
+          const existingUsers = await tx.user.findMany({
+            where: {
+              id: { in: userIdsToAssign },
+              isDeleted: false,
+              status: 'ACTIVE',
+            },
+          });
+
+          if (existingUsers.length !== userIdsToAssign.length) {
+            const foundIds = existingUsers.map((u) => u.id);
+            const missingIds = userIdsToAssign.filter(
+              (id) => !foundIds.includes(id)
+            );
+            throw new Error(
+              `Users not found or inactive: ${missingIds.join(', ')}`
+            );
+          }
+
+          // Create new assignments
+          const taskAssignments = userIdsToAssign.map((userId) => ({
+            taskId: id,
+            userId: userId,
+            status: 'ACTIVE' as const,
+          }));
+
+          await tx.taskAssignment.createMany({
+            data: taskAssignments,
+          });
+        }
+      }
+
+      return updatedTask;
     });
+
     return {
       message: 'Task Updated Successfully',
     };
   } catch (error) {
+    console.error('Error updating task:', error);
     throw error;
   }
 }
@@ -138,13 +399,12 @@ export const fetchAllTasks = async (data?: string) => {
   const paper_type = params.get('paper_type') || '';
   const client = params.get('client') || '';
   const paymentStatus = params.get('payment_status') || '';
+  const assignedUser = params.get('assigned_user') || '';
 
-  // Due filters
   const due_date = params.get('due_date') || '';
   const due_month = params.get('due_month') || '';
   const due_year = params.get('due_year') || '';
 
-  // Task create filters
   const task_create = params.get('task_create') || '';
   const task_create_month = params.get('task_create_month') || '';
   const task_create_year = params.get('task_create_year') || '';
@@ -164,19 +424,18 @@ export const fetchAllTasks = async (data?: string) => {
     lte: new Date(y, m, 0, 23, 59, 59, 999),
   });
 
-  // Find min/max year for a given field to build month-only OR ranges across actual data years
   const getYearSpan = async (
     field: 'duration' | 'createdAt'
   ): Promise<{ start: number; end: number }> => {
     if (field === 'duration') {
       const minRec = await prisma.task.findFirst({
         where: { NOT: { duration: null } },
-        orderBy: { duration: 'desc' },
+        orderBy: { duration: 'asc' },
         select: { duration: true },
       });
 
       const maxRec = await prisma.task.findFirst({
-        where: { NOT: [{ duration: null }] },
+        where: { NOT: { duration: null } },
         orderBy: { duration: 'desc' },
         select: { duration: true },
       });
@@ -189,7 +448,7 @@ export const fetchAllTasks = async (data?: string) => {
       }
     } else {
       const minRec = await prisma.task.findFirst({
-        orderBy: { createdAt: 'desc' },
+        orderBy: { createdAt: 'asc' },
         select: { createdAt: true },
       });
       const maxRec = await prisma.task.findFirst({
@@ -204,32 +463,54 @@ export const fetchAllTasks = async (data?: string) => {
       }
     }
 
-    // Fallback span if table is empty or all nulls
     const nowY = new Date().getFullYear();
     return { start: nowY - 10, end: nowY + 1 };
   };
 
-  // Build where clause
   const whereConditions: Prisma.TaskWhereInput[] = [{ isDeleted: false }];
 
-  // Search
   if (search) {
     whereConditions.push({
       OR: [
         { title: { contains: search, mode: 'insensitive' } },
         { description: { contains: search, mode: 'insensitive' } },
         { client: { name: { contains: search, mode: 'insensitive' } } },
+        {
+          taskAssignments: {
+            some: {
+              status: 'ACTIVE',
+              user: {
+                OR: [
+                  { name: { contains: search, mode: 'insensitive' } },
+                  { email: { contains: search, mode: 'insensitive' } },
+                ],
+              },
+            },
+          },
+        },
       ],
     });
   }
 
-  // Status
   if (status && status !== 'ALL') {
     whereConditions.push({ status: status as TaskStatus });
   }
 
   if (paper_type && paper_type !== 'ALL') {
     whereConditions.push({ paper_type: paper_type as PaperType });
+  }
+
+  if (assignedUser && assignedUser !== 'ALL') {
+    whereConditions.push({
+      taskAssignments: {
+        some: {
+          status: 'ACTIVE',
+          user: {
+            name: { contains: assignedUser, mode: 'insensitive' },
+          },
+        },
+      },
+    });
   }
 
   let dueDateFilter: Prisma.DateTimeFilter | undefined;
@@ -263,7 +544,6 @@ export const fetchAllTasks = async (data?: string) => {
     }
   }
 
-  // -------- Task created filters (field: createdAt) --------
   let taskCreateFilter: Prisma.DateTimeFilter | undefined;
   if (task_create) {
     const d = new Date(task_create);
@@ -295,7 +575,6 @@ export const fetchAllTasks = async (data?: string) => {
     }
   }
 
-  // Client
   if (client && client !== 'ALL') {
     whereConditions.push({
       client: { name: { contains: client, mode: 'insensitive' } },
@@ -315,20 +594,51 @@ export const fetchAllTasks = async (data?: string) => {
       take: limit,
       orderBy: { createdAt: 'desc' },
       include: {
-        assignedTo: { select: { id: true, name: true, email: true } },
+        // Updated: Include taskAssignments instead of single assignedTo
+        taskAssignments: {
+          where: { status: 'ACTIVE' },
+          include: {
+            user: {
+              select: { id: true, name: true, email: true },
+            },
+          },
+        },
         client: { select: { id: true, name: true, email: true } },
         payments: { where: { status: 'COMPLETED' } },
       },
     });
 
-    // Calculate paid amount for each task
+    // Calculate paid amount for each task and format assigned users
     let tasksWithPaid = tasks.map((task) => {
       const paid = task.payments.reduce((total, p) => total + p.amount, 0);
-      return { ...task, paid };
+
+      // Extract assigned users from task assignments
+      const assignedUsers = task.taskAssignments.map(
+        (assignment) => assignment.user
+      );
+
+      return {
+        id: task.id,
+        title: task.title,
+        description: task.description,
+        link: task.link,
+        status: task.status,
+        paper_type: task.paper_type,
+        createdAt: task.createdAt,
+        updatedAt: task.updatedAt,
+        duration: task.duration,
+        clientId: task.clientId,
+        createdById: task.createdById,
+        amount: task.amount,
+        assignedUsers, // New field: all assigned users
+        payments: task.payments,
+        note: task.note,
+        paid,
+      };
     });
 
     // Payment status filter (note: this is post-query; if you want count/totalPages to reflect this,
-    // you’d need to move the logic into the DB via HAVING/SUM on relations or a computed field)
+    // you'd need to move the logic into the DB via HAVING/SUM on relations or a computed field)
     if (paymentStatus && paymentStatus !== 'all') {
       tasksWithPaid = tasksWithPaid.filter((task) => {
         const remaining = task.amount - task.paid;
@@ -343,6 +653,7 @@ export const fetchAllTasks = async (data?: string) => {
   }
 };
 
+// Fixed: Single fetchTasksByUserEmail function with multiple user support
 export const fetchTasksByUserEmail = async (email: string, option?: string) => {
   if (!email) throw new Error('Email is required');
   try {
@@ -359,17 +670,14 @@ export const fetchTasksByUserEmail = async (email: string, option?: string) => {
     const status = params.get('status') || '';
     const paper_type = params.get('paper_type') || '';
 
-    // Due filters
     const due_date = params.get('due_date') || '';
     const due_month = params.get('due_month') || '';
     const due_year = params.get('due_year') || '';
 
-    // Task create filters
     const task_create = params.get('task_create') || '';
     const task_create_month = params.get('task_create_month') || '';
     const task_create_year = params.get('task_create_year') || '';
 
-    // Helper functions (same as fetchAllTasks)
     const monthToInt = (m: string) => {
       const n = parseInt(m);
       return Number.isFinite(n) && n >= 1 && n <= 12 ? n : undefined;
@@ -393,23 +701,26 @@ export const fetchTasksByUserEmail = async (email: string, option?: string) => {
       lte: new Date(y, m, 0, 23, 59, 59, 999),
     });
 
-    // Find min/max year for a given field to build month-only OR ranges across actual data years
     const getYearSpan = async (
       field: 'duration' | 'createdAt'
     ): Promise<{ start: number; end: number }> => {
       if (field === 'duration') {
         const minRec = await prisma.task.findFirst({
           where: {
-            assignedToId: user.id,
+            taskAssignments: {
+              some: { userId: user.id, status: 'ACTIVE' },
+            },
             NOT: { duration: null },
           },
-          orderBy: { duration: 'desc' },
+          orderBy: { duration: 'asc' },
           select: { duration: true },
         });
 
         const maxRec = await prisma.task.findFirst({
           where: {
-            assignedToId: user.id,
+            taskAssignments: {
+              some: { userId: user.id, status: 'ACTIVE' },
+            },
             NOT: { duration: null },
           },
           orderBy: { duration: 'desc' },
@@ -424,12 +735,20 @@ export const fetchTasksByUserEmail = async (email: string, option?: string) => {
         }
       } else {
         const minRec = await prisma.task.findFirst({
-          where: { assignedToId: user.id },
-          orderBy: { createdAt: 'desc' },
+          where: {
+            taskAssignments: {
+              some: { userId: user.id, status: 'ACTIVE' },
+            },
+          },
+          orderBy: { createdAt: 'asc' },
           select: { createdAt: true },
         });
         const maxRec = await prisma.task.findFirst({
-          where: { assignedToId: user.id },
+          where: {
+            taskAssignments: {
+              some: { userId: user.id, status: 'ACTIVE' },
+            },
+          },
           orderBy: { createdAt: 'desc' },
           select: { createdAt: true },
         });
@@ -441,18 +760,20 @@ export const fetchTasksByUserEmail = async (email: string, option?: string) => {
         }
       }
 
-      // Fallback span if table is empty or all nulls
       const nowY = new Date().getFullYear();
       return { start: nowY - 10, end: nowY + 1 };
     };
 
-    // Build where clause
+    // Updated: Use taskAssignments for user filtering
     const whereConditions: Prisma.TaskWhereInput[] = [
-      { assignedToId: user.id },
+      {
+        taskAssignments: {
+          some: { userId: user.id, status: 'ACTIVE' },
+        },
+      },
       { isDeleted: false },
     ];
 
-    // Search
     if (search) {
       whereConditions.push({
         OR: [
@@ -462,17 +783,14 @@ export const fetchTasksByUserEmail = async (email: string, option?: string) => {
       });
     }
 
-    // Status
     if (status && status !== 'ALL') {
       whereConditions.push({ status: status as TaskStatus });
     }
 
-    // Paper type
     if (paper_type && paper_type !== 'ALL') {
       whereConditions.push({ paper_type: paper_type as PaperType });
     }
 
-    // -------- Due date filters (field: duration) --------
     let dueDateFilter: Prisma.DateTimeFilter | undefined;
     if (due_date) {
       const d = new Date(due_date);
@@ -504,7 +822,6 @@ export const fetchTasksByUserEmail = async (email: string, option?: string) => {
       }
     }
 
-    // -------- Task creation date filters (field: createdAt) --------
     let taskCreateFilter: Prisma.DateTimeFilter | undefined;
     if (task_create) {
       const d = new Date(task_create);
@@ -548,16 +865,30 @@ export const fetchTasksByUserEmail = async (email: string, option?: string) => {
       take: limit,
       orderBy: { createdAt: 'desc' },
       include: {
-        assignedTo: { select: { name: true, email: true } },
-        payments: {
-          where: {
-            status: 'COMPLETED',
+        // Updated: Include taskAssignments instead of single assignedTo
+        taskAssignments: {
+          where: { status: 'ACTIVE' },
+          include: {
+            user: {
+              select: { id: true, name: true, email: true },
+            },
           },
+        },
+        client: { select: { id: true, name: true, email: true } },
+        payments: {
+          where: { status: 'COMPLETED' },
         },
       },
     });
 
     const tasksWithPaid = tasks.map((task) => {
+      const paid = task.payments.reduce((total, p) => total + p.amount, 0);
+
+      // Extract assigned users from task assignments
+      const assignedUsers = task.taskAssignments.map(
+        (assignment) => assignment.user
+      );
+
       return {
         id: task.id,
         title: task.title,
@@ -568,12 +899,14 @@ export const fetchTasksByUserEmail = async (email: string, option?: string) => {
         createdAt: task.createdAt,
         updatedAt: task.updatedAt,
         duration: task.duration,
-        assignedToId: task.assignedToId,
+        assignedToId: null, // Clear the assignedToId field
         clientId: task.clientId,
         createdById: task.createdById,
-        assignedTo: task.assignedTo,
+        assignedTo: null, // Clear the assignedTo field
+        assignedUsers, // New field: all assigned users
         payments: task.payments,
         note: task.note,
+        paid,
       };
     });
 
@@ -582,6 +915,7 @@ export const fetchTasksByUserEmail = async (email: string, option?: string) => {
       data: tasksWithPaid,
     };
   } catch (error) {
+    console.error('Error fetching user tasks:', error);
     throw error;
   }
 };
@@ -605,14 +939,11 @@ export const fetchAllTaskCalculation = async (data?: string) => {
   const status = params.get('status') || '';
   const paper_type = params.get('paper_type') || '';
   const client = params.get('client') || '';
-  // const paymentStatus = params.get('payment_status') || '';
 
-  // Due filters
   const due_date = params.get('due_date') || '';
   const due_month = params.get('due_month') || '';
   const due_year = params.get('due_year') || '';
 
-  // Task create filters
   const task_create = params.get('task_create') || '';
   const task_create_month = params.get('task_create_month') || '';
   const task_create_year = params.get('task_create_year') || '';
@@ -632,19 +963,18 @@ export const fetchAllTaskCalculation = async (data?: string) => {
     lte: new Date(y, m, 0, 23, 59, 59, 999),
   });
 
-  // Find min/max year for a given field to build month-only OR ranges across actual data years
   const getYearSpan = async (
     field: 'duration' | 'createdAt'
   ): Promise<{ start: number; end: number }> => {
     if (field === 'duration') {
       const minRec = await prisma.task.findFirst({
         where: { NOT: { duration: null } },
-        orderBy: { duration: 'desc' },
+        orderBy: { duration: 'asc' },
         select: { duration: true },
       });
 
       const maxRec = await prisma.task.findFirst({
-        where: { NOT: [{ duration: null }] },
+        where: { NOT: { duration: null } },
         orderBy: { duration: 'desc' },
         select: { duration: true },
       });
@@ -657,7 +987,7 @@ export const fetchAllTaskCalculation = async (data?: string) => {
       }
     } else {
       const minRec = await prisma.task.findFirst({
-        orderBy: { createdAt: 'desc' },
+        orderBy: { createdAt: 'asc' },
         select: { createdAt: true },
       });
       const maxRec = await prisma.task.findFirst({
@@ -672,15 +1002,12 @@ export const fetchAllTaskCalculation = async (data?: string) => {
       }
     }
 
-    // Fallback span if table is empty or all nulls
     const nowY = new Date().getFullYear();
     return { start: nowY - 10, end: nowY + 1 };
   };
 
-  // Build where clause (same logic as fetchAllTasks)
   const whereConditions: Prisma.TaskWhereInput[] = [{ isDeleted: false }];
 
-  // Search
   if (search) {
     whereConditions.push({
       OR: [
@@ -691,7 +1018,6 @@ export const fetchAllTaskCalculation = async (data?: string) => {
     });
   }
 
-  // Status filter (only if specific status is selected)
   if (status && status !== 'ALL') {
     whereConditions.push({ status: status as TaskStatus });
   }
@@ -700,7 +1026,6 @@ export const fetchAllTaskCalculation = async (data?: string) => {
     whereConditions.push({ paper_type: paper_type as PaperType });
   }
 
-  // Due date filtering
   let dueDateFilter: Prisma.DateTimeFilter | undefined;
   if (due_date) {
     const d = new Date(due_date);
@@ -732,7 +1057,6 @@ export const fetchAllTaskCalculation = async (data?: string) => {
     }
   }
 
-  // Task created filters
   let taskCreateFilter: Prisma.DateTimeFilter | undefined;
   if (task_create) {
     const d = new Date(task_create);
@@ -764,7 +1088,6 @@ export const fetchAllTaskCalculation = async (data?: string) => {
     }
   }
 
-  // Client
   if (client && client !== 'ALL') {
     whereConditions.push({
       client: { name: { contains: client, mode: 'insensitive' } },
@@ -775,10 +1098,8 @@ export const fetchAllTaskCalculation = async (data?: string) => {
     whereConditions.length > 0 ? { AND: whereConditions } : {};
 
   try {
-    // Get total task count
     const totalTasks = await prisma.task.count({ where });
 
-    // Get count by status
     const pendingCount = await prisma.task.count({
       where: { ...where, status: 'PENDING' },
     });
@@ -795,7 +1116,6 @@ export const fetchAllTaskCalculation = async (data?: string) => {
       where: { ...where, status: 'COMPLETED' },
     });
 
-    // Calculate percentages
     const pendingPercentage =
       totalTasks > 0 ? Math.round((pendingCount / totalTasks) * 100) : 0;
     const inProgressPercentage =
@@ -806,14 +1126,11 @@ export const fetchAllTaskCalculation = async (data?: string) => {
       totalTasks > 0 ? Math.round((completedCount / totalTasks) * 100) : 0;
 
     return {
-      // Total counts
       totalTasks,
       pendingCount,
       inProgressCount,
       submittedCount,
       completedCount,
-
-      // Percentages
       pendingPercentage,
       inProgressPercentage,
       submittedPercentage,
