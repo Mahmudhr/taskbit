@@ -290,6 +290,7 @@ export default function UsersPage() {
                     <TableHead>Name</TableHead>
                     <TableHead>Email</TableHead>
                     <TableHead>Role</TableHead>
+                    <TableHead>Salary</TableHead>
                     <TableHead>Phone</TableHead>
                     <TableHead>Status</TableHead>
                     <TableHead>Created At</TableHead>
@@ -309,6 +310,9 @@ export default function UsersPage() {
                         </TableCell>
                         <TableCell className='capitalize'>
                           {roleConvert[user.role]}
+                        </TableCell>
+                        <TableCell className='capitalize'>
+                          {user.salary || 0}
                         </TableCell>
                         <TableCell>{user.phone}</TableCell>
                         <TableCell>{getStatusBadge(user.status)}</TableCell>

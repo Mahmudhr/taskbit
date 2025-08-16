@@ -66,6 +66,7 @@ model Task {
   updatedAt       DateTime  @updatedAt @map("updated_at")
   duration        DateTime?
   startDate       DateTime? @map("start_date")
+  targetDate       DateTime? @map("target_date")
   
   // Many-to-many relationship with users through TaskAssignment
   taskAssignments TaskAssignment[] @relation("TaskAssignments")

@@ -25,6 +25,7 @@ import { useTransition } from 'react';
 import { getErrorMessage } from '@/lib/utils';
 import { useUser } from '@/hooks/use-user';
 import { Loader2Icon } from 'lucide-react';
+import { CreateUserType } from '@/server/types/user-type';
 
 export const FormSchema = z
   .object({
@@ -51,7 +52,9 @@ export const FormSchema = z
       .regex(/^[+]?[0-9]+$/, {
         message: 'Phone number can only contain numbers and optional + prefix',
       }),
-
+    salary: z.coerce
+      .number()
+      .min(1, { message: 'Amount must be greater than 0' }),
     role: z.enum(['USER', 'ADMIN'], {
       errorMap: () => ({ message: 'Please select a valid role' }),
     }),
@@ -76,12 +79,17 @@ export default function AddUserForm({
       password: '',
       confirmPassword: '',
       phone: '',
+      salary: 0,
     },
   });
 
   function onSubmit(data: z.infer<typeof FormSchema>) {
+    const payload: CreateUserType = {
+      ...data,
+      status: 'ACTIVE',
+    };
     startTransition(() => {
-      toast.promise(createUserAsync(data), {
+      toast.promise(createUserAsync(payload), {
         loading: 'Creating user...',
         success: (res) => {
           setIsOpen(false);
@@ -158,6 +166,24 @@ export default function AddUserForm({
                   className='w-full'
                   placeholder='Enter user confirm password'
                   type='password'
+                  {...field}
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name='salary'
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Salary</FormLabel>
+              <FormControl>
+                <Input
+                  className='w-full'
+                  type='number'
+                  placeholder='Enter salary'
                   {...field}
                 />
               </FormControl>

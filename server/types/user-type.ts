@@ -5,4 +5,5 @@ export type CreateUserType = {
   phone: string;
   role: 'ADMIN' | 'USER';
   status: 'ACTIVE' | 'INACTIVE';
+  salary: number;
 };

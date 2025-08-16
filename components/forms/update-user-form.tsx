@@ -54,6 +54,9 @@ export const FormSchema = z
       .regex(/^[+]?[0-9]+$/, {
         message: 'Phone number can only contain numbers and optional + prefix',
       }),
+    salary: z.coerce
+      .number()
+      .min(1, { message: 'Amount must be greater than 0' }),
     role: z.enum(['USER', 'ADMIN'], {
       errorMap: () => ({ message: 'Please select a valid role' }),
     }),
@@ -102,6 +105,7 @@ export default function UpdateUserForm({
       phone: data?.phone || '',
       role: data?.role || undefined,
       status: data?.status || undefined,
+      salary: data?.salary || 0,
     },
   });
 
@@ -116,6 +120,7 @@ export default function UpdateUserForm({
         phone: formData.phone,
         role: formData.role,
         status: formData.status,
+        salary: formData.salary,
       },
     };
     startTransition(() => {
@@ -195,6 +200,24 @@ export default function UpdateUserForm({
                   className='w-full'
                   placeholder='Enter user confirm password'
                   type='password'
+                  {...field}
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name='salary'
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Salary</FormLabel>
+              <FormControl>
+                <Input
+                  className='w-full'
+                  type='number'
+                  placeholder='Enter salary'
                   {...field}
                 />
               </FormControl>

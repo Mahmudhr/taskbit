@@ -6,7 +6,7 @@ import bcrypt from 'bcryptjs';
 import { $Enums } from '@prisma/client';
 
 export async function createUser(data: CreateUserType) {
-  const { email, password, name, phone, role } = data;
+  const { email, password, name, phone, role, salary } = data;
   try {
     const existingUser = await prisma.user.findUnique({
       where: { email: data.email },
@@ -24,6 +24,7 @@ export async function createUser(data: CreateUserType) {
         phone,
         password: hashedPassword,
         role,
+        salary,
       },
     });
     return {
@@ -178,6 +179,7 @@ export const UpdateUser = async ({
     phone: string;
     status: $Enums.UserStatus;
     updatedAt: Date;
+    salary: number;
   } = {
     name: data.name,
     email: data.email,
@@ -185,6 +187,7 @@ export const UpdateUser = async ({
     phone: data.phone,
     status: data.status,
     updatedAt: new Date(),
+    salary: data.salary,
   };
 
   if (data.password) {
