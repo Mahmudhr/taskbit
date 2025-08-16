@@ -30,6 +30,7 @@ import {
   EllipsisVertical,
   Eye,
   Banknote,
+  AlertCircle,
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import AddUserForm from '@/components/forms/add-user-form';
@@ -74,6 +75,58 @@ const getStatusBadge = (status: string) => {
   );
 };
 
+// ✅ Helper function to check if user has received salary this month
+const checkSalaryStatus = (user: UserType) => {
+  if (!user.salary || user.salary === 0) {
+    return { isPaid: true, status: 'no-salary' }; // No salary set
+  }
+
+  const currentDate = new Date();
+  const currentMonth = currentDate.getMonth();
+  const currentYear = currentDate.getFullYear();
+
+  // Check if user has received payment this month
+  const hasCurrentMonthPayment = user.salaries?.some((payment) => {
+    const paymentDate = new Date(payment.createdAt);
+    return (
+      paymentDate.getMonth() === currentMonth &&
+      paymentDate.getFullYear() === currentYear &&
+      payment.status === 'PAID'
+    );
+  });
+
+  return {
+    isPaid: hasCurrentMonthPayment || false,
+    status: hasCurrentMonthPayment ? 'paid' : 'due',
+  };
+};
+
+// ✅ Component to display salary with due status
+const SalaryDisplay = ({ user }: { user: UserType }) => {
+  const salaryStatus = checkSalaryStatus(user);
+
+  if (salaryStatus.status === 'no-salary') {
+    return <span className='text-gray-500'>-</span>;
+  }
+
+  return (
+    <div className='flex items-center gap-2'>
+      <span>৳ {user.salary}</span>
+      {salaryStatus.status === 'due' && (
+        <Badge variant='destructive' className='text-xs px-2 py-0.5'>
+          <AlertCircle className='w-3 h-3 mr-1' />
+          Due
+        </Badge>
+      )}
+      {salaryStatus.status === 'paid' && (
+        <Badge variant='default' className='text-xs px-2 py-0.5 bg-green-500'>
+          Paid
+        </Badge>
+      )}
+    </div>
+  );
+};
+
 export default function UsersPage() {
   const searchParams = useSearchParams();
   const [statusFilter, setStatusFilter] = useState(
@@ -89,6 +142,7 @@ export default function UsersPage() {
   const [paymentUserId, setPaymentUserId] = useState<number | null>(null);
   const [isPending, startTransition] = useTransition();
   const [userId, setUserId] = useState<number | null>(null);
+  const [salary, setSalary] = useState<number | null>(null);
   const router = useRouter();
 
   const [updateUserModal, setUpdateUserModal] = useState(false);
@@ -141,9 +195,10 @@ export default function UsersPage() {
     setViewUserModal(true);
   };
 
-  const handleCreatePayment = (userId: number) => {
+  const handleCreatePayment = (userId: number, salary: number) => {
     setPaymentUserId(userId);
     setCreateUserPaymentOpen(true);
+    setSalary(salary);
   };
 
   useEffect(() => {
@@ -290,7 +345,7 @@ export default function UsersPage() {
                     <TableHead>Name</TableHead>
                     <TableHead>Email</TableHead>
                     <TableHead>Role</TableHead>
-                    <TableHead>Salary</TableHead>
+                    <TableHead>Salary Status</TableHead>
                     <TableHead>Phone</TableHead>
                     <TableHead>Status</TableHead>
                     <TableHead>Created At</TableHead>
@@ -311,8 +366,9 @@ export default function UsersPage() {
                         <TableCell className='capitalize'>
                           {roleConvert[user.role]}
                         </TableCell>
-                        <TableCell className='capitalize'>
-                          {user.salary || 0}
+                        {/* ✅ Updated: Show salary with due status */}
+                        <TableCell>
+                          <SalaryDisplay user={user} />
                         </TableCell>
                         <TableCell>{user.phone}</TableCell>
                         <TableCell>{getStatusBadge(user.status)}</TableCell>
@@ -329,7 +385,12 @@ export default function UsersPage() {
                                 <DropdownMenuLabel>Options</DropdownMenuLabel>
                                 <DropdownMenuSeparator />
                                 <DropdownMenuItem
-                                  onClick={() => handleCreatePayment(user.id)}
+                                  onClick={() =>
+                                    handleCreatePayment(
+                                      user.id,
+                                      user.salary || 0
+                                    )
+                                  }
                                 >
                                   <Banknote className='mr-2 h-4 w-4' />
                                   Make Payment
@@ -391,6 +452,14 @@ export default function UsersPage() {
                             <DropdownMenuLabel>Options</DropdownMenuLabel>
                             <DropdownMenuSeparator />
                             <DropdownMenuItem
+                              onClick={() =>
+                                handleCreatePayment(user.id, user.salary || 0)
+                              }
+                            >
+                              <Banknote className='mr-2 h-4 w-4' />
+                              Make Payment
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
                               onClick={() => handleViewUser(user)}
                             >
                               <Eye className='mr-2 h-4 w-4' />
@@ -424,11 +493,10 @@ export default function UsersPage() {
                           {roleConvert[user.role]}
                         </span>
                       </div>
-                      <div className='flex justify-between'>
+                      {/* ✅ Updated: Show salary with due status in mobile view */}
+                      <div className='flex justify-between items-center'>
                         <span className='text-muted-foreground'>Salary:</span>
-                        <span className='capitalize'>
-                          {user.salary ? `৳ ${user.salary}` : '-'}
-                        </span>
+                        <SalaryDisplay user={user} />
                       </div>
                       <div className='flex justify-between'>
                         <span className='text-muted-foreground'>Email:</span>
@@ -514,12 +582,13 @@ export default function UsersPage() {
       <AlertModal
         isOpen={createUserPaymentOpen}
         setIsOpen={setCreateUserPaymentOpen}
-        title='Create new user'
+        title='Create new user payment'
         description=' '
       >
         <CreateUserPaymentForm
           setIsOpen={setCreateUserPaymentOpen}
           userId={paymentUserId}
+          salary={salary}
         />
       </AlertModal>
       <AlertModal

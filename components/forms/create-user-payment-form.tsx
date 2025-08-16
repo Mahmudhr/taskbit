@@ -20,13 +20,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from '../ui/select';
-import { useTransition } from 'react';
+import { useTransition, useEffect } from 'react';
 import { toast } from 'sonner';
 import { getErrorMessage } from '@/lib/utils';
 import { Loader2Icon } from 'lucide-react';
 import { Textarea } from '../ui/textarea';
 import { useSalary } from '@/hooks/use-salary';
-// import { useSalary } from '@/hooks/use-salary';
 
 const salaryTypes = [
   { label: 'Monthly Salary', value: 'MONTHLY' },
@@ -95,28 +94,46 @@ const FormSchema = z.object({
 type CreateSalaryFormProps = {
   setIsOpen: (open: boolean) => void;
   userId: number | null;
+  salary: number | null;
 };
 
 export default function CreateSalaryForm({
   setIsOpen,
   userId,
+  salary,
 }: CreateSalaryFormProps) {
   const [isPending, startTransition] = useTransition();
   const { createSalaryMutationAsync } = useSalary();
-  // const { data: session } = useSession();
 
   const form = useForm<z.infer<typeof FormSchema>>({
     resolver: zodResolver(FormSchema),
     defaultValues: {
-      amount: 0,
-      month: new Date().getMonth() + 1, // Current month
-      year: new Date().getFullYear(), // Current year
+      amount: salary || 0, // ✅ Set default amount to salary if available
+      month: new Date().getMonth() + 1,
+      year: new Date().getFullYear(),
       status: 'PENDING',
       salaryType: 'MONTHLY',
       referenceNumber: '',
       note: '',
     },
   });
+
+  // ✅ Watch salary type to handle amount field behavior
+  const watchedSalaryType = form.watch('salaryType');
+
+  // ✅ Effect to handle amount field based on salary type
+  useEffect(() => {
+    if (watchedSalaryType === 'MONTHLY') {
+      // Set amount to user's salary and disable field
+      form.setValue('amount', salary || 0);
+    } else {
+      // Reset amount to 0 for other types and enable field
+      form.setValue('amount', 0);
+    }
+  }, [watchedSalaryType, salary, form]);
+
+  // ✅ Check if amount field should be disabled
+  const isAmountDisabled = watchedSalaryType === 'MONTHLY';
 
   function onSubmit(data: z.infer<typeof FormSchema>) {
     if (!userId) {
@@ -160,13 +177,28 @@ export default function CreateSalaryForm({
                 <FormLabel>Amount</FormLabel>
                 <FormControl>
                   <Input
-                    className='w-full'
+                    className={`w-full ${
+                      isAmountDisabled
+                        ? 'bg-gray-100 cursor-not-allowed opacity-70'
+                        : ''
+                    }`}
                     type='number'
-                    placeholder='Enter salary amount'
+                    placeholder={
+                      isAmountDisabled
+                        ? `User's monthly salary: ৳${salary || 0}`
+                        : 'Enter amount'
+                    }
                     min={1}
+                    disabled={isAmountDisabled} // ✅ Disable when Monthly is selected
                     {...field}
                   />
                 </FormControl>
+                {isAmountDisabled && (
+                  <p className='text-xs text-muted-foreground'>
+                    Amount is automatically set to user&apos;s monthly salary
+                    when &apos;Monthly Salary&apos; is selected.
+                  </p>
+                )}
                 <FormMessage />
               </FormItem>
             )}
@@ -191,6 +223,12 @@ export default function CreateSalaryForm({
                     {salaryTypes.map((type) => (
                       <SelectItem key={type.value} value={type.value}>
                         {type.label}
+                        {/* ✅ Show salary amount for Monthly option */}
+                        {type.value === 'MONTHLY' && salary && (
+                          <span className='text-sm text-muted-foreground ml-2'>
+                            (৳{salary})
+                          </span>
+                        )}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -264,6 +302,7 @@ export default function CreateSalaryForm({
             )}
           />
         </div>
+
         <FormField
           control={form.control}
           name='paymentType'
@@ -288,6 +327,7 @@ export default function CreateSalaryForm({
             </FormItem>
           )}
         />
+
         <FormField
           control={form.control}
           name='status'
