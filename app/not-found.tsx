@@ -11,7 +11,7 @@ export default function NotFound() {
         </div>
         <div>
           <Link href='/dashboard/my-tasks'>
-            <Button>Back to My task</Button>
+            <Button size='sm'>Back to My Tasks</Button>
           </Link>
         </div>
       </div>
