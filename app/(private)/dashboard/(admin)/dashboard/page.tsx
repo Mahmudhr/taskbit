@@ -16,7 +16,14 @@ import {
   XCircle,
   ArrowUpRight,
   ArrowDownRight,
+  ListFilter,
 } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import Modal from '@/components/modal';
+import DashboardFilter from '@/components/filters/dashboard-filter';
+import { Button } from '@/components/ui/button';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { generateQueryString } from '@/lib/utils';
 
 // Updated formatCurrency function with Bangladeshi Taka
 export const formatCurrency = (amount: number) => {
@@ -30,7 +37,23 @@ export const formatCurrency = (amount: number) => {
 };
 
 export default function DashboardPage() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+
   const { fetchDashboardMutationData } = useDashboard();
+  const [openFilter, setOpenFilter] = useState(false);
+
+  const [params, setParams] = useState({
+    month: searchParams.get('month') || '',
+    year: searchParams.get('year') || '',
+    date: searchParams.get('date') || '',
+  });
+
+  const queryString = generateQueryString(params);
+
+  useEffect(() => {
+    router.push(queryString);
+  }, [queryString, router]);
 
   if (!fetchDashboardMutationData?.data) {
     return (
@@ -56,6 +79,12 @@ export default function DashboardPage() {
             Overview of your business performance
           </p>
         </div>
+        <Button
+          onClick={() => setOpenFilter(true)}
+          className='w-full sm:w-auto'
+        >
+          <ListFilter /> Filter
+        </Button>
       </div>
 
       {/* Financial Summary Cards */}
@@ -455,6 +484,18 @@ export default function DashboardPage() {
           </CardContent>
         </Card>
       )}
+      <Modal
+        isOpen={openFilter}
+        setIsOpen={setOpenFilter}
+        title='Filter Salary'
+        description=' '
+      >
+        <DashboardFilter
+          setParams={setParams}
+          params={params}
+          setOpenFilter={setOpenFilter}
+        />
+      </Modal>
     </div>
   );
 }
