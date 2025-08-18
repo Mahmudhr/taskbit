@@ -18,7 +18,13 @@ import {
 export function useTask(options?: string) {
   const queryClient = useQueryClient();
   const createTaskMutation = useMutation({
-    mutationFn: (data: CreateTaskType) => createTasks(data),
+    mutationFn: async (data: CreateTaskType) => {
+      const result = await createTasks(data);
+      if (!result.success) {
+        throw new Error(result.message || 'Failed to create task');
+      }
+      return result;
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['tasks'] });
       queryClient.invalidateQueries({ queryKey: ['tasks-calculation'] });
@@ -26,8 +32,13 @@ export function useTask(options?: string) {
   });
 
   const updateTaskMutation = useMutation({
-    mutationFn: ({ id, data }: { id: number; data: CreateTaskType }) =>
-      updateTask(id, data),
+    mutationFn: async ({ id, data }: { id: number; data: CreateTaskType }) => {
+      const result = await updateTask(id, data);
+      if (!result.success) {
+        throw new Error(result.message || 'Failed to update task');
+      }
+      return result;
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['tasks'] });
       queryClient.invalidateQueries({ queryKey: ['tasks-calculation'] });

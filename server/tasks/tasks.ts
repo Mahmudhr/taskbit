@@ -6,6 +6,7 @@ import {
   CreateTaskType,
   UpdateUserTaskDeliveryType,
 } from '../types/tasks-type';
+import { catchError } from '@/lib/utils';
 
 export async function createTasks(data: CreateTaskType) {
   const {
@@ -93,16 +94,13 @@ export async function createTasks(data: CreateTaskType) {
     });
 
     return {
+      success: true,
       message: `Task created successfully and assigned to ${userIdsToAssign.length} user(s)`,
       taskId: result.id,
       assignedUsers: userIdsToAssign.length,
     };
   } catch (error) {
-    console.error('Error creating task:', error);
-    if (error instanceof Error) {
-      throw new Error(error.message);
-    }
-    throw new Error('Failed to create task');
+    return catchError(error);
   }
 }
 
@@ -188,7 +186,7 @@ export async function assignUsersToTask(taskId: number, userIds: number[]) {
     return result;
   } catch (error) {
     console.error('Error assigning users to task:', error);
-    throw error;
+    return catchError(error);
   }
 }
 
@@ -404,14 +402,11 @@ export async function updateTask(id: number, data: CreateTaskType) {
     });
 
     return {
+      success: true,
       message: 'Task Updated Successfully',
     };
   } catch (error) {
-    console.error('Error updating task:', error);
-    if (error instanceof Error) {
-      throw new Error(error.message);
-    }
-    throw new Error('Failed to update task');
+    return catchError(error);
   }
 }
 
