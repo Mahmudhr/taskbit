@@ -14,7 +14,6 @@ import {
 import { Badge } from '@/components/ui/badge';
 import {
   Search,
-  Edit,
   ChevronLeft,
   ChevronRight,
   X,
@@ -382,13 +381,34 @@ export default function PaymentsPage() {
                         {payment.referenceNumber}
                       </span>
                     </div>
-                    <Button
-                      variant='outline'
-                      size='sm'
-                      onClick={() => setUpdatePaymentOpen(true)}
-                    >
-                      <Edit className='h-4 w-4' />
-                    </Button>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger>
+                        <EllipsisVertical className='w-5 h-5 text-gray-600' />
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align='end'>
+                        <DropdownMenuLabel>Options</DropdownMenuLabel>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem
+                          onClick={() => {
+                            setUpdatePaymentOpen(true);
+                            setTaskId(payment.id);
+                            setPaymentData(payment);
+                          }}
+                        >
+                          <SquarePen className='mr-2 h-4 w-4' />
+                          Edit
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          onClick={() => {
+                            setConfirmModal(true);
+                            setTaskId(payment.id);
+                          }}
+                        >
+                          <Trash className='mr-2 h-4 w-4' />
+                          Delete
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
                   </div>
 
                   <div className='space-y-2 text-sm'>

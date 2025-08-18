@@ -115,7 +115,7 @@ const TaskCard = ({
   const dueAmount = task.paid ? task.amount - task.paid : task.amount;
 
   return (
-    <Card className='hover:shadow-lg transition-all duration-200 border-l-4 border-l-blue-500 dark:border-l-blue-400 h-full dark:bg-gray-800/50'>
+    <Card className='hover:shadow-lg transition-all duration-200 border-l-4 border-l-blue-500 dark:border-l-blue-400 h-full'>
       <CardHeader className='pb-3'>
         <div className='flex items-start justify-between'>
           <div className='flex gap-3 flex-1 items-start'>
@@ -380,7 +380,7 @@ const TaskRow = ({
   const dueAmount = task.paid ? task.amount - task.paid : task.amount;
 
   return (
-    <div className='bg-white dark:bg-gray-800/50 border dark:border-gray-700 rounded-lg hover:shadow-md dark:hover:shadow-lg transition-all duration-200 p-4'>
+    <Card className='border rounded-lg hover:shadow-md transition-all duration-200 p-4'>
       {/* Top Row - Title and Actions */}
       <div className='flex items-start justify-between mb-3'>
         <div className='flex items-center gap-3 flex-1'>
@@ -531,7 +531,7 @@ const TaskRow = ({
       </div>
 
       {/* Bottom Row - Payment Information */}
-      <div className='bg-gray-50 dark:bg-gray-700/50 rounded-lg p-3'>
+      <CardContent className='rounded-lg p-3'>
         <div className='flex items-center justify-between'>
           {/* Payment Details */}
           <div className='flex items-center gap-6'>
@@ -607,8 +607,8 @@ const TaskRow = ({
             </div>
           </div>
         )}
-      </div>
-    </div>
+      </CardContent>
+    </Card>
   );
 };
 
@@ -787,7 +787,7 @@ export default function TasksPage() {
       <div>
         {!fetchTasksCalculationMutation.isLoading ? (
           <div className='grid grid-cols-2 md:grid-cols-5 gap-4'>
-            <Card className='dark:bg-gray-800/50 dark:border-gray-700'>
+            <Card>
               <CardContent className='p-4 text-center'>
                 <div className='text-2xl font-bold dark:text-gray-100'>
                   {fetchTasksCalculationMutation?.data?.totalTasks || 0}
@@ -797,7 +797,7 @@ export default function TasksPage() {
                 </div>
               </CardContent>
             </Card>
-            <Card className='dark:bg-gray-800/50 dark:border-gray-700'>
+            <Card>
               <CardContent className='p-4 text-center'>
                 <div className='text-2xl font-bold text-green-600 dark:text-green-400'>
                   {fetchTasksCalculationMutation?.data?.completedCount}
@@ -807,7 +807,7 @@ export default function TasksPage() {
                 </div>
               </CardContent>
             </Card>
-            <Card className='dark:bg-gray-800/50 dark:border-gray-700'>
+            <Card>
               <CardContent className='p-4 text-center'>
                 <div className='text-2xl font-bold text-yellow-600 dark:text-yellow-400'>
                   {fetchTasksCalculationMutation?.data?.inProgressCount}
@@ -817,7 +817,7 @@ export default function TasksPage() {
                 </div>
               </CardContent>
             </Card>
-            <Card className='dark:bg-gray-800/50 dark:border-gray-700'>
+            <Card>
               <CardContent className='p-4 text-center'>
                 <div className='text-2xl font-bold text-red-600 dark:text-red-400'>
                   {fetchTasksCalculationMutation?.data?.pendingCount}
@@ -827,7 +827,7 @@ export default function TasksPage() {
                 </div>
               </CardContent>
             </Card>
-            <Card className='dark:bg-gray-800/50 dark:border-gray-700'>
+            <Card>
               <CardContent className='p-4 text-center'>
                 <div className='text-2xl font-bold text-green-600 dark:text-green-400'>
                   {fetchTasksCalculationMutation?.data?.submittedCount}
@@ -861,7 +861,7 @@ export default function TasksPage() {
       </div>
 
       {/* Search & Filters */}
-      <Card className='dark:bg-gray-800/50 dark:border-gray-700'>
+      <Card>
         <CardHeader>
           <CardTitle className='dark:text-gray-100'>Search & Filters</CardTitle>
         </CardHeader>
@@ -876,7 +876,7 @@ export default function TasksPage() {
                   debounced(e.target.value);
                   setSearchQuery(e.target.value);
                 }}
-                className='pl-8 dark:bg-gray-700/50 dark:border-gray-600 dark:text-gray-100 dark:placeholder-gray-400'
+                className='pl-8 '
               />
             </div>
             <Button
@@ -1084,7 +1084,7 @@ export default function TasksPage() {
       </Card>
 
       {/* Tasks List */}
-      <Card className='dark:bg-gray-800/50 dark:border-gray-700'>
+      <Card className='dark:bg-[#232325] dark:border-gray-700'>
         <CardHeader>
           <CardTitle className='dark:text-gray-100'>Tasks List</CardTitle>
         </CardHeader>
