@@ -30,7 +30,13 @@ export function useUser(options?: string) {
 
   // Create user
   const createUserMutation = useMutation({
-    mutationFn: (data: CreateUserType) => createUser(data),
+    mutationFn: async (data: CreateUserType) => {
+      const result = await createUser(data);
+      if (!result.success) {
+        throw new Error(result.message || 'Failed to create user');
+      }
+      return result;
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['users'] });
     },

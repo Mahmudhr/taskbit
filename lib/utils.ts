@@ -101,3 +101,10 @@ export const salaryTypeConvert = {
   OVERTIME: 'Overtime',
   DEDUCTION: 'Deduction',
 } as const;
+
+export const catchError = (error: unknown) => {
+  return {
+    success: false,
+    message: error instanceof Error ? error.message : 'Failed to create user',
+  };
+};

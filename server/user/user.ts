@@ -4,6 +4,7 @@ import { prisma } from '@/prisma/db';
 import { CreateUserType } from '../types/user-type';
 import bcrypt from 'bcryptjs';
 import { $Enums } from '@prisma/client';
+import { catchError } from '@/lib/utils';
 
 export async function createUser(data: CreateUserType) {
   const { email, password, name, phone, role, salary } = data;
@@ -28,10 +29,11 @@ export async function createUser(data: CreateUserType) {
       },
     });
     return {
+      success: true,
       message: 'User registered successfully',
     };
   } catch (error) {
-    throw error;
+    return catchError(error);
   }
 }
 
