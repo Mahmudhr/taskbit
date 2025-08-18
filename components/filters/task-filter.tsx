@@ -158,7 +158,7 @@ export default function TaskFilter({
       {/* Date Filters */}
       <div className='space-y-4'>
         <div className='space-y-2'>
-          <label className='block text-sm font-medium text-gray-700'>
+          <label className='block text-sm font-medium  text-muted-foreground'>
             Duration Date Filter
           </label>
           <Select value={dateFilter} onValueChange={setDateFilter}>
@@ -176,7 +176,7 @@ export default function TaskFilter({
         {dateFilter === 'DUE_MONTH_YEAR' && (
           <div className='grid grid-cols-2 gap-4'>
             <div className='space-y-2'>
-              <label className='block text-sm font-medium text-gray-700'>
+              <label className='block text-sm font-medium text-muted-foreground'>
                 Month
               </label>
               <Select
@@ -204,7 +204,7 @@ export default function TaskFilter({
             </div>
 
             <div className='space-y-2'>
-              <label className='block text-sm font-medium text-gray-700'>
+              <label className='block text-sm font-medium text-muted-foreground'>
                 Year
               </label>
               <Select
@@ -235,7 +235,7 @@ export default function TaskFilter({
 
         {dateFilter === 'DUE_DATE' && (
           <div className='space-y-2'>
-            <label className='block text-sm font-medium text-gray-700'>
+            <label className='block text-sm font-medium text-muted-foreground'>
               Date
             </label>
             <Input
@@ -256,7 +256,7 @@ export default function TaskFilter({
       </div>
       <div className='space-y-4'>
         <div className='space-y-2'>
-          <label className='block text-sm font-medium text-gray-700'>
+          <label className='block text-sm font-medium text-muted-foreground'>
             Task Create Date Filter
           </label>
           <Select value={taskCreateDate} onValueChange={setTaskCreateDate}>
@@ -278,7 +278,7 @@ export default function TaskFilter({
         {taskCreateDate === 'TASK_CREATE_MONTH_YEAR' && (
           <div className='grid grid-cols-2 gap-4'>
             <div className='space-y-2'>
-              <label className='block text-sm font-medium text-gray-700'>
+              <label className='block text-sm font-medium text-muted-foreground'>
                 Month
               </label>
               <Select
@@ -306,7 +306,7 @@ export default function TaskFilter({
             </div>
 
             <div className='space-y-2'>
-              <label className='block text-sm font-medium text-gray-700'>
+              <label className='block text-sm font-medium text-muted-foreground'>
                 Year
               </label>
               <Select
@@ -337,7 +337,7 @@ export default function TaskFilter({
 
         {taskCreateDate === 'TASK_CREATE_DATE' && (
           <div className='space-y-2'>
-            <label className='block text-sm font-medium text-gray-700'>
+            <label className='block text-sm font-medium text-muted-foreground'>
               Date
             </label>
             <Input
@@ -369,7 +369,7 @@ export default function TaskFilter({
       </div>
       {/* Active Filters Summary */}
       <div className='pt-4 border-t'>
-        <h4 className='text-sm font-medium text-gray-700 mb-2'>
+        <h4 className='text-sm font-medium text-muted-foreground mb-2'>
           Active Filters:
         </h4>
         <div className='flex flex-wrap gap-2'>

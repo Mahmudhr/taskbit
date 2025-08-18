@@ -56,7 +56,7 @@ export default function ReactAsyncSelect<T = ReactAsyncSelectOption>({
       <div className='flex flex-col gap-1'>
         <label
           htmlFor={name}
-          className='block text-sm font-semibold text-left text-gray-700 whitespace-nowrap'
+          className='block text-sm font-semibold text-left text-muted-foreground dark:text-muted-foreground whitespace-nowrap'
         >
           {label}
         </label>
@@ -80,34 +80,63 @@ export default function ReactAsyncSelect<T = ReactAsyncSelectOption>({
               border: state.isFocused
                 ? '1px solid #9CA3AF'
                 : '1px solid #D1D5DB',
-              backgroundColor: 'transparent',
+              backgroundColor: state.isFocused
+                ? document.documentElement.classList.contains('dark')
+                  ? '#1a1a1a'
+                  : 'transparent'
+                : document.documentElement.classList.contains('dark')
+                ? '#18181b'
+                : 'transparent',
               fontSize: '0.875rem',
+              color: document.documentElement.classList.contains('dark')
+                ? '#e5e7eb'
+                : '#1F2937',
               boxShadow: '0 1px 2px 0 rgb(0 0 0 / 0.05);',
               '&:hover': {
-                borderColor: state.isFocused ? '#9CA3AF' : '#D1D5DB', // Prevent hover effect when focused
+                borderColor: state.isFocused ? '#9CA3AF' : '#D1D5DB',
               },
             }),
             input: (provided) => ({
               ...provided,
               minWidth: '100%',
-              // width: '100%',
+              color: document.documentElement.classList.contains('dark')
+                ? '#e5e7eb'
+                : '#1F2937',
             }),
             placeholder: (provided) => ({
               ...provided,
-              color: '#9CA3AF',
+              color: document.documentElement.classList.contains('dark')
+                ? '#a1a1aa'
+                : '#9CA3AF',
             }),
             singleValue: (provided) => ({
               ...provided,
-              color: '#1F2937',
+              color: document.documentElement.classList.contains('dark')
+                ? '#e5e7eb'
+                : '#1F2937',
             }),
             option: (provided, state) => ({
               ...provided,
               fontSize: '0.85rem',
-              backgroundColor: state.isSelected ? '#6B7280' : 'transparent',
-              color: state.isSelected ? '#FFFFFF' : '#1F2937',
+              backgroundColor: state.isSelected
+                ? document.documentElement.classList.contains('dark')
+                  ? '#27272a'
+                  : '#6B7280'
+                : document.documentElement.classList.contains('dark')
+                ? '#18181b'
+                : 'transparent',
+              color: state.isSelected
+                ? '#FFFFFF'
+                : document.documentElement.classList.contains('dark')
+                ? '#e5e7eb'
+                : '#1F2937',
               textAlign: 'start',
               '&:hover': {
-                backgroundColor: '#6B7280',
+                backgroundColor: document.documentElement.classList.contains(
+                  'dark'
+                )
+                  ? '#27272a'
+                  : '#6B7280',
                 color: '#FFFFFF',
               },
             }),

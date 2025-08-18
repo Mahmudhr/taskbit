@@ -324,10 +324,8 @@ export default function ExpensePage() {
       {/* Header Section */}
       <div className='flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4'>
         <div>
-          <h1 className='text-3xl font-bold text-gray-900'>
-            Expense Management
-          </h1>
-          <p className='text-gray-600 mt-1'>Track and manage all expenses</p>
+          <h1 className='text-2xl font-bold'>Expense Management</h1>
+          <p className='text-muted-foreground'>Track and manage all expenses</p>
         </div>
         <div className='flex items-center gap-2'>
           <Button onClick={() => setOpenCreateExpense(true)}>

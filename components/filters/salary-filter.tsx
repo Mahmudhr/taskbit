@@ -12,6 +12,11 @@ import {
 } from '@/components/ui/select';
 import { Filter, X } from 'lucide-react';
 import dayjs from 'dayjs';
+import {
+  paymentTypeConvert,
+  salaryStatusConvert,
+  salaryTypeConvert,
+} from '@/lib/utils';
 
 type ParamsType = {
   search: string;
@@ -63,7 +68,7 @@ export default function SalaryFilter({
     <div className='space-y-6'>
       {/* Status Filter */}
       <div className='space-y-2'>
-        <label className='block text-sm font-medium text-gray-700'>
+        <label className='block text-sm font-medium  text-muted-foreground'>
           Status
         </label>
         <Select
@@ -105,7 +110,7 @@ export default function SalaryFilter({
 
       {/* Salary Type Filter */}
       <div className='space-y-2'>
-        <label className='block text-sm font-medium text-gray-700'>
+        <label className='block text-sm font-medium  text-muted-foreground'>
           Salary Type
         </label>
         <Select
@@ -132,7 +137,7 @@ export default function SalaryFilter({
 
       {/* Payment Type Filter */}
       <div className='space-y-2'>
-        <label className='block text-sm font-medium text-gray-700'>
+        <label className='block text-sm font-medium text-muted-foreground'>
           Payment Type
         </label>
         <Select
@@ -160,7 +165,7 @@ export default function SalaryFilter({
       {/* Date Filters */}
       <div className='space-y-4'>
         <div className='space-y-2'>
-          <label className='block text-sm font-medium text-gray-700'>
+          <label className='block text-sm font-medium  text-muted-foreground'>
             Date Filter
           </label>
           <Select value={dateFilter} onValueChange={setDateFilter}>
@@ -282,17 +287,32 @@ export default function SalaryFilter({
           )}
           {params.status && params.status !== 'ALL' && (
             <div className='bg-green-100 text-green-800 px-2 py-1 rounded-md text-xs'>
-              Status: {params.status}
+              Status:{' '}
+              {
+                salaryStatusConvert[
+                  params.status as keyof typeof salaryStatusConvert
+                ]
+              }
             </div>
           )}
           {params.salary_type && params.salary_type !== 'ALL' && (
             <div className='bg-purple-100 text-purple-800 px-2 py-1 rounded-md text-xs'>
-              Type: {params.salary_type}
+              Type:{' '}
+              {
+                salaryTypeConvert[
+                  params.salary_type as keyof typeof salaryTypeConvert
+                ]
+              }
             </div>
           )}
           {params.payment_type && params.payment_type !== 'ALL' && (
             <div className='bg-orange-100 text-orange-800 px-2 py-1 rounded-md text-xs'>
-              Payment: {params.payment_type}
+              Payment:{' '}
+              {
+                paymentTypeConvert[
+                  params.payment_type as keyof typeof paymentTypeConvert
+                ]
+              }
             </div>
           )}
           {params.month && (

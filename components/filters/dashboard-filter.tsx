@@ -46,8 +46,6 @@ export default function DashboardFilter({
     }, 0);
   };
 
-  console.log({ check: window.location.pathname });
-
   const applyFilters = () => {
     setOpenFilter(false);
   };

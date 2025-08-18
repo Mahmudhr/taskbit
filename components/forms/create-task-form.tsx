@@ -205,7 +205,7 @@ export default function CreateTaskForm({ setIsOpen }: CreateTaskFormProps) {
           {/* Selected Users Display */}
           {selectedUsers.length > 0 && (
             <div className='mt-4 space-y-2'>
-              <div className='text-sm font-medium text-gray-700'>
+              <div className='text-sm font-medium text-muted-foreground'>
                 Selected Users ({selectedUsers.length}):
               </div>
               <div className='flex flex-wrap gap-2'>
@@ -238,7 +238,7 @@ export default function CreateTaskForm({ setIsOpen }: CreateTaskFormProps) {
 
           {/* Empty State */}
           {selectedUsers.length === 0 && (
-            <div className='mt-2 text-sm text-gray-500 italic'>
+            <div className='mt-2 text-sm text-muted-foreground italic'>
               No users assigned yet. Search and select users above.
             </div>
           )}
@@ -269,7 +269,7 @@ export default function CreateTaskForm({ setIsOpen }: CreateTaskFormProps) {
                   <div className='font-semibold break-words whitespace-pre-line text-left'>
                     {selectedClient.user.name}
                   </div>
-                  <div className='text-xs text-gray-600 break-all text-left'>
+                  <div className='text-xs text-muted-foreground break-all text-left'>
                     {selectedClient.user.email}
                   </div>
                 </Card>
