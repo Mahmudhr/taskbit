@@ -359,10 +359,12 @@ export default function DashboardPage() {
               {recent.payments.slice(0, 5).map((payment) => (
                 <div
                   key={payment.id}
-                  className='flex items-center justify-between'
+                  className='flex items-center justify-between gap-3'
                 >
                   <div className='space-y-1'>
-                    <p className='text-sm font-medium'>{payment.task.title}</p>
+                    <p className='text-sm font-medium break-all'>
+                      {payment.task.title}
+                    </p>
                     <p className='text-xs text-muted-foreground'>
                       {payment.user.name}
                     </p>
