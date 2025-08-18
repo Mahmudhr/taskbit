@@ -643,7 +643,7 @@ const TaskCardSkeleton = () => (
         ))}
       </div>
       <div className='space-y-3'>
-        {[...Array(3)].map((_, i) => (
+        {[...Array(1)].map((_, i) => (
           <div key={i} className='flex items-center gap-3'>
             <Skeleton className='w-8 h-8 rounded-lg dark:bg-gray-700' />
             <div className='flex-1'>
@@ -1088,7 +1088,7 @@ export default function TasksPage() {
         <CardHeader>
           <CardTitle className='dark:text-gray-100'>Tasks List</CardTitle>
         </CardHeader>
-        <CardContent>
+        <CardContent className='md:p-6 pt-0 p-3'>
           {!fetchTasksMutation.isLoading ? (
             <>
               {/* ✅ Mobile View: Cards */}
