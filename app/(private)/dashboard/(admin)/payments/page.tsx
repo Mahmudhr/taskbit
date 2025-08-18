@@ -337,9 +337,9 @@ export default function PaymentsPage() {
                       <span className='text-muted-foreground'>Amount:</span>
                       <span className='font-medium'>৳ {payment.amount}</span>
                     </div>
-                    <div className='flex justify-between'>
+                    <div className='flex justify-between gap-1'>
                       <span className='text-muted-foreground'>Task:</span>
-                      <span>{payment.task.title}</span>
+                      <span className='break-all'>{payment.task.title}</span>
                     </div>
                     <div className='flex justify-between items-center'>
                       <span className='text-muted-foreground'>Created At:</span>

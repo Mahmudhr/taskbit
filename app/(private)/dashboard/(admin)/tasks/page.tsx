@@ -118,17 +118,17 @@ const TaskCard = ({
     <Card className='hover:shadow-lg transition-all duration-200 border-l-4 border-l-blue-500 dark:border-l-blue-400 h-full dark:bg-gray-800/50'>
       <CardHeader className='pb-3'>
         <div className='flex items-start justify-between'>
-          <div className='flex items-center gap-3 flex-1'>
+          <div className='flex gap-3 flex-1 items-start'>
             <div className='bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-300 rounded-full w-10 h-10 flex items-center justify-center text-sm font-semibold'>
               #{index + 1}
             </div>
             <div className='flex-1 min-w-0'>
-              <h3
-                className='font-semibold text-lg truncate mb-1 dark:text-gray-100'
+              <p
+                className='font-semibold text-lg mb-1 dark:text-gray-100  break-all'
                 title={task.title}
               >
                 {task.title}
-              </h3>
+              </p>
               <div className='flex items-center gap-2 flex-wrap'>
                 {getStatusBadge(task.status)}
                 <Badge
@@ -389,7 +389,7 @@ const TaskRow = ({
           </div>
           <div className='flex-1 min-w-0'>
             <h3
-              className='font-semibold text-lg truncate mb-1 dark:text-gray-100'
+              className='font-semibold text-lg truncate mb-1 dark:text-gray-100 break-all'
               title={task.title}
             >
               {task.title}

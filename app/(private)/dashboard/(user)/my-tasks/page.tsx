@@ -353,7 +353,7 @@ export default function MyTasksPage() {
                       <span className='text-sm text-muted-foreground'>
                         #{index + 1}
                       </span>
-                      <h3 className='font-medium'>{task.title}</h3>
+                      <h3 className='font-medium break-all'>{task.title}</h3>
                     </div>
                     <div>
                       <DropdownMenu>
