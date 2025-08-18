@@ -1,5 +1,6 @@
 'use server';
 
+import { catchError } from '@/lib/utils';
 import { prisma } from '@/prisma/db';
 import { SalaryStatus, SalaryType, PaymentType, Prisma } from '@prisma/client';
 
@@ -68,11 +69,12 @@ export async function createSalary({
     });
 
     return {
+      success: true,
       message: 'Salary created successfully',
       salary,
     };
   } catch (e) {
-    throw new Error((e as Error)?.message || 'Failed to create salary');
+    return catchError(e);
   }
 }
 

@@ -12,12 +12,31 @@ import {
   fetchUserAllSalariesCalculation,
 } from '@/server/salary/salary';
 import { SalaryCalculationType } from '@/types/common';
+import { PaymentType, SalaryStatus, SalaryType } from '@prisma/client';
+
+type CreateSalaryType = {
+  amount: number;
+  month: number;
+  year: number;
+  status: SalaryStatus;
+  salaryType: SalaryType;
+  paymentType: PaymentType;
+  referenceNumber?: string;
+  note?: string;
+  userId: string;
+};
 
 export function useSalary() {
   const queryClient = useQueryClient();
 
   const createSalaryMutationAsync = useMutation({
-    mutationFn: createSalary,
+    mutationFn: async (data: CreateSalaryType) => {
+      const result = await createSalary(data);
+      if (!result.success) {
+        throw new Error(result.message || 'Failed to create salary');
+      }
+      return result;
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['salaries'] });
       queryClient.invalidateQueries({ queryKey: ['users'] });
