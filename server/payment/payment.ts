@@ -534,3 +534,15 @@ export const fetchAllPaymentsCalculation = async (data?: string) => {
     throw new Error('Failed to calculate payment statistics');
   }
 };
+
+export async function deletePayment(id: number) {
+  try {
+    const deletedPayment = await prisma.payment.delete({
+      where: { id },
+    });
+
+    return deletedPayment;
+  } catch {
+    throw new Error('Failed to delete payment');
+  }
+}

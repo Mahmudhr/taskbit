@@ -2,6 +2,7 @@
 
 import {
   createPayment,
+  deletePayment,
   fetchAllPayments,
   fetchAllPaymentsCalculation,
   updatePaymentByUser,
@@ -95,6 +96,16 @@ export function usePayment(options?: string) {
     },
   });
 
+  const deletePaymentMutation = useMutation({
+    mutationFn: (id: number) => deletePayment(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['payments'] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+      queryClient.invalidateQueries({ queryKey: ['payments-calculation'] });
+      queryClient.invalidateQueries({ queryKey: ['tasks'] });
+    },
+  });
+
   return {
     createPaymentMutation,
     createPaymentMutationAsync: createPaymentMutation.mutateAsync,
@@ -104,5 +115,9 @@ export function usePayment(options?: string) {
     fetchPaymentsCalculation: fetchPaymentsCalculationMutation.data,
     updatePaymentMutation,
     updatePaymentMutationAsync: updatePaymentMutation.mutateAsync,
+
+    deletePayment: deletePaymentMutation.mutate,
+    deletePaymentAsync: deletePaymentMutation.mutateAsync,
+    deletePaymentMutation,
   };
 }

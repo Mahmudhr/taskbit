@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useTransition } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -19,6 +19,9 @@ import {
   ChevronRight,
   X,
   ListFilter,
+  EllipsisVertical,
+  SquarePen,
+  Trash,
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { usePayment } from '@/hooks/use-payment';
@@ -30,6 +33,7 @@ import { useDebouncedCallback } from 'use-debounce';
 import {
   cn,
   generateQueryString,
+  getErrorMessage,
   paymentStatusConvert,
   paymentTypeConvert,
 } from '@/lib/utils';
@@ -39,6 +43,16 @@ import UpdatePaymentForm from '@/components/forms/update-payment-form';
 import { PaymentTypes } from '@/types/common';
 import PaymentFilter from '@/components/filters/payment-filter';
 import { Skeleton } from '@/components/ui/skeleton';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { toast } from 'sonner';
+import ConfirmModal from '@/components/confirm-modal';
 
 export const getStatusBadge = (status: $Enums.PaymentStatus) => {
   const variants = {
@@ -59,6 +73,8 @@ export default function PaymentsPage() {
   const [paymentData, setPaymentData] = useState<PaymentTypes | null>(null);
   const [updatePaymentOpen, setUpdatePaymentOpen] = useState(false);
   const [openPaymentFilter, setOpenPaymentFilter] = useState(false);
+  const [confirmModal, setConfirmModal] = useState(false);
+  const [isPendingDelete, startDeleteTransition] = useTransition();
 
   const router = useRouter();
 
@@ -79,6 +95,7 @@ export default function PaymentsPage() {
     fetchPayments,
     fetchPaymentsMutation,
     fetchPaymentsCalculationMutation,
+    deletePaymentAsync,
   } = usePayment(queryString);
 
   const debounced = useDebouncedCallback((value) => {
@@ -88,6 +105,20 @@ export default function PaymentsPage() {
       page: '1',
     }));
   }, 500);
+
+  const handleDeletePayment = () => {
+    if (taskId === null) return;
+    startDeleteTransition(() => {
+      toast.promise(deletePaymentAsync(taskId), {
+        loading: 'Deleting payment...',
+        success: () => {
+          setConfirmModal(false);
+          return 'Successfully payment Deleted';
+        },
+        error: (err) => getErrorMessage(err) || 'Something went wrong!',
+      });
+    });
+  };
 
   useEffect(() => {
     router.push(queryString);
@@ -287,7 +318,35 @@ export default function PaymentsPage() {
                           {dayjs(payment.createdAt).format('DD-MM-YYYY')}
                         </TableCell>
                         <TableCell>
-                          <Button
+                          <DropdownMenu>
+                            <DropdownMenuTrigger>
+                              <EllipsisVertical className='w-5 h-5 text-gray-600' />
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align='end'>
+                              <DropdownMenuLabel>Options</DropdownMenuLabel>
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem
+                                onClick={() => {
+                                  setUpdatePaymentOpen(true);
+                                  setTaskId(payment.id);
+                                  setPaymentData(payment);
+                                }}
+                              >
+                                <SquarePen className='mr-2 h-4 w-4' />
+                                Edit
+                              </DropdownMenuItem>
+                              <DropdownMenuItem
+                                onClick={() => {
+                                  setConfirmModal(true);
+                                  setTaskId(payment.id);
+                                }}
+                              >
+                                <Trash className='mr-2 h-4 w-4' />
+                                Delete
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                          {/* <Button
                             variant='outline'
                             size='sm'
                             onClick={() => {
@@ -297,7 +356,7 @@ export default function PaymentsPage() {
                             }}
                           >
                             <Edit className='h-4 w-4' />
-                          </Button>
+                          </Button> */}
                         </TableCell>
                       </TableRow>
                     ))}
@@ -427,6 +486,13 @@ export default function PaymentsPage() {
           setOpenPaymentFilter={setOpenPaymentFilter}
         />
       </Modal>
+      <ConfirmModal
+        isOpen={confirmModal}
+        setIsOpen={setConfirmModal}
+        loading={isPendingDelete}
+        title='This action cannot be undone. This will permanently delete your payment.'
+        onClick={handleDeletePayment}
+      />
     </div>
   );
 }
