@@ -111,10 +111,6 @@ export type PaymentTypes = {
   };
   task: {
     title: string;
-    assignedTo: {
-      email: string;
-      name: string;
-    } | null;
   };
 };
 
