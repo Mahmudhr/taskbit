@@ -89,15 +89,33 @@ export function useClient(options?: string) {
   });
 
   const createUserMutation = useMutation({
-    mutationFn: (data: CreateClientType) => createClient(data),
+    mutationFn: async (data: CreateClientType) => {
+      const result = await createClient(data);
+      if (!result.success) {
+        throw new Error(result.message || 'Failed to create client');
+      }
+      return result;
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['clients'] });
     },
   });
 
   const updateClientMutation = useMutation({
-    mutationFn: ({ id, data }: { id: number; data: CreateClientType }) =>
-      updateClient({ id, data }),
+    mutationFn: async ({
+      id,
+      data,
+    }: {
+      id: number;
+      data: CreateClientType;
+    }) => {
+      const result = await updateClient({ id, data });
+      if (!result.success) {
+        throw new Error(result.message || 'Failed to update client');
+      }
+      return result;
+    },
+
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['clients'] });
     },

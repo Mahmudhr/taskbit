@@ -28,9 +28,17 @@ export const createClient = async (data: CreateClientType) => {
       Array.isArray(error.meta.target) &&
       error.meta.target.includes('email')
     ) {
-      throw new Error('Email already exists');
+      // throw new Error('Email already exists');
+      return {
+        success: false,
+        message: 'Email already exists',
+      };
     }
-    throw new Error('Failed to create client');
+    // throw new Error('Failed to create client');
+    return {
+      success: false,
+      message: 'Failed to create client',
+    };
   }
 };
 
@@ -205,12 +213,13 @@ export const updateClient = async ({
       updateData.email = data.email;
     }
 
-    const updateUser = await prisma.client.update({
+    await prisma.client.update({
       where: { id },
       data: updateData,
     });
     return {
-      ...updateUser,
+      // ...updateUser,
+      success: true,
       message: 'Client updated successfully',
     };
   } catch (e) {
@@ -226,9 +235,16 @@ export const updateClient = async ({
       Array.isArray(e.meta.target) &&
       e.meta.target.includes('email')
     ) {
-      throw new Error('Email already in use');
+      // throw new Error('Email already in use');
+      return {
+        success: false,
+        message: 'Email already in use',
+      };
     }
-    throw new Error('Failed to update client');
+    return {
+      success: false,
+      message: 'Failed to create client',
+    };
   }
 };
 
