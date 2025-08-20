@@ -3,11 +3,11 @@
 import getAllDashboardData from '@/server/dashboard/dashboard';
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
 
-export function useDashboard() {
+export function useDashboard(option?: string) {
   const fetchDashboardMutation = useQuery({
-    queryKey: ['dashboard'],
+    queryKey: ['dashboard', option],
     queryFn: async () => {
-      const res = await getAllDashboardData();
+      const res = await getAllDashboardData(option);
       return res;
     },
     placeholderData: keepPreviousData,

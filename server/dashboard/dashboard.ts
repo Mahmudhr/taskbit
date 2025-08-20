@@ -1,11 +1,70 @@
 'use server';
 
 import { prisma } from '@/prisma/db';
+import { Prisma } from '@prisma/client';
 
-const getAllDashboardData = async () => {
+const getAllDashboardData = async (data?: string) => {
+  const params = new URLSearchParams(data || '');
+  // const dateString = params.get('date') || '';
+  const year = params.get('year') || '';
+  const month = params.get('month') || '';
+
+  const whereConditions = [];
+
+  const buildMonthRange = (y: number, m: number): Prisma.DateTimeFilter => ({
+    gte: new Date(y, m - 1, 1, 0, 0, 0, 0),
+    lte: new Date(y, m, 0, 23, 59, 59, 999),
+  });
+
+  if (month && year) {
+    // Month + Year
+    const monthNum = parseInt(month);
+    const yearNum = parseInt(year);
+    if (monthNum >= 1 && monthNum <= 12 && yearNum > 0) {
+      whereConditions.push({
+        createdAt: buildMonthRange(yearNum, monthNum),
+      });
+    }
+  } else if (month) {
+    // Month only - across multiple years
+    const monthNum = parseInt(month);
+    if (monthNum >= 1 && monthNum <= 12) {
+      const currentYear = new Date().getFullYear();
+      const years = [
+        currentYear - 2,
+        currentYear - 1,
+        currentYear,
+        currentYear + 1,
+        currentYear + 2,
+      ];
+
+      // Create OR condition for month across multiple years
+      whereConditions.push({
+        OR: years.map((y) => ({
+          createdAt: buildMonthRange(y, monthNum),
+        })),
+      });
+    }
+  } else if (year) {
+    // Year only
+    const yearNum = parseInt(year);
+    if (yearNum > 0) {
+      whereConditions.push({
+        createdAt: {
+          gte: new Date(yearNum, 0, 1, 0, 0, 0, 0),
+          lte: new Date(yearNum, 11, 31, 23, 59, 59, 999),
+        },
+      });
+    }
+  }
+
+  const where = whereConditions.length > 0 ? { AND: whereConditions } : {};
+
+  console.log({ params });
   try {
     // Get all payments
     const allPayments = await prisma.payment.findMany({
+      where,
       select: {
         amount: true,
         status: true,
@@ -14,6 +73,7 @@ const getAllDashboardData = async () => {
 
     // Get all expenses
     const allExpenses = await prisma.expense.findMany({
+      where,
       select: {
         amount: true,
       },
@@ -21,6 +81,7 @@ const getAllDashboardData = async () => {
 
     // Get all salaries
     const allSalaries = await prisma.salary.findMany({
+      where,
       select: {
         amount: true,
         status: true,

@@ -1,6 +1,5 @@
 'use client';
 
-import { useState } from 'react';
 import {
   Select,
   SelectContent,
@@ -9,7 +8,6 @@ import {
   SelectValue,
 } from '../ui/select';
 import dayjs from 'dayjs';
-import { Input } from '../ui/input';
 import { Button } from '../ui/button';
 import { Filter, X } from 'lucide-react';
 import { usePathname, useRouter } from 'next/navigation';
@@ -17,7 +15,6 @@ import { usePathname, useRouter } from 'next/navigation';
 type ParamsType = {
   month: string;
   year: string;
-  date: string;
 };
 
 type SalaryFilterProps = {
@@ -33,13 +30,13 @@ export default function DashboardFilter({
 }: SalaryFilterProps) {
   const router = useRouter();
   const pathname = usePathname();
-  const [dateFilter, setDateFilter] = useState('ALL');
+  // const [dateFilter, setDateFilter] = useState('ALL');
   const currentYear = new Date().getFullYear();
   const years = Array.from({ length: 5 }, (_, i) => currentYear - i);
 
   const clearFilters = () => {
-    setParams({ month: '', year: '', date: '' });
-    setDateFilter('ALL');
+    setParams({ month: '', year: '' });
+    // setDateFilter('ALL');
 
     setTimeout(() => {
       router.replace(pathname);
@@ -51,7 +48,7 @@ export default function DashboardFilter({
   };
   return (
     <div className='space-y-4'>
-      <div className='space-y-4'>
+      {/* <div className='space-y-4'>
         <div className='space-y-2'>
           <label className='block text-sm font-medium text-gray-700'>
             Date Filter
@@ -125,26 +122,63 @@ export default function DashboardFilter({
             </div>
           </div>
         )}
-
-        {dateFilter === 'DATE' && (
+      </div> */}
+      <div>
+        <div className='grid grid-cols-2 gap-4'>
           <div className='space-y-2'>
             <label className='block text-sm font-medium text-gray-700'>
-              Date
+              Month
             </label>
-            <Input
-              type='date'
-              value={params.date}
-              onChange={(e) =>
+            <Select
+              value={params.month}
+              onValueChange={(month) =>
                 setParams((prev) => ({
                   ...prev,
-                  date: e.target.value,
-                  year: '',
-                  month: '',
+                  month,
+                  date: '',
                 }))
               }
-            />
+            >
+              <SelectTrigger>
+                <SelectValue placeholder='Select month' />
+              </SelectTrigger>
+              <SelectContent className='z-[999]'>
+                {Array.from({ length: 12 }, (_, i) => (
+                  <SelectItem key={i + 1} value={(i + 1).toString()}>
+                    {dayjs().month(i).format('MMMM')}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
-        )}
+
+          <div className='space-y-2'>
+            <label className='block text-sm font-medium text-gray-700'>
+              Year
+            </label>
+            <Select
+              value={params.year}
+              onValueChange={(year) =>
+                setParams((prev) => ({
+                  ...prev,
+                  year,
+                  date: '',
+                }))
+              }
+            >
+              <SelectTrigger>
+                <SelectValue placeholder='Select year' />
+              </SelectTrigger>
+              <SelectContent className='z-[999]'>
+                {years.map((year) => (
+                  <SelectItem key={year} value={year.toString()}>
+                    {year}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
       </div>
 
       {/* Action Buttons */}
@@ -205,12 +239,7 @@ export default function DashboardFilter({
               Year: {params.year}
             </div>
           )}
-          {params.date && (
-            <div className='bg-gray-100 text-gray-800 px-2 py-1 rounded-md text-xs'>
-              Date: {dayjs(params.date).format('DD MMM YYYY')}
-            </div>
-          )}
-          {!params.month && !params.year && !params.date && (
+          {!params.month && !params.year && (
             <div className='text-gray-500 text-xs italic'>
               No filters applied
             </div>

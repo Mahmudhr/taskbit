@@ -40,13 +40,11 @@ export default function DashboardPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
-  const { fetchDashboardMutationData } = useDashboard();
   const [openFilter, setOpenFilter] = useState(false);
 
   const [params, setParams] = useState({
     month: searchParams.get('month') || '',
     year: searchParams.get('year') || '',
-    date: searchParams.get('date') || '',
   });
 
   const queryString = generateQueryString(params);
@@ -54,6 +52,8 @@ export default function DashboardPage() {
   useEffect(() => {
     router.push(queryString);
   }, [queryString, router]);
+
+  const { fetchDashboardMutationData } = useDashboard(queryString);
 
   if (!fetchDashboardMutationData?.data) {
     return (
