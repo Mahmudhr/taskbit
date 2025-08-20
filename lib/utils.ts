@@ -82,6 +82,9 @@ export const paperTypeConvert = {
   CONFERENCE: 'Conference',
   SURVEY: 'Survey',
   JOURNAL: 'Journal',
+  Journal_Q1: 'Journal Q1',
+  THESIS: 'Thesis',
+  Bicent_RESEARCH: 'Bicent Research',
 };
 
 export const formatDateToString = (date: Date | null | undefined): string => {
