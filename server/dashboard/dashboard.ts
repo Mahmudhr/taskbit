@@ -60,7 +60,6 @@ const getAllDashboardData = async (data?: string) => {
 
   const where = whereConditions.length > 0 ? { AND: whereConditions } : {};
 
-  console.log({ params });
   try {
     // Get all payments
     const allPayments = await prisma.payment.findMany({
