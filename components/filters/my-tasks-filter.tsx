@@ -99,10 +99,9 @@ export default function MyTasksFilter({
           <SelectValue placeholder='Filter by status' />
         </SelectTrigger>
         <SelectContent className='z-[999]'>
-          <SelectItem value='ALL'>All Status</SelectItem>
+          <SelectItem value='ALL'>All Tasks Status</SelectItem>
           <SelectItem value='PENDING'>Pending</SelectItem>
           <SelectItem value='IN_PROGRESS'>In Progress</SelectItem>
-          <SelectItem value='SUBMITTED'>Submitted</SelectItem>
           <SelectItem value='COMPLETED'>Completed</SelectItem>
         </SelectContent>
       </Select>

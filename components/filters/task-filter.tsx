@@ -13,6 +13,7 @@ import {
 import { Input } from '../ui/input';
 import dayjs from 'dayjs';
 import { useClient } from '@/hooks/use-client';
+import { paperTypeConvert, taskStatusConvert } from '@/lib/utils';
 
 type ParamsType = {
   search: string;
@@ -104,10 +105,9 @@ export default function TaskFilter({
             <SelectValue placeholder='Filter by status' />
           </SelectTrigger>
           <SelectContent className='z-[9999]'>
-            <SelectItem value='ALL'>All payment Status</SelectItem>
+            <SelectItem value='ALL'>All task Status</SelectItem>
             <SelectItem value='PENDING'>Pending</SelectItem>
             <SelectItem value='IN_PROGRESS'>In Progress</SelectItem>
-            <SelectItem value='SUBMITTED'>Submitted</SelectItem>
             <SelectItem value='COMPLETED'>Completed</SelectItem>
           </SelectContent>
         </Select>
@@ -375,22 +375,28 @@ export default function TaskFilter({
         <div className='flex flex-wrap gap-2'>
           {params.status && params.status !== 'ALL' && (
             <div className='bg-green-100 text-green-800 px-2 py-1 rounded-md text-xs'>
-              Status: {params.status}
-            </div>
-          )}
-          {params.status && params.status !== 'ALL' && (
-            <div className='bg-purple-100 text-purple-800 px-2 py-1 rounded-md text-xs'>
-              Type: {params.status}
+              Status:{' '}
+              {
+                taskStatusConvert[
+                  params.status as keyof typeof taskStatusConvert
+                ]
+              }
             </div>
           )}
           {params.paper_type && params.paper_type !== 'ALL' && (
-            <div className='bg-orange-100 text-orange-800 px-2 py-1 rounded-md text-xs'>
-              Payment: {params.paper_type}
+            <div className='bg-purple-100 text-purple-800 px-2 py-1 rounded-md text-xs'>
+              Type:{' '}
+              {
+                paperTypeConvert[
+                  params.paper_type as keyof typeof paperTypeConvert
+                ]
+              }
             </div>
           )}
+
           {params.client && params.client !== 'ALL' && (
             <div className='bg-orange-100 text-orange-800 px-2 py-1 rounded-md text-xs'>
-              Payment: {params.client}
+              Client: {params.client}
             </div>
           )}
           {params.payment_status && params.payment_status !== 'ALL' && (

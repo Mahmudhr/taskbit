@@ -1051,7 +1051,11 @@ export const fetchAllTaskCalculation = async (data?: string) => {
 
   const whereConditions: Prisma.TaskWhereInput[] = [{ isDeleted: false }];
 
+  // Track if any filter other than status is present
+  let hasOtherFilter = false;
+
   if (search) {
+    hasOtherFilter = true;
     whereConditions.push({
       OR: [
         { title: { contains: search, mode: 'insensitive' } },
@@ -1061,23 +1065,23 @@ export const fetchAllTaskCalculation = async (data?: string) => {
     });
   }
 
-  if (status && status !== 'ALL') {
-    whereConditions.push({ status: status as TaskStatus });
-  }
-
   if (paper_type && paper_type !== 'ALL') {
+    hasOtherFilter = true;
     whereConditions.push({ paper_type: paper_type as PaperType });
   }
 
   let dueDateFilter: Prisma.DateTimeFilter | undefined;
   if (due_date) {
+    hasOtherFilter = true;
     const d = new Date(due_date);
     if (!isNaN(d.getTime())) dueDateFilter = buildDayRange(d);
   } else if (due_month && due_year) {
+    hasOtherFilter = true;
     const m = monthToInt(due_month);
     const y = parseInt(due_year);
     if (m && y > 0) dueDateFilter = buildMonthRange(y, m);
   } else if (due_year) {
+    hasOtherFilter = true;
     const y = parseInt(due_year);
     if (y > 0)
       dueDateFilter = {
@@ -1089,6 +1093,7 @@ export const fetchAllTaskCalculation = async (data?: string) => {
   if (dueDateFilter) {
     whereConditions.push({ duration: dueDateFilter });
   } else if (due_month && !due_year && !due_date) {
+    hasOtherFilter = true;
     const m = monthToInt(due_month);
     if (m) {
       const span = await getYearSpan('duration');
@@ -1102,13 +1107,16 @@ export const fetchAllTaskCalculation = async (data?: string) => {
 
   let taskCreateFilter: Prisma.DateTimeFilter | undefined;
   if (task_create) {
+    hasOtherFilter = true;
     const d = new Date(task_create);
     if (!isNaN(d.getTime())) taskCreateFilter = buildDayRange(d);
   } else if (task_create_month && task_create_year) {
+    hasOtherFilter = true;
     const m = monthToInt(task_create_month);
     const y = parseInt(task_create_year);
     if (m && y > 0) taskCreateFilter = buildMonthRange(y, m);
   } else if (task_create_year) {
+    hasOtherFilter = true;
     const y = parseInt(task_create_year);
     if (y > 0)
       taskCreateFilter = {
@@ -1120,6 +1128,7 @@ export const fetchAllTaskCalculation = async (data?: string) => {
   if (taskCreateFilter) {
     whereConditions.push({ createdAt: taskCreateFilter });
   } else if (task_create_month && !task_create_year && !task_create) {
+    hasOtherFilter = true;
     const m = monthToInt(task_create_month);
     if (m) {
       const span = await getYearSpan('createdAt');
@@ -1132,9 +1141,15 @@ export const fetchAllTaskCalculation = async (data?: string) => {
   }
 
   if (client && client !== 'ALL') {
+    hasOtherFilter = true;
     whereConditions.push({
       client: { name: { contains: client, mode: 'insensitive' } },
     });
+  }
+
+  // Only apply status filter if another filter is present
+  if (status && status !== 'ALL' && hasOtherFilter) {
+    whereConditions.push({ status: status as TaskStatus });
   }
 
   const where: Prisma.TaskWhereInput =
@@ -1151,10 +1166,6 @@ export const fetchAllTaskCalculation = async (data?: string) => {
       where: { ...where, status: 'IN_PROGRESS' },
     });
 
-    const submittedCount = await prisma.task.count({
-      where: { ...where, status: 'SUBMITTED' },
-    });
-
     const completedCount = await prisma.task.count({
       where: { ...where, status: 'COMPLETED' },
     });
@@ -1163,8 +1174,7 @@ export const fetchAllTaskCalculation = async (data?: string) => {
       totalTasks > 0 ? Math.round((pendingCount / totalTasks) * 100) : 0;
     const inProgressPercentage =
       totalTasks > 0 ? Math.round((inProgressCount / totalTasks) * 100) : 0;
-    const submittedPercentage =
-      totalTasks > 0 ? Math.round((submittedCount / totalTasks) * 100) : 0;
+
     const completedPercentage =
       totalTasks > 0 ? Math.round((completedCount / totalTasks) * 100) : 0;
 
@@ -1172,11 +1182,11 @@ export const fetchAllTaskCalculation = async (data?: string) => {
       totalTasks,
       pendingCount,
       inProgressCount,
-      submittedCount,
+
       completedCount,
       pendingPercentage,
       inProgressPercentage,
-      submittedPercentage,
+
       completedPercentage,
     };
   } catch (error) {

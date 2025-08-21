@@ -62,8 +62,8 @@ export const userStatusConvert = {
 export const taskStatusConvert = {
   PENDING: 'Pending',
   IN_PROGRESS: 'In Progress',
-  SUBMITTED: 'Submitted',
   COMPLETED: 'Completed',
+  SUBMITTED: 'Submitted',
 };
 
 export const paymentStatusConvert = {
@@ -86,6 +86,8 @@ export const paperTypeConvert = {
   THESIS: 'Thesis',
   Bicent_RESEARCH: 'Bicent Research',
 };
+
+export const allTaskStatus = ['PENDING', 'IN_PROGRESS', 'COMPLETED'];
 
 export const formatDateToString = (date: Date | null | undefined): string => {
   if (!date) return '';

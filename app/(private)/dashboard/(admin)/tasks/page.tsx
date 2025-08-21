@@ -60,6 +60,13 @@ import TaskFilter from '@/components/filters/task-filter';
 import { Skeleton } from '@/components/ui/skeleton';
 import TaskAssignee from '@/components/task-assignee';
 
+const statusTabs = [
+  { label: 'All', value: '' },
+  { label: 'Completed', value: 'COMPLETED' },
+  { label: 'In Progress', value: 'IN_PROGRESS' },
+  { label: 'Pending', value: 'PENDING' },
+];
+
 export const getStatusBadge = (status: string) => {
   const variants = {
     PENDING:
@@ -278,6 +285,22 @@ const TaskCard = ({
               </p>
             </div>
           </div>
+
+          <div className='flex items-center gap-3'>
+            <div className='bg-pink-50 dark:bg-pink-900/30 p-2 rounded-lg'>
+              <Calendar className='w-4 h-4 text-pink-600 dark:text-pink-400' />
+            </div>
+            <div className='flex-1'>
+              <p className='text-xs text-muted-foreground dark:text-gray-400'>
+                Target Date
+              </p>
+              <p className='font-medium text-sm dark:text-gray-200'>
+                {task.target_date
+                  ? dayjs(task.target_date).format('DD MMM YYYY')
+                  : 'Not Set'}
+              </p>
+            </div>
+          </div>
         </div>
 
         {/* Payment Information */}
@@ -464,7 +487,7 @@ const TaskRow = ({
       </div>
 
       {/* Middle Row - Main Information */}
-      <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-3'>
+      <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4 mb-3'>
         {/* Client */}
         <div className='flex items-center gap-3'>
           <div className='bg-purple-50 dark:bg-purple-900/30 p-2 rounded-lg'>
@@ -524,6 +547,38 @@ const TaskRow = ({
             <p className='font-medium text-sm dark:text-gray-200'>
               {task.duration
                 ? dayjs(task.duration).format('DD MMM')
+                : 'Not Set'}
+            </p>
+          </div>
+        </div>
+
+        {/* Created At */}
+        <div className='flex items-center gap-3'>
+          <div className='bg-gray-50 dark:bg-gray-700/50 p-2 rounded-lg'>
+            <Calendar className='w-4 h-4 text-gray-600 dark:text-gray-400' />
+          </div>
+          <div>
+            <p className='text-xs text-muted-foreground dark:text-gray-400'>
+              Created
+            </p>
+            <p className='font-medium text-sm dark:text-gray-200'>
+              {dayjs(task.createdAt).format('DD MMM YYYY')}
+            </p>
+          </div>
+        </div>
+
+        {/* Target Date */}
+        <div className='flex items-center gap-3'>
+          <div className='bg-pink-50 dark:bg-pink-900/30 p-2 rounded-lg'>
+            <Calendar className='w-4 h-4 text-pink-600 dark:text-pink-400' />
+          </div>
+          <div>
+            <p className='text-xs text-muted-foreground dark:text-gray-400'>
+              Target Date
+            </p>
+            <p className='font-medium text-sm dark:text-gray-200'>
+              {task.target_date
+                ? dayjs(task.target_date).format('DD MMM YYYY')
                 : 'Not Set'}
             </p>
           </div>
@@ -712,7 +767,7 @@ export default function TasksPage() {
   const [params, setParams] = useState({
     search: searchParams.get('search') || '',
     page: searchParams.get('page') || '1',
-    status: searchParams.get('status') || '',
+    status: searchParams.get('status') || 'IN_PROGRESS',
     paper_type: searchParams.get('paper_type') || '',
     client: searchParams.get('client') || '',
     payment_status: searchParams.get('payment_status') || '',
@@ -786,8 +841,16 @@ export default function TasksPage() {
       {/* Statistics Cards */}
       <div>
         {!fetchTasksCalculationMutation.isLoading ? (
-          <div className='grid grid-cols-2 md:grid-cols-5 gap-4'>
-            <Card>
+          <div className='grid grid-cols-2 md:grid-cols-4 gap-4'>
+            <Card
+              className='cursor-pointer'
+              onClick={() => {
+                setParams((prev) => ({
+                  ...prev,
+                  status: '',
+                }));
+              }}
+            >
               <CardContent className='p-4 text-center'>
                 <div className='text-2xl font-bold dark:text-gray-100'>
                   {fetchTasksCalculationMutation?.data?.totalTasks || 0}
@@ -797,7 +860,15 @@ export default function TasksPage() {
                 </div>
               </CardContent>
             </Card>
-            <Card>
+            <Card
+              className='cursor-pointer'
+              onClick={() => {
+                setParams((prev) => ({
+                  ...prev,
+                  status: 'COMPLETED',
+                }));
+              }}
+            >
               <CardContent className='p-4 text-center'>
                 <div className='text-2xl font-bold text-green-600 dark:text-green-400'>
                   {fetchTasksCalculationMutation?.data?.completedCount}
@@ -807,7 +878,15 @@ export default function TasksPage() {
                 </div>
               </CardContent>
             </Card>
-            <Card>
+            <Card
+              className='cursor-pointer'
+              onClick={() => {
+                setParams((prev) => ({
+                  ...prev,
+                  status: 'IN_PROGRESS',
+                }));
+              }}
+            >
               <CardContent className='p-4 text-center'>
                 <div className='text-2xl font-bold text-yellow-600 dark:text-yellow-400'>
                   {fetchTasksCalculationMutation?.data?.inProgressCount}
@@ -817,7 +896,15 @@ export default function TasksPage() {
                 </div>
               </CardContent>
             </Card>
-            <Card>
+            <Card
+              className='cursor-pointer'
+              onClick={() => {
+                setParams((prev) => ({
+                  ...prev,
+                  status: 'PENDING',
+                }));
+              }}
+            >
               <CardContent className='p-4 text-center'>
                 <div className='text-2xl font-bold text-red-600 dark:text-red-400'>
                   {fetchTasksCalculationMutation?.data?.pendingCount}
@@ -827,7 +914,7 @@ export default function TasksPage() {
                 </div>
               </CardContent>
             </Card>
-            <Card>
+            {/* <Card>
               <CardContent className='p-4 text-center'>
                 <div className='text-2xl font-bold text-green-600 dark:text-green-400'>
                   {fetchTasksCalculationMutation?.data?.submittedCount}
@@ -836,7 +923,7 @@ export default function TasksPage() {
                   Submitted
                 </div>
               </CardContent>
-            </Card>
+            </Card> */}
           </div>
         ) : (
           <div className='grid grid-cols-1 md:grid-cols-4 gap-4'>
@@ -1082,6 +1169,24 @@ export default function TasksPage() {
           </div>
         </CardContent>
       </Card>
+      <div className='flex gap-2 my-4'>
+        {statusTabs.map((tab) => (
+          <Button
+            key={tab.value}
+            size={'sm'}
+            variant={params.status === tab.value ? 'default' : 'outline'}
+            onClick={() =>
+              setParams((prev) => ({
+                ...prev,
+                status: tab.value,
+                page: '1',
+              }))
+            }
+          >
+            {tab.label}
+          </Button>
+        ))}
+      </div>
 
       {/* Tasks List */}
       <Card className='dark:bg-[#232325] dark:border-gray-700'>

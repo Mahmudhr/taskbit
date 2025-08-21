@@ -26,6 +26,7 @@ import { useSearchUser, SearchUserOption } from '@/hooks/use-search-user';
 import ReactAsyncSelect from '../react-async-select';
 import { Card } from '../ui/card';
 import {
+  allTaskStatus,
   formatDateToString,
   getErrorMessage,
   paperTypeConvert,
@@ -360,7 +361,7 @@ export default function UpdateTaskForm({
                   </SelectTrigger>
                 </FormControl>
                 <SelectContent className='z-[9999]'>
-                  {Object.values(TaskStatus).map((status) => (
+                  {allTaskStatus.map((status) => (
                     <SelectItem key={status} value={status}>
                       {
                         taskStatusConvert[

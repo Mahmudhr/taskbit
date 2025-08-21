@@ -27,6 +27,7 @@ import ReactAsyncSelect from '../react-async-select';
 import { Card } from '../ui/card';
 import { useState } from 'react';
 import {
+  allTaskStatus,
   formatDateToString,
   getErrorMessage,
   paperTypeConvert,
@@ -310,7 +311,7 @@ export default function CreateTaskForm({ setIsOpen }: CreateTaskFormProps) {
                   </SelectTrigger>
                 </FormControl>
                 <SelectContent className='z-[9999]'>
-                  {Object.values(TaskStatus).map((status) => (
+                  {allTaskStatus.map((status) => (
                     <SelectItem key={status} value={status}>
                       {
                         taskStatusConvert[

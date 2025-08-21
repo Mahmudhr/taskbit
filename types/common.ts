@@ -189,8 +189,6 @@ export interface TaskCalculationsType {
   inProgressPercentage: number;
   pendingCount: number;
   pendingPercentage: number;
-  submittedCount: number;
-  submittedPercentage: number;
 }
 
 export type PaymentCalculationsType = Record<

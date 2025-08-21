@@ -21,7 +21,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '../ui/select';
-import { getErrorMessage, taskStatusConvert } from '@/lib/utils';
+import { allTaskStatus, getErrorMessage, taskStatusConvert } from '@/lib/utils';
 import { Button } from '../ui/button';
 import { Loader2Icon } from 'lucide-react';
 import { useTransition } from 'react';
@@ -45,7 +45,7 @@ const FormSchema = z
   })
   .refine(
     (data) => {
-      if (data.status === TaskStatus.SUBMITTED) {
+      if (data.status === TaskStatus.COMPLETED) {
         return (
           data.link &&
           data.link.trim().length > 0 &&
@@ -133,7 +133,7 @@ export default function CreateTaskDeliveryForm({
             <FormItem>
               <FormLabel>
                 Link{' '}
-                {watchedStatus === TaskStatus.SUBMITTED && (
+                {watchedStatus === TaskStatus.COMPLETED && (
                   <span className='text-red-500'>*</span>
                 )}
               </FormLabel>
@@ -141,7 +141,7 @@ export default function CreateTaskDeliveryForm({
                 <Input
                   className='w-full'
                   placeholder={
-                    watchedStatus === TaskStatus.SUBMITTED
+                    watchedStatus === TaskStatus.COMPLETED
                       ? 'Enter task delivery link (required)'
                       : 'Enter task delivery link (optional)'
                   }
@@ -173,18 +173,15 @@ export default function CreateTaskDeliveryForm({
                   </SelectTrigger>
                 </FormControl>
                 <SelectContent className='z-[9999]'>
-                  {Object.values(TaskStatus).map(
-                    (status) =>
-                      status !== 'COMPLETED' && (
-                        <SelectItem key={status} value={status}>
-                          {
-                            taskStatusConvert[
-                              status as keyof typeof taskStatusConvert
-                            ]
-                          }
-                        </SelectItem>
-                      )
-                  )}
+                  {allTaskStatus.map((status) => (
+                    <SelectItem key={status} value={status}>
+                      {
+                        taskStatusConvert[
+                          status as keyof typeof taskStatusConvert
+                        ]
+                      }
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
               <FormMessage />
