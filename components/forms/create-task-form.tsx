@@ -57,7 +57,6 @@ const FormSchema = z.object({
   assignedUserIds: z.array(z.number()).optional(),
   clientId: z.coerce.number().optional(),
   duration: z.string().optional(),
-  targetDate: z.date().optional().nullable(),
   startDate: z.date().optional().nullable(),
 });
 
@@ -85,7 +84,6 @@ export default function CreateTaskForm({ setIsOpen }: CreateTaskFormProps) {
       assignedUserIds: [],
       clientId: 0,
       duration: '',
-      targetDate: null,
       startDate: null,
     },
   });
@@ -396,33 +394,6 @@ export default function CreateTaskForm({ setIsOpen }: CreateTaskFormProps) {
                   type='date'
                   placeholder='Select date'
                   {...field}
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <FormField
-          control={form.control}
-          name='targetDate'
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Delivery Date</FormLabel>
-              <FormControl>
-                <Input
-                  className='w-full'
-                  type='date'
-                  placeholder='Select start date'
-                  value={formatDateToString(field.value)}
-                  onChange={(e) => {
-                    const dateValue = e.target.value
-                      ? new Date(e.target.value)
-                      : null;
-                    field.onChange(dateValue);
-                  }}
-                  onBlur={field.onBlur}
-                  name={field.name}
-                  ref={field.ref}
                 />
               </FormControl>
               <FormMessage />

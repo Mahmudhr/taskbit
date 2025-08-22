@@ -406,13 +406,13 @@ const TaskRow = ({
     <Card className='border rounded-lg hover:shadow-md transition-all duration-200 p-4'>
       {/* Top Row - Title and Actions */}
       <div className='flex items-start justify-between mb-3'>
-        <div className='flex items-center gap-3 flex-1'>
+        <div className='flex items-start gap-3 flex-1'>
           <div className='bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-300 rounded-full w-8 h-8 flex items-center justify-center text-sm font-semibold'>
             #{index + 1}
           </div>
           <div className='flex-1 min-w-0'>
             <h3
-              className='font-semibold text-lg truncate mb-1 dark:text-gray-100 break-all'
+              className='font-semibold text-lg truncate mb-1 dark:text-gray-100 text-wrap break-all'
               title={task.title}
             >
               {task.title}
@@ -525,11 +525,11 @@ const TaskRow = ({
           </div>
           <div>
             <p className='text-xs text-muted-foreground dark:text-gray-400'>
-              Start Date
+              Assigned Date
             </p>
             <p className='font-medium text-sm dark:text-gray-200'>
               {task.startDate
-                ? dayjs(task.startDate).format('DD MMM')
+                ? dayjs(task.startDate).format('DD MMM YYYY')
                 : 'Not Set'}
             </p>
           </div>
@@ -542,18 +542,18 @@ const TaskRow = ({
           </div>
           <div>
             <p className='text-xs text-muted-foreground dark:text-gray-400'>
-              Due Date
+              Delivery Date
             </p>
             <p className='font-medium text-sm dark:text-gray-200'>
               {task.duration
-                ? dayjs(task.duration).format('DD MMM')
+                ? dayjs(task.duration).format('DD MMM YYYY')
                 : 'Not Set'}
             </p>
           </div>
         </div>
 
         {/* Created At */}
-        <div className='flex items-center gap-3'>
+        {/* <div className='flex items-center gap-3'>
           <div className='bg-gray-50 dark:bg-gray-700/50 p-2 rounded-lg'>
             <Calendar className='w-4 h-4 text-gray-600 dark:text-gray-400' />
           </div>
@@ -565,24 +565,7 @@ const TaskRow = ({
               {dayjs(task.createdAt).format('DD MMM YYYY')}
             </p>
           </div>
-        </div>
-
-        {/* Target Date */}
-        <div className='flex items-center gap-3'>
-          <div className='bg-pink-50 dark:bg-pink-900/30 p-2 rounded-lg'>
-            <Calendar className='w-4 h-4 text-pink-600 dark:text-pink-400' />
-          </div>
-          <div>
-            <p className='text-xs text-muted-foreground dark:text-gray-400'>
-              Target Date
-            </p>
-            <p className='font-medium text-sm dark:text-gray-200'>
-              {task.target_date
-                ? dayjs(task.target_date).format('DD MMM YYYY')
-                : 'Not Set'}
-            </p>
-          </div>
-        </div>
+        </div> */}
       </div>
 
       {/* Bottom Row - Payment Information */}
@@ -767,7 +750,7 @@ export default function TasksPage() {
   const [params, setParams] = useState({
     search: searchParams.get('search') || '',
     page: searchParams.get('page') || '1',
-    status: searchParams.get('status') || 'IN_PROGRESS',
+    status: searchParams.get('status') || 'PENDING',
     paper_type: searchParams.get('paper_type') || '',
     client: searchParams.get('client') || '',
     payment_status: searchParams.get('payment_status') || '',
