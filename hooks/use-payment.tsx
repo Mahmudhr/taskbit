@@ -2,6 +2,7 @@
 
 import {
   createPayment,
+  createReceivableAmount,
   deletePayment,
   fetchAllPayments,
   fetchAllPaymentsCalculation,
@@ -106,6 +107,24 @@ export function usePayment(options?: string) {
     },
   });
 
+  const createReceivablePaymentMutation = useMutation({
+    mutationFn: async (data: { amount: number; taskId: number }) => {
+      const result = await createReceivableAmount(data);
+      if (!result.success) {
+        throw new Error(
+          result.message || 'Failed to create receivable payment'
+        );
+      }
+      return result;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['payments'] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+      queryClient.invalidateQueries({ queryKey: ['payments-calculation'] });
+      queryClient.invalidateQueries({ queryKey: ['tasks'] });
+    },
+  });
+
   return {
     createPaymentMutation,
     createPaymentMutationAsync: createPaymentMutation.mutateAsync,
@@ -119,5 +138,8 @@ export function usePayment(options?: string) {
     deletePayment: deletePaymentMutation.mutate,
     deletePaymentAsync: deletePaymentMutation.mutateAsync,
     deletePaymentMutation,
+    createReceivablePaymentMutation,
+    createReceivablePaymentMutationAsync:
+      createReceivablePaymentMutation.mutateAsync,
   };
 }

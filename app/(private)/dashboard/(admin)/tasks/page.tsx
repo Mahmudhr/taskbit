@@ -59,6 +59,7 @@ import TaskDetailsView from '@/components/task-details-view';
 import TaskFilter from '@/components/filters/task-filter';
 import { Skeleton } from '@/components/ui/skeleton';
 import TaskAssignee from '@/components/task-assignee';
+import CreateReceivablePaymentForm from '@/components/forms/create-recievale-payment-form';
 
 const statusTabs = [
   { label: 'All', value: '' },
@@ -392,6 +393,7 @@ const TaskRow = ({
   onView,
   onDelete,
   onPayment,
+  onReceivablePayment,
 }: {
   task: TaskType;
   index: number;
@@ -399,8 +401,9 @@ const TaskRow = ({
   onView: () => void;
   onDelete: () => void;
   onPayment: () => void;
+  onReceivablePayment: () => void;
 }) => {
-  const dueAmount = task.paid ? task.amount - task.paid : task.amount;
+  // const dueAmount = task.paid ? task.amount - task.paid : task.amount;
 
   return (
     <Card className='border rounded-lg hover:shadow-md transition-all duration-200 p-4'>
@@ -472,6 +475,14 @@ const TaskRow = ({
               >
                 <CreditCard className='mr-2 h-4 w-4' />
                 Make Payment
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={onReceivablePayment}
+                disabled={task.amount === 0}
+                className='cursor-pointer dark:hover:bg-gray-700 dark:text-gray-200'
+              >
+                <CreditCard className='mr-2 h-4 w-4' />
+                Receivable Payment
               </DropdownMenuItem>
               <DropdownMenuSeparator className='dark:border-gray-700' />
               <DropdownMenuItem
@@ -589,7 +600,7 @@ const TaskRow = ({
               </div>
               <div className='text-center'>
                 <p className='text-muted-foreground dark:text-gray-400 text-xs'>
-                  Paid
+                  Received Amount
                 </p>
                 <p className='font-bold text-green-600 dark:text-green-400'>
                   ৳{task.paid || 0}
@@ -597,16 +608,16 @@ const TaskRow = ({
               </div>
               <div className='text-center'>
                 <p className='text-muted-foreground dark:text-gray-400 text-xs'>
-                  Due
+                  Receivable Amount
                 </p>
                 <p
                   className={`font-bold ${
-                    dueAmount > 0
+                    task.receivable > 0
                       ? 'text-red-600 dark:text-red-400'
                       : 'text-green-600 dark:text-green-400'
                   }`}
                 >
-                  ৳{dueAmount}
+                  ৳{task.receivable}
                 </p>
               </div>
             </div>
@@ -614,7 +625,7 @@ const TaskRow = ({
 
           {/* Payment Status & Links */}
           <div className='flex items-center gap-3'>
-            {getPaymentStatusBadge(dueAmount)}
+            {getPaymentStatusBadge(task.receivable)}
 
             {task.link && (
               <Link
@@ -745,6 +756,8 @@ export default function TasksPage() {
   const [viewTask, setViewTask] = useState<TaskType | null>(null);
   const [viewTaskModal, setViewTaskModal] = useState(false);
   const [openSalaryFilter, setOpenSalaryFilter] = useState(false);
+  const [createReceivablePaymentOpen, setCreateReceivablePaymentOpen] =
+    useState(false);
 
   const router = useRouter();
   const [params, setParams] = useState({
@@ -1220,6 +1233,10 @@ export default function TasksPage() {
                           setOpenPayment(true);
                           setTaskId(task.id);
                         }}
+                        onReceivablePayment={() => {
+                          setCreateReceivablePaymentOpen(true);
+                          setTaskId(task.id);
+                        }}
                       />
                     ))}
                 </div>
@@ -1317,6 +1334,17 @@ export default function TasksPage() {
         description=' '
       >
         <CreatePaymentForm setIsOpen={setOpenPayment} taskId={taskId} />
+      </AlertModal>
+      <AlertModal
+        isOpen={createReceivablePaymentOpen}
+        setIsOpen={setCreateReceivablePaymentOpen}
+        title='Create new receivable payment'
+        description=' '
+      >
+        <CreateReceivablePaymentForm
+          setIsOpen={setCreateReceivablePaymentOpen}
+          taskId={taskId}
+        />
       </AlertModal>
       <Modal
         isOpen={viewTaskModal}

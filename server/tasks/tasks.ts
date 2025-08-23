@@ -643,6 +643,7 @@ export const fetchAllTasks = async (data?: string) => {
         },
         client: { select: { id: true, name: true, email: true } },
         payments: { where: { status: 'COMPLETED' } },
+        receivableAmounts: { select: { id: true, amount: true, status: true } },
         createdBy: { select: { id: true, name: true, email: true } },
       },
     });
@@ -650,6 +651,11 @@ export const fetchAllTasks = async (data?: string) => {
     // Calculate paid amount for each task and format assigned users
     let tasksWithPaid = tasks.map((task) => {
       const paid = task.payments.reduce((total, p) => total + p.amount, 0);
+
+      const receivable = task.receivableAmounts.reduce(
+        (total, r) => total + r.amount,
+        0
+      );
 
       // Extract assigned users from task assignments
       const assignedUsers = task.taskAssignments.map(
@@ -677,6 +683,8 @@ export const fetchAllTasks = async (data?: string) => {
         note: task.note,
         createdBy: task.createdBy,
         paid,
+        receivable,
+        receivableAmounts: task.receivableAmounts,
       };
     });
 

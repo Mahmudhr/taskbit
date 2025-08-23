@@ -66,7 +66,7 @@ model Task {
   updatedAt       DateTime  @updatedAt @map("updated_at")
   duration        DateTime?
   startDate       DateTime? @map("start_date")
-  targetDate       DateTime? @map("target_date")
+  targetDate      DateTime? @map("target_date")
   
   // Many-to-many relationship with users through TaskAssignment
   taskAssignments TaskAssignment[] @relation("TaskAssignments")
@@ -76,6 +76,7 @@ model Task {
   createdById     Int?      @map("created_by_id")
   client          Client?   @relation("ClientTasks", fields: [clientId], references: [id])
   clientId        Int?      @map("client_id")
+  receivableAmounts ReceivableAmount[] @relation("TaskReceivableAmounts")
 
   @@map("tasks")
 }
@@ -140,9 +141,24 @@ model Expense {
   @@map("expenses")
 }
 
+model ReceivableAmount {
+  id        Int          @id @default(autoincrement())
+  amount    Float
+  status    PaymentStatus?
+  createdAt DateTime     @default(now()) @map("created_at")
+  updatedAt DateTime     @updatedAt @map("updated_at")
+
+  // Relation to Task
+  task      Task?         @relation("TaskReceivableAmounts", fields: [taskId], references: [id])
+  taskId    Int?          @map("task_id")
+
+  @@map("receivable_amounts")
+}
+
 enum Role {
   ADMIN
   USER
+  EMPLOYEE
 }
 
 enum UserStatus {

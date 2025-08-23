@@ -546,3 +546,28 @@ export async function deletePayment(id: number) {
     throw new Error('Failed to delete payment');
   }
 }
+
+export async function createReceivableAmount(data: {
+  amount: number;
+  taskId: number;
+}) {
+  try {
+    const newReceivable = await prisma.receivableAmount.create({
+      data: {
+        amount: data.amount,
+        task: {
+          connect: { id: data.taskId },
+        },
+      },
+    });
+
+    return {
+      success: true,
+      newReceivable,
+      message: 'Receivable amount created successfully',
+    };
+  } catch (error) {
+    console.error('Error creating receivable amount:', error);
+    throw new Error('Failed to create receivable amount');
+  }
+}

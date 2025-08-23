@@ -80,6 +80,8 @@ export type TaskType = {
         name: string;
         email: string;
       }[];
+  receivableAmounts: ReceivableAmountType[];
+  receivable: number;
 };
 
 export type UserTaskType = {
@@ -205,3 +207,9 @@ export type PaymentCalculationsType = Record<
   | 'totalPendingAmount',
   number
 >;
+
+export type ReceivableAmountType = {
+  id: number;
+  amount: number;
+  status: $Enums.PaymentStatus | null;
+};
