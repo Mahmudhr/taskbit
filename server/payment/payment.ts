@@ -1,7 +1,7 @@
 'use server';
 
 import { prisma } from '@/prisma/db';
-import { PaymentStatus, PaymentType, Prisma } from '@prisma/client';
+import { PaymentStatus, PaymentType, TaskStatus, Prisma } from '@prisma/client';
 
 export async function createPayment({
   paymentType,
@@ -571,3 +571,126 @@ export async function createReceivableAmount(data: {
     throw new Error('Failed to create receivable amount');
   }
 }
+
+export const fetchAllPaymentsWithCalculation = async (data?: string) => {
+  const params = new URLSearchParams(data || '');
+  const search = params.get('search') || '';
+  const status = params.get('status') || '';
+  const dateString = params.get('date') || '';
+  const year = params.get('year') || '';
+  const month = params.get('month') || '';
+  const paymentType = params.get('payment_type') || '';
+
+  // Build where conditions for tasks
+  const whereConditions: Prisma.TaskWhereInput = { isDeleted: false };
+
+  // Search filter (title or client name)
+  if (search) {
+    whereConditions.OR = [
+      { title: { contains: search, mode: 'insensitive' } },
+      { client: { name: { contains: search, mode: 'insensitive' } } },
+    ];
+  }
+
+  // Status filter
+  if (status && status !== 'ALL') {
+    whereConditions.status = status as TaskStatus;
+  }
+
+  // Date filter (duration or createdAt)
+  if (dateString) {
+    const filterDate = new Date(dateString);
+    if (!isNaN(filterDate.getTime())) {
+      whereConditions.createdAt = {
+        gte: new Date(
+          filterDate.getFullYear(),
+          filterDate.getMonth(),
+          filterDate.getDate(),
+          0,
+          0,
+          0,
+          0
+        ),
+        lte: new Date(
+          filterDate.getFullYear(),
+          filterDate.getMonth(),
+          filterDate.getDate(),
+          23,
+          59,
+          59,
+          999
+        ),
+      };
+    }
+  } else if (month && year) {
+    const monthNum = parseInt(month);
+    const yearNum = parseInt(year);
+    if (monthNum >= 1 && monthNum <= 12 && yearNum > 0) {
+      whereConditions.createdAt = {
+        gte: new Date(yearNum, monthNum - 1, 1, 0, 0, 0, 0),
+        lte: new Date(yearNum, monthNum, 0, 23, 59, 59, 999),
+      };
+    }
+  } else if (year) {
+    const yearNum = parseInt(year);
+    if (yearNum > 0) {
+      whereConditions.createdAt = {
+        gte: new Date(yearNum, 0, 1, 0, 0, 0, 0),
+        lte: new Date(yearNum, 11, 31, 23, 59, 59, 999),
+      };
+    }
+  }
+
+  // PaymentType filter (for payments inside each task)
+  let paymentTypeFilter: Prisma.PaymentWhereInput | undefined = undefined;
+  if (paymentType && paymentType !== 'ALL') {
+    paymentTypeFilter = { paymentType: paymentType as PaymentType };
+  }
+
+  // Get all filtered tasks
+  const tasks = await prisma.task.findMany({
+    where: whereConditions,
+    select: {
+      id: true,
+      amount: true,
+      payments: paymentTypeFilter
+        ? { where: paymentTypeFilter, select: { amount: true } }
+        : { select: { amount: true } },
+      receivableAmounts: { select: { amount: true } },
+    },
+  });
+
+  // Total amount and task count
+  const totalAmount = tasks.reduce((sum, t) => sum + (t.amount || 0), 0);
+  const totalTaskCount = tasks.length;
+
+  // Paid amount and paid task count
+  let paidAmount = 0;
+  let paidTaskCount = 0;
+  tasks.forEach((t) => {
+    const taskPaid = t.payments.reduce((sum, p) => sum + (p.amount || 0), 0);
+    paidAmount += taskPaid;
+    if (taskPaid > 0) paidTaskCount += 1;
+  });
+
+  // Receivable amount and receivable task count
+  let receivableAmount = 0;
+  let receivableTaskCount = 0;
+  tasks.forEach((t) => {
+    const taskReceivable = t.receivableAmounts.reduce(
+      (sum, r) => sum + (r.amount || 0),
+      0
+    );
+    receivableAmount += taskReceivable;
+    if (taskReceivable > 0) receivableTaskCount += 1;
+  });
+
+  return {
+    totalAmount,
+    totalTaskCount,
+    paidAmount,
+    paidTaskCount,
+    receivableAmount,
+    receivableTaskCount,
+  };
+};

@@ -14,6 +14,7 @@ import { Input } from '../ui/input';
 import dayjs from 'dayjs';
 import { useClient } from '@/hooks/use-client';
 import { paperTypeConvert, taskStatusConvert } from '@/lib/utils';
+import { PaperType } from '@prisma/client';
 
 type ParamsType = {
   search: string;
@@ -126,10 +127,11 @@ export default function TaskFilter({
             <SelectValue placeholder='Filter by paper type' />
           </SelectTrigger>
           <SelectContent className='z-[9999]'>
-            <SelectItem value='ALL'>All Type</SelectItem>
-            <SelectItem value='CONFERENCE'>Conference</SelectItem>
-            <SelectItem value='SURVEY'>Survey</SelectItem>
-            <SelectItem value='JOURNAL'>Journal</SelectItem>
+            {Object.values(PaperType).map((status) => (
+              <SelectItem key={status} value={status}>
+                {paperTypeConvert[status as keyof typeof paperTypeConvert]}
+              </SelectItem>
+            ))}
           </SelectContent>
         </Select>
         <Select

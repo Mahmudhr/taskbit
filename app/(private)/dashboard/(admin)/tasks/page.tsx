@@ -794,6 +794,7 @@ export default function TasksPage() {
     fetchTasksMutation,
     deleteTaskAsync,
     fetchTasksCalculationMutation,
+    fetchAllTaskWithCalcMutation,
   } = useTask(queryString);
 
   const handleDeleTask = () => {
@@ -934,6 +935,96 @@ export default function TasksPage() {
         ) : (
           <div className='grid grid-cols-1 md:grid-cols-4 gap-4'>
             {[1, 2, 3, 4].map((i) => (
+              <Card
+                key={i}
+                className='dark:bg-gray-800/50 dark:border-gray-700'
+              >
+                <CardContent className='p-6'>
+                  <div className='flex items-center justify-between'>
+                    <div>
+                      <Skeleton className='h-4 w-24 mb-2 dark:bg-gray-700' />
+                      <Skeleton className='h-8 w-16 dark:bg-gray-700' />
+                    </div>
+                    <Skeleton className='h-8 w-8 dark:bg-gray-700' />
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        )}
+      </div>
+      {/* All amounts */}
+
+      <div>
+        {!fetchAllTaskWithCalcMutation.isLoading ? (
+          <div className='grid grid-cols-2 md:grid-cols-3 gap-4'>
+            <Card className='cursor-pointer'>
+              <CardContent className='p-4 text-center space-y-2'>
+                <div>
+                  <div className='text-2xl font-bold dark:text-gray-100'>
+                    ৳ {fetchAllTaskWithCalcMutation?.data?.totalAmount || 0}
+                  </div>
+                  <div className='text-xs text-muted-foreground dark:text-gray-400'>
+                    Total Tasks Amounts
+                  </div>
+                </div>
+                <div>
+                  <div className='text-lg font-bold dark:text-gray-100'>
+                    {fetchAllTaskWithCalcMutation?.data?.totalTaskCount || 0}
+                  </div>
+                  <div className='text-xs text-muted-foreground dark:text-gray-400'>
+                    Total Tasks
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+            <Card className='cursor-pointer'>
+              <CardContent className='p-4 text-center space-y-2'>
+                <div>
+                  <div className='text-2xl font-bold text-green-600 dark:text-green-400'>
+                    ৳ {fetchAllTaskWithCalcMutation?.data?.paidAmount}
+                  </div>
+                  <div className='text-xs text-muted-foreground dark:text-gray-400'>
+                    Total Paid Amount
+                  </div>
+                </div>
+                <div>
+                  <div className='text-lg font-bold text-green-600 dark:text-green-400'>
+                    {fetchAllTaskWithCalcMutation?.data?.paidTaskCount}
+                  </div>
+                  <div className='text-xs text-muted-foreground dark:text-gray-400'>
+                    Total Paid Tasks
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+            <Card className='cursor-pointer'>
+              <CardContent className='p-4 text-center space-y-2'>
+                <div>
+                  <div className='text-2xl font-bold text-red-600 dark:text-red-400'>
+                    ৳ {fetchAllTaskWithCalcMutation?.data?.receivableAmount}
+                  </div>
+                  <div className='text-xs text-muted-foreground dark:text-gray-400'>
+                    Total Receivable Amount
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* <Card>
+              <CardContent className='p-4 text-center'>
+                <div className='text-2xl font-bold text-green-600 dark:text-green-400'>
+                  {fetchTasksCalculationMutation?.data?.submittedCount}
+                </div>
+                <div className='text-xs text-muted-foreground dark:text-gray-400'>
+                  Submitted
+                </div>
+              </CardContent>
+            </Card> */}
+          </div>
+        ) : (
+          <div className='grid grid-cols-1 md:grid-cols-3 gap-4'>
+            {[1, 2, 3].map((i) => (
               <Card
                 key={i}
                 className='dark:bg-gray-800/50 dark:border-gray-700'

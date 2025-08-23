@@ -213,3 +213,11 @@ export type ReceivableAmountType = {
   amount: number;
   status: $Enums.PaymentStatus | null;
 };
+
+export type TaskCalculationSummary = {
+  paidAmount: number;
+  paidTaskCount: number;
+  receivableAmount: number;
+  totalAmount: number;
+  totalTaskCount: number;
+};
