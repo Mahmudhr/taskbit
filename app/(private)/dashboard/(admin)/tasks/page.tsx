@@ -112,6 +112,7 @@ const TaskCard = ({
   onView,
   onDelete,
   onPayment,
+  onReceivablePayment,
 }: {
   task: TaskType;
   index: number;
@@ -119,6 +120,7 @@ const TaskCard = ({
   onView: () => void;
   onDelete: () => void;
   onPayment: () => void;
+  onReceivablePayment: () => void;
 }) => {
   const dueAmount = task.paid ? task.amount - task.paid : task.amount;
 
@@ -192,6 +194,14 @@ const TaskCard = ({
                 >
                   <CreditCard className='mr-2 h-4 w-4' />
                   Make Payment
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={onReceivablePayment}
+                  disabled={task.amount === 0}
+                  className='cursor-pointer dark:hover:bg-gray-700 dark:text-gray-200'
+                >
+                  <CreditCard className='mr-2 h-4 w-4' />
+                  Receivable Payment
                 </DropdownMenuItem>
                 <DropdownMenuSeparator className='dark:border-gray-700' />
                 <DropdownMenuItem
@@ -600,7 +610,7 @@ const TaskRow = ({
               </div>
               <div className='text-center'>
                 <p className='text-muted-foreground dark:text-gray-400 text-xs'>
-                  Received Amount
+                  Paid Amount
                 </p>
                 <p className='font-bold text-green-600 dark:text-green-400'>
                   ৳{task.paid || 0}
@@ -1208,6 +1218,10 @@ export default function TasksPage() {
                       }}
                       onPayment={() => {
                         setOpenPayment(true);
+                        setTaskId(task.id);
+                      }}
+                      onReceivablePayment={() => {
+                        setCreateReceivablePaymentOpen(true);
                         setTaskId(task.id);
                       }}
                     />
