@@ -18,6 +18,7 @@ export function useExpenses() {
       queryClient.invalidateQueries({ queryKey: ['user-expenses'] });
       queryClient.invalidateQueries({ queryKey: ['expense-calculation'] });
       queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard-calc'] });
     },
   });
 
@@ -28,6 +29,7 @@ export function useExpenses() {
       queryClient.invalidateQueries({ queryKey: ['user-expenses'] });
       queryClient.invalidateQueries({ queryKey: ['expense-calculation'] });
       queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard-calc'] });
     },
   });
 
@@ -38,6 +40,7 @@ export function useExpenses() {
       queryClient.invalidateQueries({ queryKey: ['user-expenses'] });
       queryClient.invalidateQueries({ queryKey: ['expense-calculation'] });
       queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard-calc'] });
     },
   });
 

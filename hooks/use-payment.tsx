@@ -55,6 +55,7 @@ export function usePayment(options?: string) {
       queryClient.invalidateQueries({ queryKey: ['dashboard'] });
       queryClient.invalidateQueries({ queryKey: ['tasks'] });
       queryClient.invalidateQueries({ queryKey: ['payments-calculation'] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard-calc'] });
     },
   });
 
@@ -94,6 +95,7 @@ export function usePayment(options?: string) {
       queryClient.invalidateQueries({ queryKey: ['dashboard'] });
       queryClient.invalidateQueries({ queryKey: ['payments-calculation'] });
       queryClient.invalidateQueries({ queryKey: ['tasks'] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard-calc'] });
     },
   });
 
@@ -102,6 +104,7 @@ export function usePayment(options?: string) {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['payments'] });
       queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard-calc'] });
       queryClient.invalidateQueries({ queryKey: ['payments-calculation'] });
       queryClient.invalidateQueries({ queryKey: ['tasks'] });
     },
@@ -120,6 +123,7 @@ export function usePayment(options?: string) {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['payments'] });
       queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard-calc'] });
       queryClient.invalidateQueries({ queryKey: ['payments-calculation'] });
       queryClient.invalidateQueries({ queryKey: ['tasks'] });
     },

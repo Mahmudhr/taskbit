@@ -29,7 +29,6 @@ import {
   X,
   EllipsisVertical,
   Eye,
-  Banknote,
   AlertCircle,
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -61,7 +60,6 @@ import {
 import dayjs from 'dayjs';
 import UserDetailsView from '@/components/user-details-view';
 import Modal from '@/components/modal';
-import CreateUserPaymentForm from '@/components/forms/create-user-payment-form';
 
 const getStatusBadge = (status: string) => {
   const variants = {
@@ -138,11 +136,9 @@ export default function UsersPage() {
 
   const [addUserOpen, setAddUserOpen] = useState(false);
   const [confirmModal, setConfirmModal] = useState(false);
-  const [createUserPaymentOpen, setCreateUserPaymentOpen] = useState(false);
-  const [paymentUserId, setPaymentUserId] = useState<number | null>(null);
+
   const [isPending, startTransition] = useTransition();
   const [userId, setUserId] = useState<number | null>(null);
-  const [salary, setSalary] = useState<number | null>(null);
   const router = useRouter();
 
   const [updateUserModal, setUpdateUserModal] = useState(false);
@@ -193,12 +189,6 @@ export default function UsersPage() {
   const handleViewUser = (user: UserType) => {
     setViewUser(user);
     setViewUserModal(true);
-  };
-
-  const handleCreatePayment = (userId: number, salary: number) => {
-    setPaymentUserId(userId);
-    setCreateUserPaymentOpen(true);
-    setSalary(salary);
   };
 
   useEffect(() => {
@@ -364,7 +354,7 @@ export default function UsersPage() {
                           {user.email}
                         </TableCell>
                         <TableCell className='capitalize'>
-                          {roleConvert[user.role]}
+                          {roleConvert[user.role as keyof typeof roleConvert]}
                         </TableCell>
                         {/* ✅ Updated: Show salary with due status */}
                         <TableCell>
@@ -384,7 +374,7 @@ export default function UsersPage() {
                               <DropdownMenuContent align='end'>
                                 <DropdownMenuLabel>Options</DropdownMenuLabel>
                                 <DropdownMenuSeparator />
-                                <DropdownMenuItem
+                                {/* <DropdownMenuItem
                                   onClick={() =>
                                     handleCreatePayment(
                                       user.id,
@@ -394,7 +384,7 @@ export default function UsersPage() {
                                 >
                                   <Banknote className='mr-2 h-4 w-4' />
                                   Make Payment
-                                </DropdownMenuItem>
+                                </DropdownMenuItem> */}
                                 <DropdownMenuItem
                                   onClick={() => handleViewUser(user)}
                                 >
@@ -452,14 +442,6 @@ export default function UsersPage() {
                             <DropdownMenuLabel>Options</DropdownMenuLabel>
                             <DropdownMenuSeparator />
                             <DropdownMenuItem
-                              onClick={() =>
-                                handleCreatePayment(user.id, user.salary || 0)
-                              }
-                            >
-                              <Banknote className='mr-2 h-4 w-4' />
-                              Make Payment
-                            </DropdownMenuItem>
-                            <DropdownMenuItem
                               onClick={() => handleViewUser(user)}
                             >
                               <Eye className='mr-2 h-4 w-4' />
@@ -490,7 +472,7 @@ export default function UsersPage() {
                       <div className='flex justify-between'>
                         <span className='text-muted-foreground'>Role:</span>
                         <span className='capitalize'>
-                          {roleConvert[user.role]}
+                          {roleConvert[user.role as keyof typeof roleConvert]}
                         </span>
                       </div>
                       {/* ✅ Updated: Show salary with due status in mobile view */}
@@ -578,18 +560,6 @@ export default function UsersPage() {
         description=' '
       >
         <AddUserForm setIsOpen={setAddUserOpen} />
-      </AlertModal>
-      <AlertModal
-        isOpen={createUserPaymentOpen}
-        setIsOpen={setCreateUserPaymentOpen}
-        title='Create new user payment'
-        description=' '
-      >
-        <CreateUserPaymentForm
-          setIsOpen={setCreateUserPaymentOpen}
-          userId={paymentUserId}
-          salary={salary}
-        />
       </AlertModal>
       <AlertModal
         isOpen={updateUserModal}

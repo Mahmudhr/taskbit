@@ -36,6 +36,7 @@ export function useTask(options?: string) {
       queryClient.invalidateQueries({ queryKey: ['tasks'] });
       queryClient.invalidateQueries({ queryKey: ['tasks-calculation'] });
       queryClient.invalidateQueries({ queryKey: ['tasks-calc'] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard-calc'] });
     },
   });
 
@@ -51,6 +52,7 @@ export function useTask(options?: string) {
       queryClient.invalidateQueries({ queryKey: ['tasks'] });
       queryClient.invalidateQueries({ queryKey: ['tasks-calculation'] });
       queryClient.invalidateQueries({ queryKey: ['tasks-calc'] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard-calc'] });
     },
   });
 
@@ -77,6 +79,7 @@ export function useTask(options?: string) {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['tasks'] });
       queryClient.invalidateQueries({ queryKey: ['tasks-calculation'] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard-calc'] });
     },
   });
 

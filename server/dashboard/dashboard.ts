@@ -3,7 +3,7 @@
 import { prisma } from '@/prisma/db';
 import { Prisma } from '@prisma/client';
 
-const getAllDashboardData = async (data?: string) => {
+export const getAllDashboardData = async (data?: string) => {
   const params = new URLSearchParams(data || '');
   // const dateString = params.get('date') || '';
   const year = params.get('year') || '';
@@ -242,4 +242,99 @@ const getAllDashboardData = async (data?: string) => {
   }
 };
 
-export default getAllDashboardData;
+export const getAllDashboardCalc = async (data?: string) => {
+  const params = new URLSearchParams(data || '');
+  const year = params.get('year') || '';
+  const month = params.get('month') || '';
+
+  const buildMonthRange = (y: number, m: number): Prisma.DateTimeFilter => ({
+    gte: new Date(y, m - 1, 1, 0, 0, 0, 0),
+    lte: new Date(y, m, 0, 23, 59, 59, 999),
+  });
+
+  const whereConditions = [];
+
+  if (month && year) {
+    const monthNum = parseInt(month);
+    const yearNum = parseInt(year);
+    if (monthNum >= 1 && monthNum <= 12 && yearNum > 0) {
+      whereConditions.push({
+        createdAt: buildMonthRange(yearNum, monthNum),
+      });
+    }
+  } else if (month) {
+    const monthNum = parseInt(month);
+    if (monthNum >= 1 && monthNum <= 12) {
+      const currentYear = new Date().getFullYear();
+      const years = [
+        currentYear - 2,
+        currentYear - 1,
+        currentYear,
+        currentYear + 1,
+        currentYear + 2,
+      ];
+      whereConditions.push({
+        OR: years.map((y) => ({
+          createdAt: buildMonthRange(y, monthNum),
+        })),
+      });
+    }
+  } else if (year) {
+    const yearNum = parseInt(year);
+    if (yearNum > 0) {
+      whereConditions.push({
+        createdAt: {
+          gte: new Date(yearNum, 0, 1, 0, 0, 0, 0),
+          lte: new Date(yearNum, 11, 31, 23, 59, 59, 999),
+        },
+      });
+    }
+  }
+
+  const where = whereConditions.length > 0 ? { AND: whereConditions } : {};
+
+  // Fetch all tasks
+  const allTasks = await prisma.task.findMany({
+    where,
+    select: {
+      amount: true,
+    },
+  });
+
+  // Fetch all payments
+  const allPayments = await prisma.payment.findMany({
+    where,
+    select: {
+      amount: true,
+    },
+  });
+
+  // Fetch all receivable amounts
+  const allReceivables = await prisma.receivableAmount.findMany({
+    where,
+    select: {
+      amount: true,
+    },
+  });
+
+  // Fetch all expenses
+  const allExpenses = await prisma.expense.findMany({
+    where,
+    select: {
+      amount: true,
+    },
+  });
+
+  // Calculate totals
+  const totalPrice = allTasks.reduce((sum, t) => sum + (t.amount || 0), 0);
+  const received = allPayments.reduce((sum, p) => sum + (p.amount || 0), 0);
+  const due = allReceivables.reduce((sum, r) => sum + (r.amount || 0), 0);
+  const expense = allExpenses.reduce((sum, e) => sum + (e.amount || 0), 0);
+
+  return {
+    totalPrice,
+    received,
+    due,
+    expense,
+  };
+};

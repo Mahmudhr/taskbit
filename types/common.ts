@@ -221,3 +221,10 @@ export type TaskCalculationSummary = {
   totalAmount: number;
   totalTaskCount: number;
 };
+
+export type DashboardAllCalcType = {
+  due: number;
+  expense: number;
+  received: number;
+  totalPrice: number;
+};

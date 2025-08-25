@@ -1,6 +1,10 @@
 'use client';
 
-import getAllDashboardData from '@/server/dashboard/dashboard';
+import {
+  getAllDashboardCalc,
+  getAllDashboardData,
+} from '@/server/dashboard/dashboard';
+import { DashboardAllCalcType } from '@/types/common';
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
 
 export function useDashboard(option?: string) {
@@ -12,8 +16,20 @@ export function useDashboard(option?: string) {
     },
     placeholderData: keepPreviousData,
   });
+
+  const fetchDashboardCalcMutation = useQuery<DashboardAllCalcType>({
+    queryKey: ['dashboard-calc', option],
+    queryFn: async () => {
+      const res = await getAllDashboardCalc(option);
+      return res;
+    },
+    placeholderData: keepPreviousData,
+  });
+
   return {
     fetchDashboardMutation,
     fetchDashboardMutationData: fetchDashboardMutation.data,
+    fetchDashboardCalcMutation,
+    fetchDashboardCalcMutationData: fetchDashboardCalcMutation.data,
   };
 }

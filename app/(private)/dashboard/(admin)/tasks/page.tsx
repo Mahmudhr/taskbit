@@ -134,7 +134,7 @@ const TaskCard = ({
             </div>
             <div className='flex-1 min-w-0'>
               <p
-                className='font-semibold text-lg mb-1 dark:text-gray-100  break-all'
+                className='font-semibold text-lg mb-1 dark:text-gray-100 break-all'
                 title={task.title}
               >
                 {task.title}
@@ -193,7 +193,7 @@ const TaskCard = ({
                   className='cursor-pointer dark:hover:bg-gray-700 dark:text-gray-200'
                 >
                   <CreditCard className='mr-2 h-4 w-4' />
-                  Make Payment
+                  Complete Payment
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   onClick={onReceivablePayment}
@@ -201,7 +201,7 @@ const TaskCard = ({
                   className='cursor-pointer dark:hover:bg-gray-700 dark:text-gray-200'
                 >
                   <CreditCard className='mr-2 h-4 w-4' />
-                  Receivable Payment
+                  Due Payment
                 </DropdownMenuItem>
                 <DropdownMenuSeparator className='dark:border-gray-700' />
                 <DropdownMenuItem
@@ -282,36 +282,6 @@ const TaskCard = ({
               </p>
             </div>
           </div>
-
-          <div className='flex items-center gap-3'>
-            <div className='bg-gray-50 dark:bg-gray-700/50 p-2 rounded-lg'>
-              <Calendar className='w-4 h-4 text-gray-600 dark:text-gray-400' />
-            </div>
-            <div className='flex-1'>
-              <p className='text-xs text-muted-foreground dark:text-gray-400'>
-                Created
-              </p>
-              <p className='font-medium text-sm dark:text-gray-200'>
-                {dayjs(task.createdAt).format('DD MMM YYYY')}
-              </p>
-            </div>
-          </div>
-
-          <div className='flex items-center gap-3'>
-            <div className='bg-pink-50 dark:bg-pink-900/30 p-2 rounded-lg'>
-              <Calendar className='w-4 h-4 text-pink-600 dark:text-pink-400' />
-            </div>
-            <div className='flex-1'>
-              <p className='text-xs text-muted-foreground dark:text-gray-400'>
-                Target Date
-              </p>
-              <p className='font-medium text-sm dark:text-gray-200'>
-                {task.target_date
-                  ? dayjs(task.target_date).format('DD MMM YYYY')
-                  : 'Not Set'}
-              </p>
-            </div>
-          </div>
         </div>
 
         {/* Payment Information */}
@@ -348,13 +318,9 @@ const TaskCard = ({
                 Due
               </p>
               <p
-                className={`font-bold text-base ${
-                  dueAmount > 0
-                    ? 'text-red-600 dark:text-red-400'
-                    : 'text-green-600 dark:text-green-400'
-                }`}
+                className={`font-bold text-base text-red-600 dark:text-red-400`}
               >
-                ৳{dueAmount}
+                ৳{task.receivable}
               </p>
             </div>
           </div>
@@ -484,7 +450,7 @@ const TaskRow = ({
                 className='cursor-pointer dark:hover:bg-gray-700 dark:text-gray-200'
               >
                 <CreditCard className='mr-2 h-4 w-4' />
-                Make Payment
+                Complete Payment
               </DropdownMenuItem>
               <DropdownMenuItem
                 onClick={onReceivablePayment}
@@ -492,7 +458,7 @@ const TaskRow = ({
                 className='cursor-pointer dark:hover:bg-gray-700 dark:text-gray-200'
               >
                 <CreditCard className='mr-2 h-4 w-4' />
-                Receivable Payment
+                Due Payment
               </DropdownMenuItem>
               <DropdownMenuSeparator className='dark:border-gray-700' />
               <DropdownMenuItem
@@ -610,7 +576,7 @@ const TaskRow = ({
               </div>
               <div className='text-center'>
                 <p className='text-muted-foreground dark:text-gray-400 text-xs'>
-                  Paid Amount
+                  Paid
                 </p>
                 <p className='font-bold text-green-600 dark:text-green-400'>
                   ৳{task.paid || 0}
@@ -618,7 +584,7 @@ const TaskRow = ({
               </div>
               <div className='text-center'>
                 <p className='text-muted-foreground dark:text-gray-400 text-xs'>
-                  Receivable Amount
+                  Due
                 </p>
                 <p
                   className={`font-bold ${
@@ -1443,7 +1409,7 @@ export default function TasksPage() {
       <AlertModal
         isOpen={createReceivablePaymentOpen}
         setIsOpen={setCreateReceivablePaymentOpen}
-        title='Create new receivable payment'
+        title='Create new Due Payment'
         description=' '
       >
         <CreateReceivablePaymentForm

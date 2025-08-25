@@ -45,11 +45,6 @@ const adminMenuItems = [
     icon: CreditCard,
   },
   {
-    title: 'Salaries',
-    url: '/dashboard/salaries',
-    icon: Banknote,
-  },
-  {
     title: 'Expenses',
     url: '/dashboard/expenses',
     icon: Banknote,

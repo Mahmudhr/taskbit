@@ -68,7 +68,7 @@ const DetailItem = ({
   return (
     <div className='p-3 border rounded-lg'>
       <div className='flex items-center gap-2 mb-1'>
-        <label className='text-sm font-medium text-muted-foreground text-start'>
+        <label className='text-sm font-medium text-muted-foreground text-start break-all'>
           {label}
         </label>
         <div className='flex gap-1'>
@@ -96,7 +96,7 @@ const DetailItem = ({
           </Button>
         </div>
       </div>
-      <p className='text-sm text-start'>{displayValue || value}</p>
+      <p className='text-sm text-start break-all'>{displayValue || value}</p>
     </div>
   );
 };
@@ -172,6 +172,11 @@ export default function TaskDetails({ task }: { task: TaskType }) {
                 : task.link || 'Not provided'
             }
           />
+          <DetailItem
+            label='Note'
+            value={task.note || 'Not provided'}
+            fieldName='Note'
+          />
           <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
             <DetailItem
               label='Duration'
@@ -203,17 +208,31 @@ export default function TaskDetails({ task }: { task: TaskType }) {
         <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
           <DetailItem
             label='Assigned To'
-            value={task.assignedTo?.name || 'Not assigned'}
+            value={
+              task.assignedUsers && task.assignedUsers.length > 0
+                ? task.assignedUsers.map((u) => u.name).join(', ')
+                : 'Not assigned'
+            }
             fieldName='Assigned To'
           />
           <DetailItem
-            label='Assignee Email'
-            value={task.assignedTo?.email || 'Not available'}
-            fieldName='Assignee Email'
+            label='Assignee Emails'
+            value={
+              task.assignedUsers && task.assignedUsers.length > 0
+                ? task.assignedUsers.map((u) => u.email).join(', ')
+                : 'Not available'
+            }
+            fieldName='Assignee Emails'
             displayValue={
-              task.assignedTo?.email && task.assignedTo.email.length > 20
-                ? task.assignedTo.email.slice(0, 20) + '...'
-                : task.assignedTo?.email || 'Not available'
+              task.assignedUsers && task.assignedUsers.length > 0
+                ? task.assignedUsers
+                    .map((u) =>
+                      u.email.length > 20
+                        ? u.email.slice(0, 20) + '...'
+                        : u.email
+                    )
+                    .join(', ')
+                : 'Not available'
             }
           />
           <DetailItem

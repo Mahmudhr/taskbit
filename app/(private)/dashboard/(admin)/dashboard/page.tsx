@@ -9,14 +9,12 @@ import {
   TrendingDown,
   CreditCard,
   Receipt,
-  Users,
   AlertTriangle,
   CheckCircle,
   Clock,
   XCircle,
-  ArrowUpRight,
-  ArrowDownRight,
   ListFilter,
+  ArrowDownLeft,
 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import Modal from '@/components/modal';
@@ -53,9 +51,16 @@ export default function DashboardPage() {
     router.push(queryString);
   }, [queryString, router]);
 
-  const { fetchDashboardMutationData } = useDashboard(queryString);
+  const {
+    fetchDashboardMutationData,
+    fetchDashboardCalcMutationData,
+    fetchDashboardCalcMutation,
+  } = useDashboard(queryString);
 
-  if (!fetchDashboardMutationData?.data) {
+  if (
+    !fetchDashboardMutationData?.data ||
+    fetchDashboardCalcMutation.isLoading
+  ) {
     return (
       <div className='flex items-center justify-center min-h-screen'>
         <div className='text-center'>
@@ -91,37 +96,52 @@ export default function DashboardPage() {
       <div className='grid gap-4 md:grid-cols-2 lg:grid-cols-4'>
         <Card>
           <CardHeader className='flex flex-row items-center justify-between space-y-0 pb-2'>
-            <CardTitle className='text-sm font-medium'>Total Income</CardTitle>
+            <CardTitle className='text-sm font-medium'>
+              Total Tasks Amounts
+            </CardTitle>
             <TrendingUp className='h-4 w-4 text-green-600' />
           </CardHeader>
           <CardContent>
             <div className='text-2xl font-bold text-green-600'>
-              {formatCurrency(financial.totalIncoming)}
+              {formatCurrency(fetchDashboardCalcMutationData?.totalPrice || 0)}
             </div>
-            <p className='text-xs text-muted-foreground'>
+            {/* <p className='text-xs text-muted-foreground'>
               From {counts.payments.completed} completed payments
-            </p>
+            </p> */}
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className='flex flex-row items-center justify-between space-y-0 pb-2'>
             <CardTitle className='text-sm font-medium'>
-              Total Expenses
+              Total Received
             </CardTitle>
-            <TrendingDown className='h-4 w-4 text-red-600' />
+            <ArrowDownLeft className='h-4 w-4 text-blue-600 dark:text-blue-400' />
           </CardHeader>
           <CardContent>
-            <div className='text-2xl font-bold text-red-600'>
-              {formatCurrency(financial.totalOutgoing)}
+            <div className='text-2xl font-bold text-blue-600 dark:text-blue-400'>
+              {formatCurrency(fetchDashboardCalcMutationData?.received || 0)}
             </div>
-            <p className='text-xs text-muted-foreground'>Expenses + Salaries</p>
+            {/* <p className='text-xs text-muted-foreground'>Expenses + Salaries</p> */}
           </CardContent>
         </Card>
-
         <Card>
           <CardHeader className='flex flex-row items-center justify-between space-y-0 pb-2'>
-            <CardTitle className='text-sm font-medium'>Net Profit</CardTitle>
+            <CardTitle className='text-sm font-medium'>Total Due</CardTitle>
+            <TrendingDown className='h-4 w-4 dark:text-yellow-500 text-yellow-600' />
+          </CardHeader>
+          <CardContent>
+            <div className='text-2xl font-bold dark:text-yellow-500 text-yellow-600'>
+              {formatCurrency(fetchDashboardCalcMutationData?.due || 0)}
+            </div>
+            {/* <p className='text-xs text-muted-foreground'>
+              From {counts.payments.completed} completed payments
+            </p> */}
+          </CardContent>
+        </Card>
+        {/* <Card>
+          <CardHeader className='flex flex-row items-center justify-between space-y-0 pb-2'>
+            <CardTitle className='text-sm font-medium'>Total Due</CardTitle>
             {financial.netProfit >= 0 ? (
               <ArrowUpRight className='h-4 w-4 text-green-600' />
             ) : (
@@ -140,28 +160,28 @@ export default function DashboardPage() {
               Profit Margin: {financial.profitMargin}%
             </p>
           </CardContent>
-        </Card>
+        </Card> */}
 
         <Card>
           <CardHeader className='flex flex-row items-center justify-between space-y-0 pb-2'>
             <CardTitle className='text-sm font-medium'>
-              Pending Income
+              Total Expenses
             </CardTitle>
-            <Clock className='h-4 w-4 text-yellow-600' />
+            <TrendingUp className='h-4 w-4 text-red-600' />
           </CardHeader>
           <CardContent>
-            <div className='text-2xl font-bold text-yellow-600'>
-              {formatCurrency(financial.pendingIncome)}
+            <div className='text-2xl font-bold text-red-600'>
+              {formatCurrency(fetchDashboardCalcMutationData?.expense || 0)}
             </div>
-            <p className='text-xs text-muted-foreground'>
-              From {counts.payments.pending} pending payments
-            </p>
+            {/* <p className='text-xs text-muted-foreground'>
+              From {counts.payments.completed} completed payments
+            </p> */}
           </CardContent>
         </Card>
       </div>
 
       {/* Detailed Stats */}
-      <div className='grid gap-4 md:grid-cols-2 lg:grid-cols-3'>
+      <div className='grid gap-4 md:grid-cols-2'>
         {/* Payment Stats */}
         <Card>
           <CardHeader>
@@ -276,79 +296,10 @@ export default function DashboardPage() {
             )}
           </CardContent>
         </Card>
-
-        {/* Salary Stats */}
-        <Card>
-          <CardHeader>
-            <CardTitle className='flex items-center gap-2'>
-              <Users className='h-5 w-5' />
-              Salaries
-            </CardTitle>
-          </CardHeader>
-          <CardContent className='space-y-4'>
-            <div className='space-y-2'>
-              <div className='flex justify-between'>
-                <span className='text-sm'>Total Salaries</span>
-                <span className='font-medium'>{counts.salaries.total}</span>
-              </div>
-              <div className='flex justify-between'>
-                <span className='text-sm'>Total Amount</span>
-                <span className='font-medium text-red-600'>
-                  {formatCurrency(salaries.total)}
-                </span>
-              </div>
-            </div>
-
-            <div className='space-y-3'>
-              <div className='flex items-center justify-between'>
-                <div className='flex items-center gap-2'>
-                  <CheckCircle className='h-4 w-4 text-green-600' />
-                  <span className='text-sm'>Paid</span>
-                </div>
-                <div className='text-right'>
-                  <div className='font-medium text-green-600'>
-                    {formatCurrency(salaries.paid)}
-                  </div>
-                  <div className='text-xs text-muted-foreground'>
-                    {counts.salaries.paid} payments
-                  </div>
-                </div>
-              </div>
-
-              <div className='flex items-center justify-between'>
-                <div className='flex items-center gap-2'>
-                  <Clock className='h-4 w-4 text-yellow-600' />
-                  <span className='text-sm'>Pending</span>
-                </div>
-                <div className='text-right'>
-                  <div className='font-medium text-yellow-600'>
-                    {formatCurrency(salaries.pending)}
-                  </div>
-                  <div className='text-xs text-muted-foreground'>
-                    {counts.salaries.pending} payments
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div className='space-y-2'>
-              <div className='flex justify-between text-sm'>
-                <span>% of Income</span>
-                <span className='font-medium'>
-                  {insights.salaryPercentage}%
-                </span>
-              </div>
-              <Progress
-                value={Math.min(insights.salaryPercentage, 100)}
-                className='h-2'
-              />
-            </div>
-          </CardContent>
-        </Card>
       </div>
 
       {/* Recent Activity */}
-      <div className='grid gap-4 md:grid-cols-2 lg:grid-cols-3'>
+      <div className='grid gap-4 md:grid-cols-2'>
         {/* Recent Payments */}
         <Card>
           <CardHeader>
@@ -412,43 +363,6 @@ export default function DashboardPage() {
                   </div>
                   <div className='font-medium text-red-600'>
                     {formatCurrency(expense.amount)}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Recent Salaries */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Recent Salaries</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className='space-y-3'>
-              {recent.salaries.slice(0, 5).map((salary) => (
-                <div
-                  key={salary.id}
-                  className='flex items-center justify-between'
-                >
-                  <div className='space-y-1'>
-                    <p className='text-sm font-medium'>{salary.user.name}</p>
-                    <p className='text-xs text-muted-foreground'>
-                      {salary.salaryType} - {salary.month}/{salary.year}
-                    </p>
-                  </div>
-                  <div className='text-right'>
-                    <div className='font-medium'>
-                      {formatCurrency(salary.amount)}
-                    </div>
-                    <Badge
-                      variant={
-                        salary.status === 'PAID' ? 'default' : 'secondary'
-                      }
-                      className='text-xs'
-                    >
-                      {salary.status}
-                    </Badge>
                   </div>
                 </div>
               ))}
