@@ -57,7 +57,7 @@ export const FormSchema = z
     salary: z.coerce
       .number()
       .min(1, { message: 'Amount must be greater than 0' }),
-    role: z.enum(['USER', 'ADMIN'], {
+    role: z.enum(['USER', 'ADMIN', 'EMPLOYEE'], {
       errorMap: () => ({ message: 'Please select a valid role' }),
     }),
     status: z.enum(['ACTIVE', 'INACTIVE'], {
@@ -257,6 +257,7 @@ export default function UpdateUserForm({
                 <SelectContent className='z-[9999]'>
                   <SelectItem value='ADMIN'>Admin</SelectItem>
                   <SelectItem value='USER'>User</SelectItem>
+                  <SelectItem value='EMPLOYEE'>Employee</SelectItem>
                 </SelectContent>
               </Select>
               <FormMessage />

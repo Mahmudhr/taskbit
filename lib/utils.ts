@@ -52,6 +52,7 @@ export function formatDateDMY(dateString: string) {
 export const roleConvert = {
   ADMIN: 'Admin',
   USER: 'User',
+  EMPLOYEE: 'Employee',
 };
 
 export const userStatusConvert = {

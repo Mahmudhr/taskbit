@@ -179,6 +179,61 @@ export default function DashboardPage() {
           </CardContent>
         </Card>
       </div>
+      <div className='grid gap-4 md:grid-cols-2 lg:grid-cols-3'>
+        <Card>
+          <CardHeader className='flex flex-row items-center justify-between space-y-0 pb-2'>
+            <CardTitle className='text-sm font-medium'>Net Income</CardTitle>
+            <TrendingUp className='h-4 w-4 text-green-600' />
+          </CardHeader>
+          <CardContent>
+            {fetchDashboardCalcMutationData?.netIncome &&
+            fetchDashboardCalcMutationData?.netIncome > 0 ? (
+              <div className='text-2xl font-bold text-green-600'>
+                {formatCurrency(fetchDashboardCalcMutationData?.netIncome || 0)}
+              </div>
+            ) : (
+              <div className='text-2xl font-bold text-red-600'>
+                {formatCurrency(fetchDashboardCalcMutationData?.netIncome || 0)}
+              </div>
+            )}
+            {/* <p className='text-xs text-muted-foreground'>
+              From {counts.payments.completed} completed payments
+            </p> */}
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className='flex flex-row items-center justify-between space-y-0 pb-2'>
+            <CardTitle className='text-sm font-medium'>
+              Total Received
+            </CardTitle>
+            <ArrowDownLeft className='h-4 w-4 text-blue-600 dark:text-blue-400' />
+          </CardHeader>
+          <CardContent>
+            <div className='text-2xl font-bold text-blue-600 dark:text-blue-400'>
+              {formatCurrency(fetchDashboardCalcMutationData?.received || 0)}
+            </div>
+            {/* <p className='text-xs text-muted-foreground'>Expenses + Salaries</p> */}
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className='flex flex-row items-center justify-between space-y-0 pb-2'>
+            <CardTitle className='text-sm font-medium'>
+              Total Expenses
+            </CardTitle>
+            <TrendingUp className='h-4 w-4 text-red-600' />
+          </CardHeader>
+          <CardContent>
+            <div className='text-2xl font-bold text-red-600'>
+              {formatCurrency(fetchDashboardCalcMutationData?.expense || 0)}
+            </div>
+            {/* <p className='text-xs text-muted-foreground'>
+              From {counts.payments.completed} completed payments
+            </p> */}
+          </CardContent>
+        </Card>
+      </div>
 
       {/* Detailed Stats */}
       <div className='grid gap-4 md:grid-cols-2'>

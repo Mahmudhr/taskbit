@@ -227,4 +227,5 @@ export type DashboardAllCalcType = {
   expense: number;
   received: number;
   totalPrice: number;
+  netIncome: number;
 };

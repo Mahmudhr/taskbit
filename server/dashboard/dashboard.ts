@@ -331,10 +331,13 @@ export const getAllDashboardCalc = async (data?: string) => {
   const due = allReceivables.reduce((sum, r) => sum + (r.amount || 0), 0);
   const expense = allExpenses.reduce((sum, e) => sum + (e.amount || 0), 0);
 
+  const netIncome = received - expense;
+
   return {
     totalPrice,
     received,
     due,
     expense,
+    netIncome,
   };
 };

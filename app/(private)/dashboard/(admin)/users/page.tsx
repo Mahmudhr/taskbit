@@ -29,7 +29,6 @@ import {
   X,
   EllipsisVertical,
   Eye,
-  AlertCircle,
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import AddUserForm from '@/components/forms/add-user-form';
@@ -110,17 +109,17 @@ const SalaryDisplay = ({ user }: { user: UserType }) => {
   return (
     <div className='flex items-center gap-2'>
       <span>৳ {user.salary}</span>
-      {salaryStatus.status === 'due' && (
+      {/* {salaryStatus.status === 'due' && (
         <Badge variant='destructive' className='text-xs px-2 py-0.5'>
           <AlertCircle className='w-3 h-3 mr-1' />
           Due
         </Badge>
-      )}
-      {salaryStatus.status === 'paid' && (
+      )} */}
+      {/* {salaryStatus.status === 'paid' && (
         <Badge variant='default' className='text-xs px-2 py-0.5 bg-green-500'>
           Paid
         </Badge>
-      )}
+      )} */}
     </div>
   );
 };
@@ -259,6 +258,7 @@ export default function UsersPage() {
                 <SelectItem value='all'>All Roles</SelectItem>
                 <SelectItem value='ADMIN'>Admin</SelectItem>
                 <SelectItem value='USER'>User</SelectItem>
+                <SelectItem value='EMPLOYEE'>Employee</SelectItem>
               </SelectContent>
             </Select>
           </div>

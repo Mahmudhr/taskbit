@@ -23,7 +23,7 @@ export default withAuth(
     const role = (req.nextauth?.token as any)?.user?.role;
     const path = req.nextUrl.pathname;
 
-    if (role === 'USER') {
+    if (role === 'USER' || role === 'EMPLOYEE') {
       if (ADMIN_PATHS.some((adminPath) => path.startsWith(adminPath))) {
         return NextResponse.redirect(new URL('/dashboard/my-tasks', req.url));
       }

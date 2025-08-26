@@ -67,11 +67,11 @@ const userMenuItems = [
     url: '/dashboard/my-tasks',
     icon: User,
   },
-  {
-    title: 'My Payments',
-    url: '/dashboard/my-payments',
-    icon: CreditCard,
-  },
+  // {
+  //   title: 'My Payments',
+  //   url: '/dashboard/my-payments',
+  //   icon: CreditCard,
+  // },
 ];
 
 const MenuSkeleton = () => (
@@ -147,7 +147,9 @@ export function AppSidebar() {
               </SidebarGroup>
             )}
 
-            {(userRole === 'USER' || userRole === 'ADMIN') && (
+            {(userRole === 'USER' ||
+              userRole === 'ADMIN' ||
+              userRole === 'EMPLOYEE') && (
               <SidebarGroup>
                 <SidebarGroupLabel>
                   {userRole === 'ADMIN' ? 'User Panel' : 'My Dashboard'}

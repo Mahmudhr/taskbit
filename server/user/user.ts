@@ -8,6 +8,7 @@ import { catchError } from '@/lib/utils';
 
 export async function createUser(data: CreateUserType) {
   const { email, password, name, phone, role, salary } = data;
+
   try {
     const existingUser = await prisma.user.findUnique({
       where: { email: data.email },
