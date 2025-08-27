@@ -1407,20 +1407,11 @@ export const fetchAllTaskWithCalculation = async (data?: string) => {
     if (taskPaid > 0) paidTaskCount += 1;
   });
 
-  let receivableAmount = 0;
-  tasks.forEach((t) => {
-    const taskReceivable = t.receivableAmounts.reduce(
-      (sum, r) => sum + (r.amount || 0),
-      0
-    );
-    receivableAmount += taskReceivable;
-  });
-
   return {
     totalAmount,
     totalTaskCount,
     paidAmount,
     paidTaskCount,
-    receivableAmount,
+    receivableAmount: totalAmount - paidAmount,
   };
 };

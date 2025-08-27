@@ -80,8 +80,8 @@ export type TaskType = {
         name: string;
         email: string;
       }[];
-  receivableAmounts: ReceivableAmountType[];
-  receivable: number;
+  // receivableAmounts: ReceivableAmountType[];
+  // receivable: number;
 };
 
 export type UserTaskType = {

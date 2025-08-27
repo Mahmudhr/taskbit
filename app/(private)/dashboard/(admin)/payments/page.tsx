@@ -311,7 +311,9 @@ export default function PaymentsPage() {
                           {paymentTypeConvert[payment.paymentType]}
                         </TableCell>
                         <TableCell>৳ {payment.amount}</TableCell>
-                        <TableCell>{payment.task.title}</TableCell>
+                        <TableCell className='max-w-sm break-words'>
+                          {payment.task.title}
+                        </TableCell>
                         <TableCell>{getStatusBadge(payment.status)}</TableCell>
                         <TableCell>
                           {dayjs(payment.createdAt).format('DD-MM-YYYY')}

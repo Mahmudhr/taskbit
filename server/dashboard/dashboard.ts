@@ -5,28 +5,23 @@ import { Prisma } from '@prisma/client';
 
 export const getAllDashboardData = async (data?: string) => {
   const params = new URLSearchParams(data || '');
-  // const dateString = params.get('date') || '';
   const year = params.get('year') || '';
   const month = params.get('month') || '';
-
-  const whereConditions = [];
 
   const buildMonthRange = (y: number, m: number): Prisma.DateTimeFilter => ({
     gte: new Date(y, m - 1, 1, 0, 0, 0, 0),
     lte: new Date(y, m, 0, 23, 59, 59, 999),
   });
 
+  // Filter for tasks by duration
+  const taskWhere: Prisma.TaskWhereInput = { isDeleted: false };
   if (month && year) {
-    // Month + Year
     const monthNum = parseInt(month);
     const yearNum = parseInt(year);
     if (monthNum >= 1 && monthNum <= 12 && yearNum > 0) {
-      whereConditions.push({
-        createdAt: buildMonthRange(yearNum, monthNum),
-      });
+      taskWhere.duration = buildMonthRange(yearNum, monthNum);
     }
   } else if (month) {
-    // Month only - across multiple years
     const monthNum = parseInt(month);
     if (monthNum >= 1 && monthNum <= 12) {
       const currentYear = new Date().getFullYear();
@@ -37,33 +32,131 @@ export const getAllDashboardData = async (data?: string) => {
         currentYear + 1,
         currentYear + 2,
       ];
-
-      // Create OR condition for month across multiple years
-      whereConditions.push({
-        OR: years.map((y) => ({
-          createdAt: buildMonthRange(y, monthNum),
-        })),
-      });
+      taskWhere.OR = years.map((y) => ({
+        duration: buildMonthRange(y, monthNum),
+      }));
     }
   } else if (year) {
-    // Year only
     const yearNum = parseInt(year);
     if (yearNum > 0) {
-      whereConditions.push({
-        createdAt: {
-          gte: new Date(yearNum, 0, 1, 0, 0, 0, 0),
-          lte: new Date(yearNum, 11, 31, 23, 59, 59, 999),
-        },
-      });
+      taskWhere.duration = {
+        gte: new Date(yearNum, 0, 1, 0, 0, 0, 0),
+        lte: new Date(yearNum, 11, 31, 23, 59, 59, 999),
+      };
     }
   }
 
-  const where = whereConditions.length > 0 ? { AND: whereConditions } : {};
+  // Payments: filter by createdAt (month/year)
+  const paymentWhere: Prisma.PaymentWhereInput = {};
+  if (month && year) {
+    const monthNum = parseInt(month);
+    const yearNum = parseInt(year);
+    if (monthNum >= 1 && monthNum <= 12 && yearNum > 0) {
+      paymentWhere.createdAt = buildMonthRange(yearNum, monthNum);
+    }
+  } else if (month) {
+    const monthNum = parseInt(month);
+    if (monthNum >= 1 && monthNum <= 12) {
+      const currentYear = new Date().getFullYear();
+      const years = [
+        currentYear - 2,
+        currentYear - 1,
+        currentYear,
+        currentYear + 1,
+        currentYear + 2,
+      ];
+      paymentWhere.OR = years.map((y) => ({
+        createdAt: buildMonthRange(y, monthNum),
+      }));
+    }
+  } else if (year) {
+    const yearNum = parseInt(year);
+    if (yearNum > 0) {
+      paymentWhere.createdAt = {
+        gte: new Date(yearNum, 0, 1, 0, 0, 0, 0),
+        lte: new Date(yearNum, 11, 31, 23, 59, 59, 999),
+      };
+    }
+  }
+
+  // Salaries: filter by createdAt (month/year)
+  const salaryWhere: Prisma.SalaryWhereInput = {};
+  if (month && year) {
+    const monthNum = parseInt(month);
+    const yearNum = parseInt(year);
+    if (monthNum >= 1 && monthNum <= 12 && yearNum > 0) {
+      salaryWhere.createdAt = buildMonthRange(yearNum, monthNum);
+    }
+  } else if (month) {
+    const monthNum = parseInt(month);
+    if (monthNum >= 1 && monthNum <= 12) {
+      const currentYear = new Date().getFullYear();
+      const years = [
+        currentYear - 2,
+        currentYear - 1,
+        currentYear,
+        currentYear + 1,
+        currentYear + 2,
+      ];
+      salaryWhere.OR = years.map((y) => ({
+        createdAt: buildMonthRange(y, monthNum),
+      }));
+    }
+  } else if (year) {
+    const yearNum = parseInt(year);
+    if (yearNum > 0) {
+      salaryWhere.createdAt = {
+        gte: new Date(yearNum, 0, 1, 0, 0, 0, 0),
+        lte: new Date(yearNum, 11, 31, 23, 59, 59, 999),
+      };
+    }
+  }
+
+  // Expenses: filter by createdAt (month/year)
+  const expenseWhere: Prisma.ExpenseWhereInput = {};
+  if (month && year) {
+    const monthNum = parseInt(month);
+    const yearNum = parseInt(year);
+    if (monthNum >= 1 && monthNum <= 12 && yearNum > 0) {
+      expenseWhere.createdAt = buildMonthRange(yearNum, monthNum);
+    }
+  } else if (month) {
+    const monthNum = parseInt(month);
+    if (monthNum >= 1 && monthNum <= 12) {
+      const currentYear = new Date().getFullYear();
+      const years = [
+        currentYear - 2,
+        currentYear - 1,
+        currentYear,
+        currentYear + 1,
+        currentYear + 2,
+      ];
+      expenseWhere.OR = years.map((y) => ({
+        createdAt: buildMonthRange(y, monthNum),
+      }));
+    }
+  } else if (year) {
+    const yearNum = parseInt(year);
+    if (yearNum > 0) {
+      expenseWhere.createdAt = {
+        gte: new Date(yearNum, 0, 1, 0, 0, 0, 0),
+        lte: new Date(yearNum, 11, 31, 23, 59, 59, 999),
+      };
+    }
+  }
 
   try {
+    // Get all tasks (filtered by duration)
+    const allTasks = await prisma.task.findMany({
+      where: taskWhere,
+      select: {
+        amount: true,
+      },
+    });
+
     // Get all payments
     const allPayments = await prisma.payment.findMany({
-      where,
+      where: paymentWhere,
       select: {
         amount: true,
         status: true,
@@ -72,7 +165,7 @@ export const getAllDashboardData = async (data?: string) => {
 
     // Get all expenses
     const allExpenses = await prisma.expense.findMany({
-      where,
+      where: expenseWhere,
       select: {
         amount: true,
       },
@@ -80,7 +173,7 @@ export const getAllDashboardData = async (data?: string) => {
 
     // Get all salaries
     const allSalaries = await prisma.salary.findMany({
-      where,
+      where: salaryWhere,
       select: {
         amount: true,
         status: true,
@@ -102,12 +195,6 @@ export const getAllDashboardData = async (data?: string) => {
       .filter((payment) => payment.status === 'FAILED')
       .reduce((total, payment) => total + payment.amount, 0);
 
-    // Calculate expense totals
-    const totalExpenses = allExpenses.reduce(
-      (total, expense) => total + expense.amount,
-      0
-    );
-
     // Calculate salary totals
     const totalSalaries = allSalaries.reduce(
       (total, salary) => total + salary.amount,
@@ -116,24 +203,26 @@ export const getAllDashboardData = async (data?: string) => {
     const paidSalaries = allSalaries
       .filter((salary) => salary.status === 'PAID')
       .reduce((total, salary) => total + salary.amount, 0);
-    const pendingSalaries = allSalaries
-      .filter((salary) => salary.status === 'PENDING')
-      .reduce((total, salary) => total + salary.amount, 0);
+
+    // Calculate expense totals (expenses + paid salaries)
+    const totalExpenses =
+      allExpenses.reduce((total, expense) => total + expense.amount, 0) +
+      paidSalaries;
 
     // Calculate business metrics
-    const totalOutgoing = totalExpenses + paidSalaries; // Only paid salaries count as outgoing
-    const totalIncoming = completedPayments; // Only completed payments count as income
-    const netProfit = totalIncoming - totalOutgoing; // Profit/Loss calculation
-    const pendingIncome = pendingPayments; // Money we expect to receive
-    const pendingExpenses = pendingSalaries; // Money we need to pay
+    const totalOutgoing = totalExpenses;
+    const totalIncoming = completedPayments;
 
-    // Calculate percentages for insights
-    const expensePercentage =
-      totalIncoming > 0 ? Math.round((totalExpenses / totalIncoming) * 100) : 0;
-    const salaryPercentage =
-      totalIncoming > 0 ? Math.round((paidSalaries / totalIncoming) * 100) : 0;
-    const profitMargin =
-      totalIncoming > 0 ? Math.round((netProfit / totalIncoming) * 100) : 0;
+    // Total task price
+    const totalTaskPrice = allTasks.reduce(
+      (sum, t) => sum + (t.amount || 0),
+      0
+    );
+
+    // Due = total task price - total received
+    const due = totalTaskPrice - completedPayments;
+
+    const netProfit = totalIncoming - totalOutgoing;
 
     // Get counts for dashboard cards
     const paymentCounts = {
@@ -166,7 +255,6 @@ export const getAllDashboardData = async (data?: string) => {
       },
     });
 
-    // Fixed: Remove user include from expenses
     const recentExpenses = await prisma.expense.findMany({
       orderBy: { createdAt: 'desc' },
     });
@@ -183,49 +271,50 @@ export const getAllDashboardData = async (data?: string) => {
     return {
       success: true,
       data: {
-        // Financial Summary
         financial: {
           totalIncoming: completedPayments,
           totalOutgoing,
           netProfit,
-          pendingIncome,
-          pendingExpenses,
-          profitMargin,
+          due,
+          profitMargin:
+            totalIncoming > 0
+              ? Math.round((netProfit / totalIncoming) * 100)
+              : 0,
+          totalTaskPrice,
         },
-
-        // Detailed Amounts
         payments: {
           total: totalPayments,
           completed: completedPayments,
           pending: pendingPayments,
           failed: failedPayments,
         },
-
         expenses: {
           total: totalExpenses,
         },
-
         salaries: {
           total: totalSalaries,
           paid: paidSalaries,
-          pending: pendingSalaries,
+          pending: allSalaries.filter((s) => s.status === 'PENDING').length,
         },
-
-        // Counts
         counts: {
           payments: paymentCounts,
           expenses: expenseCounts,
           salaries: salaryCounts,
         },
-
-        // Percentages
         insights: {
-          expensePercentage,
-          salaryPercentage,
-          profitMargin,
+          expensePercentage:
+            totalIncoming > 0
+              ? Math.round((totalExpenses / totalIncoming) * 100)
+              : 0,
+          salaryPercentage:
+            totalIncoming > 0
+              ? Math.round((paidSalaries / totalIncoming) * 100)
+              : 0,
+          profitMargin:
+            totalIncoming > 0
+              ? Math.round((netProfit / totalIncoming) * 100)
+              : 0,
         },
-
-        // ALL Recent Data (no limit)
         recent: {
           payments: recentPayments,
           expenses: recentExpenses,
@@ -295,7 +384,10 @@ export const getAllDashboardCalc = async (data?: string) => {
 
   // Fetch all tasks
   const allTasks = await prisma.task.findMany({
-    where,
+    where: {
+      ...where,
+      isDeleted: false,
+    },
     select: {
       amount: true,
     },
@@ -303,14 +395,6 @@ export const getAllDashboardCalc = async (data?: string) => {
 
   // Fetch all payments
   const allPayments = await prisma.payment.findMany({
-    where,
-    select: {
-      amount: true,
-    },
-  });
-
-  // Fetch all receivable amounts
-  const allReceivables = await prisma.receivableAmount.findMany({
     where,
     select: {
       amount: true,
@@ -328,7 +412,7 @@ export const getAllDashboardCalc = async (data?: string) => {
   // Calculate totals
   const totalPrice = allTasks.reduce((sum, t) => sum + (t.amount || 0), 0);
   const received = allPayments.reduce((sum, p) => sum + (p.amount || 0), 0);
-  const due = allReceivables.reduce((sum, r) => sum + (r.amount || 0), 0);
+  const due = totalPrice - received;
   const expense = allExpenses.reduce((sum, e) => sum + (e.amount || 0), 0);
 
   const netIncome = received - expense;

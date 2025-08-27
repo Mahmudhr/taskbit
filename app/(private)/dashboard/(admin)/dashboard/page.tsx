@@ -14,7 +14,8 @@ import {
   Clock,
   XCircle,
   ListFilter,
-  ArrowDownLeft,
+  ArrowUpRight,
+  ArrowDownRight,
 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import Modal from '@/components/modal';
@@ -51,16 +52,9 @@ export default function DashboardPage() {
     router.push(queryString);
   }, [queryString, router]);
 
-  const {
-    fetchDashboardMutationData,
-    fetchDashboardCalcMutationData,
-    fetchDashboardCalcMutation,
-  } = useDashboard(queryString);
+  const { fetchDashboardMutationData } = useDashboard(queryString);
 
-  if (
-    !fetchDashboardMutationData?.data ||
-    fetchDashboardCalcMutation.isLoading
-  ) {
+  if (!fetchDashboardMutationData?.data) {
     return (
       <div className='flex items-center justify-center min-h-screen'>
         <div className='text-center'>
@@ -93,55 +87,71 @@ export default function DashboardPage() {
       </div>
 
       {/* Financial Summary Cards */}
-      <div className='grid gap-4 md:grid-cols-2 lg:grid-cols-4'>
+      <div className='grid gap-4 md:grid-cols-2 lg:grid-cols-5'>
         <Card>
           <CardHeader className='flex flex-row items-center justify-between space-y-0 pb-2'>
             <CardTitle className='text-sm font-medium'>
               Total Tasks Amounts
             </CardTitle>
+            <TrendingUp className='h-4 w-4 text-blue-500' />
+          </CardHeader>
+          <CardContent>
+            <div className='text-2xl font-bold text-blue-500'>
+              {formatCurrency(financial.totalTaskPrice)}
+            </div>
+            <p className='text-xs text-muted-foreground'>
+              From {counts.payments.completed} completed payments
+            </p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className='flex flex-row items-center justify-between space-y-0 pb-2'>
+            <CardTitle className='text-sm font-medium'>Total Income</CardTitle>
             <TrendingUp className='h-4 w-4 text-green-600' />
           </CardHeader>
           <CardContent>
             <div className='text-2xl font-bold text-green-600'>
-              {formatCurrency(fetchDashboardCalcMutationData?.totalPrice || 0)}
+              {formatCurrency(financial.totalIncoming)}
             </div>
-            {/* <p className='text-xs text-muted-foreground'>
+            <p className='text-xs text-muted-foreground'>
               From {counts.payments.completed} completed payments
-            </p> */}
+            </p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className='flex flex-row items-center justify-between space-y-0 pb-2'>
             <CardTitle className='text-sm font-medium'>
-              Total Received
+              Total Expenses
             </CardTitle>
-            <ArrowDownLeft className='h-4 w-4 text-blue-600 dark:text-blue-400' />
+            <TrendingDown className='h-4 w-4 text-red-600' />
           </CardHeader>
           <CardContent>
-            <div className='text-2xl font-bold text-blue-600 dark:text-blue-400'>
-              {formatCurrency(fetchDashboardCalcMutationData?.received || 0)}
+            <div className='text-2xl font-bold text-red-600'>
+              {formatCurrency(financial.totalOutgoing)}
             </div>
-            {/* <p className='text-xs text-muted-foreground'>Expenses + Salaries</p> */}
+            <p className='text-xs text-muted-foreground'>Expenses + Salaries</p>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className='flex flex-row items-center justify-between space-y-0 pb-2'>
-            <CardTitle className='text-sm font-medium'>Total Due</CardTitle>
-            <TrendingDown className='h-4 w-4 dark:text-yellow-500 text-yellow-600' />
+            <CardTitle className='text-sm font-medium'>
+              Pending Income
+            </CardTitle>
+            <Clock className='h-4 w-4 text-yellow-600' />
           </CardHeader>
           <CardContent>
-            <div className='text-2xl font-bold dark:text-yellow-500 text-yellow-600'>
-              {formatCurrency(fetchDashboardCalcMutationData?.due || 0)}
+            <div className='text-2xl font-bold text-yellow-600'>
+              {formatCurrency(financial.due)}
             </div>
-            {/* <p className='text-xs text-muted-foreground'>
-              From {counts.payments.completed} completed payments
-            </p> */}
+            <p className='text-xs text-muted-foreground'>
+              From {counts.payments.pending} pending payments
+            </p>
           </CardContent>
         </Card>
-        {/* <Card>
+        <Card>
           <CardHeader className='flex flex-row items-center justify-between space-y-0 pb-2'>
-            <CardTitle className='text-sm font-medium'>Total Due</CardTitle>
+            <CardTitle className='text-sm font-medium'>Net Profit</CardTitle>
             {financial.netProfit >= 0 ? (
               <ArrowUpRight className='h-4 w-4 text-green-600' />
             ) : (
@@ -159,78 +169,6 @@ export default function DashboardPage() {
             <p className='text-xs text-muted-foreground'>
               Profit Margin: {financial.profitMargin}%
             </p>
-          </CardContent>
-        </Card> */}
-
-        <Card>
-          <CardHeader className='flex flex-row items-center justify-between space-y-0 pb-2'>
-            <CardTitle className='text-sm font-medium'>
-              Total Expenses
-            </CardTitle>
-            <TrendingUp className='h-4 w-4 text-red-600' />
-          </CardHeader>
-          <CardContent>
-            <div className='text-2xl font-bold text-red-600'>
-              {formatCurrency(fetchDashboardCalcMutationData?.expense || 0)}
-            </div>
-            {/* <p className='text-xs text-muted-foreground'>
-              From {counts.payments.completed} completed payments
-            </p> */}
-          </CardContent>
-        </Card>
-      </div>
-      <div className='grid gap-4 md:grid-cols-2 lg:grid-cols-3'>
-        <Card>
-          <CardHeader className='flex flex-row items-center justify-between space-y-0 pb-2'>
-            <CardTitle className='text-sm font-medium'>Net Income</CardTitle>
-            <TrendingUp className='h-4 w-4 text-green-600' />
-          </CardHeader>
-          <CardContent>
-            {fetchDashboardCalcMutationData?.netIncome &&
-            fetchDashboardCalcMutationData?.netIncome > 0 ? (
-              <div className='text-2xl font-bold text-green-600'>
-                {formatCurrency(fetchDashboardCalcMutationData?.netIncome || 0)}
-              </div>
-            ) : (
-              <div className='text-2xl font-bold text-red-600'>
-                {formatCurrency(fetchDashboardCalcMutationData?.netIncome || 0)}
-              </div>
-            )}
-            {/* <p className='text-xs text-muted-foreground'>
-              From {counts.payments.completed} completed payments
-            </p> */}
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className='flex flex-row items-center justify-between space-y-0 pb-2'>
-            <CardTitle className='text-sm font-medium'>
-              Total Received
-            </CardTitle>
-            <ArrowDownLeft className='h-4 w-4 text-blue-600 dark:text-blue-400' />
-          </CardHeader>
-          <CardContent>
-            <div className='text-2xl font-bold text-blue-600 dark:text-blue-400'>
-              {formatCurrency(fetchDashboardCalcMutationData?.received || 0)}
-            </div>
-            {/* <p className='text-xs text-muted-foreground'>Expenses + Salaries</p> */}
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className='flex flex-row items-center justify-between space-y-0 pb-2'>
-            <CardTitle className='text-sm font-medium'>
-              Total Expenses
-            </CardTitle>
-            <TrendingUp className='h-4 w-4 text-red-600' />
-          </CardHeader>
-          <CardContent>
-            <div className='text-2xl font-bold text-red-600'>
-              {formatCurrency(fetchDashboardCalcMutationData?.expense || 0)}
-            </div>
-            {/* <p className='text-xs text-muted-foreground'>
-              From {counts.payments.completed} completed payments
-            </p> */}
           </CardContent>
         </Card>
       </div>

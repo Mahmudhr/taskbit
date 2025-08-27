@@ -29,6 +29,8 @@ import {
   X,
   EllipsisVertical,
   Eye,
+  Banknote,
+  AlertCircle,
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import AddUserForm from '@/components/forms/add-user-form';
@@ -59,6 +61,7 @@ import {
 import dayjs from 'dayjs';
 import UserDetailsView from '@/components/user-details-view';
 import Modal from '@/components/modal';
+import CreateUserPaymentForm from '@/components/forms/create-user-payment-form';
 
 const getStatusBadge = (status: string) => {
   const variants = {
@@ -109,17 +112,17 @@ const SalaryDisplay = ({ user }: { user: UserType }) => {
   return (
     <div className='flex items-center gap-2'>
       <span>৳ {user.salary}</span>
-      {/* {salaryStatus.status === 'due' && (
+      {salaryStatus.status === 'due' && (
         <Badge variant='destructive' className='text-xs px-2 py-0.5'>
           <AlertCircle className='w-3 h-3 mr-1' />
           Due
         </Badge>
-      )} */}
-      {/* {salaryStatus.status === 'paid' && (
+      )}
+      {salaryStatus.status === 'paid' && (
         <Badge variant='default' className='text-xs px-2 py-0.5 bg-green-500'>
           Paid
         </Badge>
-      )} */}
+      )}
     </div>
   );
 };
@@ -135,9 +138,11 @@ export default function UsersPage() {
 
   const [addUserOpen, setAddUserOpen] = useState(false);
   const [confirmModal, setConfirmModal] = useState(false);
-
+  const [createUserPaymentOpen, setCreateUserPaymentOpen] = useState(false);
+  const [paymentUserId, setPaymentUserId] = useState<number | null>(null);
   const [isPending, startTransition] = useTransition();
   const [userId, setUserId] = useState<number | null>(null);
+  const [salary, setSalary] = useState<number | null>(null);
   const router = useRouter();
 
   const [updateUserModal, setUpdateUserModal] = useState(false);
@@ -188,6 +193,12 @@ export default function UsersPage() {
   const handleViewUser = (user: UserType) => {
     setViewUser(user);
     setViewUserModal(true);
+  };
+
+  const handleCreatePayment = (userId: number, salary: number) => {
+    setPaymentUserId(userId);
+    setCreateUserPaymentOpen(true);
+    setSalary(salary);
   };
 
   useEffect(() => {
@@ -258,7 +269,6 @@ export default function UsersPage() {
                 <SelectItem value='all'>All Roles</SelectItem>
                 <SelectItem value='ADMIN'>Admin</SelectItem>
                 <SelectItem value='USER'>User</SelectItem>
-                <SelectItem value='EMPLOYEE'>Employee</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -354,7 +364,7 @@ export default function UsersPage() {
                           {user.email}
                         </TableCell>
                         <TableCell className='capitalize'>
-                          {roleConvert[user.role as keyof typeof roleConvert]}
+                          {roleConvert[user.role]}
                         </TableCell>
                         {/* ✅ Updated: Show salary with due status */}
                         <TableCell>
@@ -374,7 +384,7 @@ export default function UsersPage() {
                               <DropdownMenuContent align='end'>
                                 <DropdownMenuLabel>Options</DropdownMenuLabel>
                                 <DropdownMenuSeparator />
-                                {/* <DropdownMenuItem
+                                <DropdownMenuItem
                                   onClick={() =>
                                     handleCreatePayment(
                                       user.id,
@@ -384,7 +394,7 @@ export default function UsersPage() {
                                 >
                                   <Banknote className='mr-2 h-4 w-4' />
                                   Make Payment
-                                </DropdownMenuItem> */}
+                                </DropdownMenuItem>
                                 <DropdownMenuItem
                                   onClick={() => handleViewUser(user)}
                                 >
@@ -442,6 +452,14 @@ export default function UsersPage() {
                             <DropdownMenuLabel>Options</DropdownMenuLabel>
                             <DropdownMenuSeparator />
                             <DropdownMenuItem
+                              onClick={() =>
+                                handleCreatePayment(user.id, user.salary || 0)
+                              }
+                            >
+                              <Banknote className='mr-2 h-4 w-4' />
+                              Make Payment
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
                               onClick={() => handleViewUser(user)}
                             >
                               <Eye className='mr-2 h-4 w-4' />
@@ -472,7 +490,7 @@ export default function UsersPage() {
                       <div className='flex justify-between'>
                         <span className='text-muted-foreground'>Role:</span>
                         <span className='capitalize'>
-                          {roleConvert[user.role as keyof typeof roleConvert]}
+                          {roleConvert[user.role]}
                         </span>
                       </div>
                       {/* ✅ Updated: Show salary with due status in mobile view */}
@@ -560,6 +578,18 @@ export default function UsersPage() {
         description=' '
       >
         <AddUserForm setIsOpen={setAddUserOpen} />
+      </AlertModal>
+      <AlertModal
+        isOpen={createUserPaymentOpen}
+        setIsOpen={setCreateUserPaymentOpen}
+        title='Create new user payment'
+        description=' '
+      >
+        <CreateUserPaymentForm
+          setIsOpen={setCreateUserPaymentOpen}
+          userId={paymentUserId}
+          salary={salary}
+        />
       </AlertModal>
       <AlertModal
         isOpen={updateUserModal}
