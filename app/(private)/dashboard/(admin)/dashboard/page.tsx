@@ -1,6 +1,6 @@
 'use client';
 
-import { useDashboard } from '@/hooks/use-dashboard';
+import { useCurrentDashboard, useDashboard } from '@/hooks/use-dashboard';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
@@ -22,7 +22,7 @@ import Modal from '@/components/modal';
 import DashboardFilter from '@/components/filters/dashboard-filter';
 import { Button } from '@/components/ui/button';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { generateQueryString } from '@/lib/utils';
+import { currentMonth, generateQueryString } from '@/lib/utils';
 
 // Updated formatCurrency function with Bangladeshi Taka
 export const formatCurrency = (amount: number) => {
@@ -38,7 +38,6 @@ export const formatCurrency = (amount: number) => {
 export default function DashboardPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
-
   const [openFilter, setOpenFilter] = useState(false);
 
   const [params, setParams] = useState({
@@ -53,8 +52,14 @@ export default function DashboardPage() {
   }, [queryString, router]);
 
   const { fetchDashboardMutationData } = useDashboard(queryString);
+  const {
+    fetchCurrentDashboardMutationData: fetchDashboardDataCurrentMonthData,
+  } = useCurrentDashboard(`?month=${currentMonth}`);
 
-  if (!fetchDashboardMutationData?.data) {
+  if (
+    !fetchDashboardMutationData?.data ||
+    !fetchDashboardDataCurrentMonthData?.data
+  ) {
     return (
       <div className='flex items-center justify-center min-h-screen'>
         <div className='text-center'>
@@ -87,90 +92,208 @@ export default function DashboardPage() {
       </div>
 
       {/* Financial Summary Cards */}
-      <div className='grid gap-4 md:grid-cols-2 lg:grid-cols-5'>
-        <Card>
-          <CardHeader className='flex flex-row items-center justify-between space-y-0 pb-2'>
-            <CardTitle className='text-sm font-medium'>
-              Total Tasks Amounts
-            </CardTitle>
-            <TrendingUp className='h-4 w-4 text-blue-500' />
-          </CardHeader>
-          <CardContent>
-            <div className='text-2xl font-bold text-blue-500'>
-              {formatCurrency(financial.totalTaskPrice)}
-            </div>
-            <p className='text-xs text-muted-foreground'>
-              From {counts.payments.completed} completed payments
-            </p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className='flex flex-row items-center justify-between space-y-0 pb-2'>
-            <CardTitle className='text-sm font-medium'>Total Income</CardTitle>
-            <TrendingUp className='h-4 w-4 text-green-600' />
-          </CardHeader>
-          <CardContent>
-            <div className='text-2xl font-bold text-green-600'>
-              {formatCurrency(financial.totalIncoming)}
-            </div>
-            <p className='text-xs text-muted-foreground'>
-              From {counts.payments.completed} completed payments
-            </p>
-          </CardContent>
-        </Card>
+      <div className='space-y-2'>
+        <h2 className='text-lg font-medium'>Overall</h2>
+        <div className='grid gap-4 md:grid-cols-2 lg:grid-cols-5'>
+          <Card>
+            <CardHeader className='flex flex-row items-center justify-between space-y-0 pb-2'>
+              <CardTitle className='text-sm font-medium'>
+                Total Tasks Amounts
+              </CardTitle>
+              <TrendingUp className='h-4 w-4 text-blue-500' />
+            </CardHeader>
+            <CardContent>
+              <div className='text-2xl font-bold text-blue-500'>
+                {formatCurrency(financial.totalTaskPrice)}
+              </div>
+              <p className='text-xs text-muted-foreground'>
+                From {counts.payments.completed} completed payments
+              </p>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader className='flex flex-row items-center justify-between space-y-0 pb-2'>
+              <CardTitle className='text-sm font-medium'>
+                Total Income
+              </CardTitle>
+              <TrendingUp className='h-4 w-4 text-green-600' />
+            </CardHeader>
+            <CardContent>
+              <div className='text-2xl font-bold text-green-600'>
+                {formatCurrency(financial.totalIncoming)}
+              </div>
+              <p className='text-xs text-muted-foreground'>
+                From {counts.payments.completed} completed payments
+              </p>
+            </CardContent>
+          </Card>
 
-        <Card>
-          <CardHeader className='flex flex-row items-center justify-between space-y-0 pb-2'>
-            <CardTitle className='text-sm font-medium'>
-              Total Expenses
-            </CardTitle>
-            <TrendingDown className='h-4 w-4 text-red-600' />
-          </CardHeader>
-          <CardContent>
-            <div className='text-2xl font-bold text-red-600'>
-              {formatCurrency(financial.totalOutgoing)}
-            </div>
-            <p className='text-xs text-muted-foreground'>Expenses + Salaries</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className='flex flex-row items-center justify-between space-y-0 pb-2'>
-            <CardTitle className='text-sm font-medium'>
-              Pending Income
-            </CardTitle>
-            <Clock className='h-4 w-4 text-yellow-600' />
-          </CardHeader>
-          <CardContent>
-            <div className='text-2xl font-bold text-yellow-600'>
-              {formatCurrency(financial.due)}
-            </div>
-            <p className='text-xs text-muted-foreground'>
-              From {counts.payments.pending} pending payments
-            </p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className='flex flex-row items-center justify-between space-y-0 pb-2'>
-            <CardTitle className='text-sm font-medium'>Net Profit</CardTitle>
-            {financial.netProfit >= 0 ? (
-              <ArrowUpRight className='h-4 w-4 text-green-600' />
-            ) : (
-              <ArrowDownRight className='h-4 w-4 text-red-600' />
-            )}
-          </CardHeader>
-          <CardContent>
-            <div
-              className={`text-2xl font-bold ${
-                financial.netProfit >= 0 ? 'text-green-600' : 'text-red-600'
-              }`}
-            >
-              {formatCurrency(financial.netProfit)}
-            </div>
-            <p className='text-xs text-muted-foreground'>
-              Profit Margin: {financial.profitMargin}%
-            </p>
-          </CardContent>
-        </Card>
+          <Card>
+            <CardHeader className='flex flex-row items-center justify-between space-y-0 pb-2'>
+              <CardTitle className='text-sm font-medium'>
+                Total Expenses
+              </CardTitle>
+              <TrendingDown className='h-4 w-4 text-red-600' />
+            </CardHeader>
+            <CardContent>
+              <div className='text-2xl font-bold text-red-600'>
+                {formatCurrency(financial.totalOutgoing)}
+              </div>
+              <p className='text-xs text-muted-foreground'>
+                Expenses + Salaries
+              </p>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader className='flex flex-row items-center justify-between space-y-0 pb-2'>
+              <CardTitle className='text-sm font-medium'>Total Due</CardTitle>
+              <Clock className='h-4 w-4 text-yellow-600' />
+            </CardHeader>
+            <CardContent>
+              <div className='text-2xl font-bold text-yellow-600'>
+                {formatCurrency(financial.due)}
+              </div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader className='flex flex-row items-center justify-between space-y-0 pb-2'>
+              <CardTitle className='text-sm font-medium'>Net Profit</CardTitle>
+              {financial.netProfit >= 0 ? (
+                <ArrowUpRight className='h-4 w-4 text-green-600' />
+              ) : (
+                <ArrowDownRight className='h-4 w-4 text-red-600' />
+              )}
+            </CardHeader>
+            <CardContent>
+              <div
+                className={`text-2xl font-bold ${
+                  financial.netProfit >= 0 ? 'text-green-600' : 'text-red-600'
+                }`}
+              >
+                {formatCurrency(financial.netProfit)}
+              </div>
+              <p className='text-xs text-muted-foreground'>
+                Profit Margin: {financial.profitMargin}%
+              </p>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+      <div className='space-y-2'>
+        <h2 className='text-lg font-medium'>Current Month</h2>
+        <div className='grid gap-4 md:grid-cols-2 lg:grid-cols-5'>
+          <Card>
+            <CardHeader className='flex flex-row items-center justify-between space-y-0 pb-2'>
+              <CardTitle className='text-sm font-medium'>
+                Total Tasks Amounts
+              </CardTitle>
+              <TrendingUp className='h-4 w-4 text-blue-500' />
+            </CardHeader>
+            <CardContent>
+              <div className='text-2xl font-bold text-blue-500'>
+                {formatCurrency(
+                  fetchDashboardDataCurrentMonthData.data.financial
+                    .totalTaskPrice
+                )}
+              </div>
+              <p className='text-xs text-muted-foreground'>
+                From{' '}
+                {
+                  fetchDashboardDataCurrentMonthData.data.counts.payments
+                    .completed
+                }{' '}
+                completed payments
+              </p>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader className='flex flex-row items-center justify-between space-y-0 pb-2'>
+              <CardTitle className='text-sm font-medium'>
+                Total Income
+              </CardTitle>
+              <TrendingUp className='h-4 w-4 text-green-600' />
+            </CardHeader>
+            <CardContent>
+              <div className='text-2xl font-bold text-green-600'>
+                {formatCurrency(
+                  fetchDashboardDataCurrentMonthData.data.financial
+                    .totalIncoming
+                )}
+              </div>
+              <p className='text-xs text-muted-foreground'>
+                From{' '}
+                {
+                  fetchDashboardDataCurrentMonthData.data.counts.payments
+                    .completed
+                }{' '}
+                completed payments
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className='flex flex-row items-center justify-between space-y-0 pb-2'>
+              <CardTitle className='text-sm font-medium'>
+                Total Expenses
+              </CardTitle>
+              <TrendingDown className='h-4 w-4 text-red-600' />
+            </CardHeader>
+            <CardContent>
+              <div className='text-2xl font-bold text-red-600'>
+                {formatCurrency(
+                  fetchDashboardDataCurrentMonthData.data.financial
+                    .totalOutgoing
+                )}
+              </div>
+              <p className='text-xs text-muted-foreground'>
+                Expenses + Salaries
+              </p>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader className='flex flex-row items-center justify-between space-y-0 pb-2'>
+              <CardTitle className='text-sm font-medium'>Total Due</CardTitle>
+              <Clock className='h-4 w-4 text-yellow-600' />
+            </CardHeader>
+            <CardContent>
+              <div className='text-2xl font-bold text-yellow-600'>
+                {formatCurrency(
+                  fetchDashboardDataCurrentMonthData.data.financial.due
+                )}
+              </div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader className='flex flex-row items-center justify-between space-y-0 pb-2'>
+              <CardTitle className='text-sm font-medium'>Net Profit</CardTitle>
+              {fetchDashboardDataCurrentMonthData.data.financial.netProfit >=
+              0 ? (
+                <ArrowUpRight className='h-4 w-4 text-green-600' />
+              ) : (
+                <ArrowDownRight className='h-4 w-4 text-red-600' />
+              )}
+            </CardHeader>
+            <CardContent>
+              <div
+                className={`text-2xl font-bold ${
+                  fetchDashboardDataCurrentMonthData.data.financial.netProfit >=
+                  0
+                    ? 'text-green-600'
+                    : 'text-red-600'
+                }`}
+              >
+                {formatCurrency(
+                  fetchDashboardDataCurrentMonthData.data.financial.netProfit
+                )}
+              </div>
+              <p className='text-xs text-muted-foreground'>
+                Profit Margin:{' '}
+                {fetchDashboardDataCurrentMonthData.data.financial.profitMargin}
+                %
+              </p>
+            </CardContent>
+          </Card>
+        </div>
       </div>
 
       {/* Detailed Stats */}
@@ -294,6 +417,7 @@ export default function DashboardPage() {
       {/* Recent Activity */}
       <div className='grid gap-4 md:grid-cols-2'>
         {/* Recent Payments */}
+
         <Card>
           <CardHeader>
             <CardTitle>Recent Payments</CardTitle>

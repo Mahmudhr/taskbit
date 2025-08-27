@@ -1,4 +1,5 @@
 import { clsx, type ClassValue } from 'clsx';
+import dayjs from 'dayjs';
 import { twMerge } from 'tailwind-merge';
 
 export function cn(...inputs: ClassValue[]) {
@@ -114,3 +115,5 @@ export const catchError = (error: unknown) => {
     message: error instanceof Error ? error.message : 'Failed to create user',
   };
 };
+
+export const currentMonth = dayjs().month() + 1;

@@ -13,6 +13,7 @@ import {
 } from '@/server/salary/salary';
 import { SalaryCalculationType } from '@/types/common';
 import { PaymentType, SalaryStatus, SalaryType } from '@prisma/client';
+import { currentMonth } from '@/lib/utils';
 
 type CreateSalaryType = {
   amount: number;
@@ -44,6 +45,9 @@ export function useSalary() {
       queryClient.invalidateQueries({ queryKey: ['user-salaries-by-email'] });
       queryClient.invalidateQueries({ queryKey: ['salaries-calculations'] });
       queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+      queryClient.invalidateQueries({
+        queryKey: ['dashboard', `?month=${currentMonth}`],
+      });
     },
   });
 
@@ -56,6 +60,9 @@ export function useSalary() {
       queryClient.invalidateQueries({ queryKey: ['user-salaries-by-email'] });
       queryClient.invalidateQueries({ queryKey: ['salaries-calculations'] });
       queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+      queryClient.invalidateQueries({
+        queryKey: ['dashboard', `?month=${currentMonth}`],
+      });
     },
   });
 
@@ -68,6 +75,9 @@ export function useSalary() {
       queryClient.invalidateQueries({ queryKey: ['user-salaries-by-email'] });
       queryClient.invalidateQueries({ queryKey: ['salaries-calculations'] });
       queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+      queryClient.invalidateQueries({
+        queryKey: ['dashboard', `?month=${currentMonth}`],
+      });
     },
   });
 
@@ -125,6 +135,10 @@ export function useCreateSalary() {
       queryClient.invalidateQueries({ queryKey: ['salaries'] });
       queryClient.invalidateQueries({ queryKey: ['user-salaries'] });
       queryClient.invalidateQueries({ queryKey: ['user-salaries-by-email'] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+      queryClient.invalidateQueries({
+        queryKey: ['dashboard', `?month=${currentMonth}`],
+      });
     },
   });
 }
@@ -139,6 +153,9 @@ export function useUpdateSalary() {
       queryClient.invalidateQueries({ queryKey: ['user-salaries'] });
       queryClient.invalidateQueries({ queryKey: ['user-salaries-by-email'] });
       queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+      queryClient.invalidateQueries({
+        queryKey: ['dashboard', `?month=${currentMonth}`],
+      });
     },
   });
 }
@@ -153,6 +170,9 @@ export function useDeleteSalary() {
       queryClient.invalidateQueries({ queryKey: ['user-salaries'] });
       queryClient.invalidateQueries({ queryKey: ['user-salaries-by-email'] });
       queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+      queryClient.invalidateQueries({
+        queryKey: ['dashboard', `?month=${currentMonth}`],
+      });
     },
   });
 }

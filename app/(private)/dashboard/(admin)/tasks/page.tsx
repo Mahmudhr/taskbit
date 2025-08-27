@@ -905,7 +905,16 @@ export default function TasksPage() {
       <div>
         {!fetchAllTaskWithCalcMutation.isLoading ? (
           <div className='grid grid-cols-2 md:grid-cols-3 gap-4'>
-            <Card className='cursor-pointer'>
+            <Card
+              className='cursor-pointer'
+              onClick={() => {
+                setParams((prev) => ({
+                  ...prev,
+                  payment_status: '',
+                  status: '',
+                }));
+              }}
+            >
               <CardContent className='p-4 text-center space-y-2'>
                 <div>
                   <div className='text-2xl font-bold dark:text-gray-100'>
@@ -925,7 +934,16 @@ export default function TasksPage() {
                 </div>
               </CardContent>
             </Card>
-            <Card className='cursor-pointer'>
+            <Card
+              className='cursor-pointer'
+              onClick={() => {
+                setParams((prev) => ({
+                  ...prev,
+                  payment_status: 'paid',
+                  status: '',
+                }));
+              }}
+            >
               <CardContent className='p-4 text-center space-y-2'>
                 <div>
                   <div className='text-2xl font-bold text-green-600 dark:text-green-400'>
@@ -945,7 +963,16 @@ export default function TasksPage() {
                 </div>
               </CardContent>
             </Card>
-            <Card className='cursor-pointer'>
+            <Card
+              className='cursor-pointer'
+              onClick={() => {
+                setParams((prev) => ({
+                  ...prev,
+                  payment_status: 'due',
+                  status: '',
+                }));
+              }}
+            >
               <CardContent className='p-4 text-center space-y-2'>
                 <div>
                   <div className='text-2xl font-bold text-red-600 dark:text-red-400'>

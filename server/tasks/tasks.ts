@@ -630,7 +630,7 @@ export const fetchAllTasks = async (data?: string) => {
       where,
       skip: (page - 1) * limit,
       take: limit,
-      orderBy: { createdAt: 'desc' },
+      orderBy: { duration: 'asc' },
       include: {
         // Updated: Include taskAssignments instead of single assignedTo
         taskAssignments: {

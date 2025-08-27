@@ -1,3 +1,4 @@
+import { currentMonth } from '@/lib/utils';
 import {
   createExpense,
   deleteExpense,
@@ -18,7 +19,9 @@ export function useExpenses() {
       queryClient.invalidateQueries({ queryKey: ['user-expenses'] });
       queryClient.invalidateQueries({ queryKey: ['expense-calculation'] });
       queryClient.invalidateQueries({ queryKey: ['dashboard'] });
-      queryClient.invalidateQueries({ queryKey: ['dashboard-calc'] });
+      queryClient.invalidateQueries({
+        queryKey: ['dashboard', `?month=${currentMonth}`],
+      });
     },
   });
 
@@ -29,7 +32,9 @@ export function useExpenses() {
       queryClient.invalidateQueries({ queryKey: ['user-expenses'] });
       queryClient.invalidateQueries({ queryKey: ['expense-calculation'] });
       queryClient.invalidateQueries({ queryKey: ['dashboard'] });
-      queryClient.invalidateQueries({ queryKey: ['dashboard-calc'] });
+      queryClient.invalidateQueries({
+        queryKey: ['dashboard', `?month=${currentMonth}`],
+      });
     },
   });
 
@@ -40,7 +45,9 @@ export function useExpenses() {
       queryClient.invalidateQueries({ queryKey: ['user-expenses'] });
       queryClient.invalidateQueries({ queryKey: ['expense-calculation'] });
       queryClient.invalidateQueries({ queryKey: ['dashboard'] });
-      queryClient.invalidateQueries({ queryKey: ['dashboard-calc'] });
+      queryClient.invalidateQueries({
+        queryKey: ['dashboard', `?month=${currentMonth}`],
+      });
     },
   });
 

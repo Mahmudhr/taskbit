@@ -22,6 +22,7 @@ import {
   useQuery,
   useQueryClient,
 } from '@tanstack/react-query';
+import { currentMonth } from '@/lib/utils';
 
 export function usePayment(options?: string) {
   const queryClient = useQueryClient();
@@ -55,7 +56,9 @@ export function usePayment(options?: string) {
       queryClient.invalidateQueries({ queryKey: ['dashboard'] });
       queryClient.invalidateQueries({ queryKey: ['tasks'] });
       queryClient.invalidateQueries({ queryKey: ['payments-calculation'] });
-      queryClient.invalidateQueries({ queryKey: ['dashboard-calc'] });
+      queryClient.invalidateQueries({
+        queryKey: ['dashboard', `?month=${currentMonth}`],
+      });
     },
   });
 
@@ -95,7 +98,9 @@ export function usePayment(options?: string) {
       queryClient.invalidateQueries({ queryKey: ['dashboard'] });
       queryClient.invalidateQueries({ queryKey: ['payments-calculation'] });
       queryClient.invalidateQueries({ queryKey: ['tasks'] });
-      queryClient.invalidateQueries({ queryKey: ['dashboard-calc'] });
+      queryClient.invalidateQueries({
+        queryKey: ['dashboard', `?month=${currentMonth}`],
+      });
     },
   });
 
@@ -104,9 +109,11 @@ export function usePayment(options?: string) {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['payments'] });
       queryClient.invalidateQueries({ queryKey: ['dashboard'] });
-      queryClient.invalidateQueries({ queryKey: ['dashboard-calc'] });
       queryClient.invalidateQueries({ queryKey: ['payments-calculation'] });
       queryClient.invalidateQueries({ queryKey: ['tasks'] });
+      queryClient.invalidateQueries({
+        queryKey: ['dashboard', `?month=${currentMonth}`],
+      });
     },
   });
 
@@ -123,7 +130,9 @@ export function usePayment(options?: string) {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['payments'] });
       queryClient.invalidateQueries({ queryKey: ['dashboard'] });
-      queryClient.invalidateQueries({ queryKey: ['dashboard-calc'] });
+      queryClient.invalidateQueries({
+        queryKey: ['dashboard', `?month=${currentMonth}`],
+      });
       queryClient.invalidateQueries({ queryKey: ['payments-calculation'] });
       queryClient.invalidateQueries({ queryKey: ['tasks'] });
     },

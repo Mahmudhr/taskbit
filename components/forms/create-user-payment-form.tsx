@@ -111,7 +111,7 @@ export default function CreateSalaryForm({
       amount: salary || 0, // ✅ Set default amount to salary if available
       month: new Date().getMonth() + 1,
       year: new Date().getFullYear(),
-      status: 'PENDING',
+      status: 'PAID',
       salaryType: 'MONTHLY',
       referenceNumber: '',
       note: '',
@@ -334,7 +334,11 @@ export default function CreateSalaryForm({
           render={({ field }) => (
             <FormItem>
               <FormLabel>Status</FormLabel>
-              <Select onValueChange={field.onChange} defaultValue={field.value}>
+              <Select
+                onValueChange={field.onChange}
+                defaultValue={field.value}
+                disabled
+              >
                 <FormControl>
                   <SelectTrigger>
                     <SelectValue placeholder='Select status' />
