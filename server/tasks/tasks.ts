@@ -414,7 +414,7 @@ export async function updateUserTaskDelivery(
   id: number,
   data: UpdateUserTaskDeliveryType
 ) {
-  const { note, link, status } = data;
+  const { note, link, status, assignedUserIds } = data;
   try {
     const payload: {
       note?: string | null;
@@ -427,13 +427,112 @@ export async function updateUserTaskDelivery(
       status,
       updatedAt: new Date(),
     };
+    await prisma.$transaction(async (tx) => {
+      // Update the task
+      const updatedTask = await tx.task.update({
+        where: { id },
+        data: payload,
+      });
 
-    await prisma.task.update({
-      where: { id },
-      data: payload,
+      if (assignedUserIds !== undefined && Array.isArray(assignedUserIds)) {
+        const currentAssignments = await tx.taskAssignment.findMany({
+          where: { taskId: id, status: 'ACTIVE' },
+          select: { userId: true },
+        });
+
+        const currentUserIds = currentAssignments.map((a) => a.userId);
+        const newUserIds = assignedUserIds.map((userId) => +userId);
+
+        const usersToRemove = currentUserIds.filter(
+          (userId) => !newUserIds.includes(userId)
+        );
+
+        const usersToAdd = newUserIds.filter(
+          (userId) => !currentUserIds.includes(userId)
+        );
+
+        if (usersToRemove.length > 0) {
+          await tx.taskAssignment.updateMany({
+            where: {
+              taskId: id,
+              userId: { in: usersToRemove },
+              status: 'ACTIVE',
+            },
+            data: { status: 'REMOVED' },
+          });
+        }
+
+        if (usersToAdd.length > 0) {
+          const existingUsers = await tx.user.findMany({
+            where: {
+              id: { in: usersToAdd },
+              isDeleted: false,
+              status: 'ACTIVE',
+            },
+            select: { id: true },
+          });
+
+          if (existingUsers.length !== usersToAdd.length) {
+            const foundIds = existingUsers.map((u) => u.id);
+            const missingIds = usersToAdd.filter(
+              (id) => !foundIds.includes(id)
+            );
+            throw new Error(
+              `Users not found or inactive: ${missingIds.join(', ')}`
+            );
+          }
+
+          const existingAssignments = await tx.taskAssignment.findMany({
+            where: {
+              taskId: id,
+              userId: { in: usersToAdd },
+            },
+            select: { userId: true, status: true },
+          });
+
+          const existingAssignmentUserIds = existingAssignments.map(
+            (a) => a.userId
+          );
+          const removedAssignments = existingAssignments.filter(
+            (a) => a.status === 'REMOVED'
+          );
+          const removedUserIds = removedAssignments.map((a) => a.userId);
+
+          if (removedUserIds.length > 0) {
+            await tx.taskAssignment.updateMany({
+              where: {
+                taskId: id,
+                userId: { in: removedUserIds },
+                status: 'REMOVED',
+              },
+              data: { status: 'ACTIVE' },
+            });
+          }
+
+          const completelyNewUsers = usersToAdd.filter(
+            (userId) => !existingAssignmentUserIds.includes(userId)
+          );
+
+          if (completelyNewUsers.length > 0) {
+            const newTaskAssignments = completelyNewUsers.map((userId) => ({
+              taskId: id,
+              userId: userId,
+              status: 'ACTIVE' as const,
+            }));
+
+            await tx.taskAssignment.createMany({
+              data: newTaskAssignments,
+            });
+          }
+        }
+      }
+
+      return updatedTask;
     });
+
     return {
-      message: 'Task Delivery Updated Successfully',
+      success: true,
+      message: 'Task Updated Successfully',
     };
   } catch (error) {
     throw error;

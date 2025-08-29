@@ -19,4 +19,5 @@ export type UpdateUserTaskDeliveryType = {
   note?: string | null;
   link?: string | null;
   status: $Enums.TaskStatus;
+  assignedUserIds?: number[];
 };

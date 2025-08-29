@@ -245,6 +245,36 @@ export const searchUsers = async (query: string) => {
     throw new Error('Failed to search users');
   }
 };
+export const searchMember = async (query: string) => {
+  if (!query || query.trim() === '') return [];
+  try {
+    const users = await prisma.user.findMany({
+      where: {
+        OR: [
+          { name: { contains: query, mode: 'insensitive' } },
+          { email: { contains: query, mode: 'insensitive' } },
+        ],
+        status: 'ACTIVE',
+        isDeleted: false,
+        role: 'EMPLOYEE',
+      },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        phone: true,
+        role: true,
+        status: true,
+        createdAt: true,
+        updatedAt: true,
+      },
+      take: 10,
+    });
+    return users;
+  } catch {
+    throw new Error('Failed to search users');
+  }
+};
 
 /**
  * Fetch a single user by ID with all profile information

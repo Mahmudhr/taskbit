@@ -96,6 +96,12 @@ export type UserTaskType = {
   assignedToId?: number | null;
   duration: Date | null;
   paper_type: $Enums.PaperType;
+  assignedUsers:
+    | {
+        id: number;
+        name: string;
+        email: string;
+      }[];
 };
 
 export type PaymentTypes = {

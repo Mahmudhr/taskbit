@@ -265,7 +265,7 @@ export default function MyTasksPage() {
                   tasks?.data?.map((task: UserTaskType, index: number) => (
                     <TableRow key={task.id}>
                       <TableCell>{index + 1}</TableCell>
-                      <TableCell className='font-medium'>
+                      <TableCell className='font-medium max-w-sm break-words'>
                         {task.title}
                       </TableCell>
                       <TableCell>
