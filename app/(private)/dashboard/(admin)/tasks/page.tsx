@@ -763,6 +763,7 @@ export default function TasksPage() {
       ...prevParams,
       search: value,
       page: '1',
+      status: '',
     }));
   }, 500);
 
