@@ -3,6 +3,8 @@
 import {
   createEmployeeOfTheMonth,
   fetchAllEmployeesOfTheMonth,
+  fetchEmployeeOfTheMonthByEmail,
+  updateEmployeeOfTheMonthView,
 } from '@/server/employee-of-the-month/employee-of-the-month';
 import { CreateEmployeeOfTheMonthType } from '@/server/types/employee-of-the-month-type';
 import { EmployeeOfTheMonthType, Meta, Response } from '@/types/common';
@@ -36,10 +38,55 @@ export default function useEmployeeOfTheMonth(option?: string) {
     },
   });
 
+  // const getEmployeeOfTheMonthByEmail = useQuery<
+  //   Response<EmployeeOfTheMonthType, Meta>
+  // >({
+  //   queryKey: ['employee-of-the-month', 'by-email', option],
+  //   queryFn: async () => {
+  //     const result = await fetchEmployeeOfTheMonthByEmail(option);
+  //     return result;
+  //   },
+  // });
+
+  const updateEmployeeOfTheMonthViewMutationAsync = useMutation({
+    mutationFn: (email: string) => updateEmployeeOfTheMonthView(email),
+    // onSuccess receives (data, variables)
+    onSuccess: (_data, email) => {
+      if (email) {
+        queryClient.invalidateQueries({
+          queryKey: ['user-employee-of-the-month-by-email', email],
+        });
+      }
+    },
+  });
+
   return {
     createEmployeeOfTheMonthMutationAsync:
       createEmployeeOfTheMonthAsync.mutateAsync,
     getAllEmployeesOfTheMonthData: getAllEmployeesOfTheMonth.data,
     getAllEmployeesOfTheMonth,
+    updateEmployeeOfTheMonthViewMutationAsync:
+      updateEmployeeOfTheMonthViewMutationAsync.mutateAsync,
   };
 }
+
+export function useFetchEmployeeOfTheMonth(email: string) {
+  return useQuery({
+    queryKey: ['user-employee-of-the-month-by-email', email],
+    queryFn: () => fetchEmployeeOfTheMonthByEmail(email),
+    enabled: !!email,
+  });
+}
+
+// export function useUpdateEmployeeOfTheMonthView(email: string) {
+//   const queryClient = useQueryClient();
+
+//   return useMutation({
+//     mutationFn: () => updateEmployeeOfTheMonthView(email),
+//     onSuccess: () => {
+//       queryClient.invalidateQueries({
+//         queryKey: ['user-employee-of-the-month-by-email', email],
+//       });
+//     },
+//   });
+// }

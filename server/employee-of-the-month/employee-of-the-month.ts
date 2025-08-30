@@ -113,3 +113,64 @@ export async function fetchAllEmployeesOfTheMonth(data?: string) {
     throw new Error('Failed to load employees of the month');
   }
 }
+
+export async function fetchEmployeeOfTheMonthByEmail(email: string) {
+  try {
+    const now = new Date();
+    const currentMonth = now.getMonth() + 1; // JS months are 0-based
+    const currentYear = now.getFullYear();
+
+    const result = await prisma.employeeOfMonth.findFirst({
+      where: {
+        user: {
+          email,
+        },
+        month: currentMonth,
+        year: currentYear,
+        is_view: false,
+      },
+      include: {
+        user: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+          },
+        },
+      },
+    });
+
+    // findFirst returns an object or null (not an array)
+    return result;
+  } catch {
+    throw new Error('Failed to load employee of the month');
+  }
+}
+
+export async function updateEmployeeOfTheMonthView(email: string) {
+  try {
+    const now = new Date();
+    const currentMonth = now.getMonth() + 1;
+    const currentYear = now.getFullYear();
+
+    // Update only the record for the given user for the current month/year
+    // and only if it is not already viewed
+    const result = await prisma.employeeOfMonth.updateMany({
+      where: {
+        user: {
+          email,
+        },
+        month: currentMonth,
+        year: currentYear,
+        is_view: false,
+      },
+      data: {
+        is_view: true,
+      },
+    });
+
+    return result;
+  } catch {
+    throw new Error('Failed to update employee of the month view');
+  }
+}

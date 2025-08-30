@@ -17,6 +17,7 @@ interface ModalProps {
   description: string;
   title: string;
   reset?: () => void;
+  hideClose?: boolean;
 }
 
 export default function AlertModal({
@@ -26,6 +27,7 @@ export default function AlertModal({
   description,
   title,
   reset,
+  hideClose,
 }: ModalProps) {
   const onOpenChange = () => {
     setIsOpen(false);
@@ -47,21 +49,23 @@ export default function AlertModal({
             }}
           >
             <AlertDialogTitle>{title}</AlertDialogTitle>
-            <button
-              onClick={handleClose}
-              aria-label='Close'
-              style={{
-                background: 'none',
-                border: 'none',
-                fontSize: '1.25rem',
-                cursor: 'pointer',
-                lineHeight: 1,
-                padding: 0,
-                marginLeft: '1rem',
-              }}
-            >
-              ×
-            </button>
+            {!hideClose && (
+              <button
+                onClick={handleClose}
+                aria-label='Close'
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  fontSize: '1.25rem',
+                  cursor: 'pointer',
+                  lineHeight: 1,
+                  padding: 0,
+                  marginLeft: '1rem',
+                }}
+              >
+                ×
+              </button>
+            )}
           </div>
           <AlertDialogDescription>{description}</AlertDialogDescription>
           <div className='max-h-[80vh] overflow-y-auto px-1'>{children}</div>

@@ -10,6 +10,7 @@ import {
 } from '@/components/ui/sidebar';
 import { Separator } from '@/components/ui/separator';
 import { ThemeToggle } from '@/components/theme-toggle';
+import HeaderGiftBox from '@/components/header-gift-box';
 
 export default function DashboardLayout({
   children,
@@ -25,7 +26,10 @@ export default function DashboardLayout({
           <Separator orientation='vertical' className='mr-2 h-4' />
           <h1 className='text-lg font-semibold'>Taskbit</h1>
           <div className='ml-auto'>
-            <ThemeToggle />
+            <div className='flex items-center gap-2'>
+              <HeaderGiftBox />
+              <ThemeToggle />
+            </div>
           </div>
         </header>
         <div className='flex flex-1 flex-col gap-4 p-4 bg-sidebar'>
