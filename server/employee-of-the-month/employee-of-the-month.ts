@@ -72,7 +72,7 @@ export async function fetchAllEmployeesOfTheMonth(data?: string) {
       ],
     });
   }
-  console.log({ search });
+
   if (month && parseInt(month) >= 1 && parseInt(month) <= 12) {
     whereConditions.push({
       month: parseInt(month),

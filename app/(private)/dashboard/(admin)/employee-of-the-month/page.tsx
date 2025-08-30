@@ -25,6 +25,8 @@ import {
 } from 'lucide-react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
+import EmployeeOfMonthCard from '@/components/employee-of-month-card';
+import EmployeeOfMonthCardSkeleton from '@/components/skeletons/employee-of-month-card-skeleton';
 import { useDebouncedCallback } from 'use-debounce';
 
 export default function EmployeeOfTheMonthPage() {
@@ -75,8 +77,6 @@ export default function EmployeeOfTheMonthPage() {
       date: '',
     });
   };
-
-  console.log({ getAllEmployeesOfTheMonth: getAllEmployeesOfTheMonth.data });
 
   return (
     <div className='space-y-3 md:space-y-6 p-2 md:p-6'>
@@ -258,52 +258,82 @@ export default function EmployeeOfTheMonthPage() {
         </CardContent>
       </Card>
       <div>
-        {getAllEmployeesOfTheMonthData &&
-          getAllEmployeesOfTheMonthData?.meta.count > 0 && (
-            <div className='flex md:flex-row flex-col items-center md:justify-between justify-center gap-3 py-4'>
-              <div className='text-sm text-muted-foreground'>
-                {getAllEmployeesOfTheMonthData &&
-                  ` Showing ${params.page} to ${
-                    getAllEmployeesOfTheMonthData.meta.page *
-                    getAllEmployeesOfTheMonthData.data.length
-                  } of ${getAllEmployeesOfTheMonthData.meta.count} results`}
-              </div>
-              <div className='flex items-center space-x-2'>
-                <Button
-                  variant='outline'
-                  size='sm'
-                  onClick={() =>
-                    setParams((prev) => ({
-                      ...prev,
-                      page: (+params.page - 1).toString(),
-                    }))
-                  }
-                  disabled={+params.page === 1}
-                >
-                  <ChevronLeft className='h-4 w-4' />
-                  Previous
-                </Button>
-                <Button
-                  variant='outline'
-                  size='sm'
-                  onClick={() =>
-                    setParams((prev) => ({
-                      ...prev,
-                      page: (+params.page + 1).toString(),
-                    }))
-                  }
-                  disabled={
-                    +params.page ===
-                    (getAllEmployeesOfTheMonthData &&
-                      getAllEmployeesOfTheMonthData.meta.totalPages)
-                  }
-                >
-                  Next
-                  <ChevronRight className='h-4 w-4' />
-                </Button>
-              </div>
-            </div>
+        {/* Results / List */}
+        <div className='grid grid-cols-1 gap-4'>
+          {getAllEmployeesOfTheMonth.isLoading && (
+            <>
+              <EmployeeOfMonthCardSkeleton />
+              <EmployeeOfMonthCardSkeleton />
+              <EmployeeOfMonthCardSkeleton />
+            </>
           )}
+
+          {!getAllEmployeesOfTheMonth.isLoading &&
+            getAllEmployeesOfTheMonthData &&
+            getAllEmployeesOfTheMonthData.data.length > 0 && (
+              <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-4'>
+                {getAllEmployeesOfTheMonthData.data.map((employee) => (
+                  <EmployeeOfMonthCard key={employee.id} employee={employee} />
+                ))}
+              </div>
+            )}
+
+          {!getAllEmployeesOfTheMonth.isLoading &&
+            getAllEmployeesOfTheMonthData &&
+            getAllEmployeesOfTheMonthData.data.length === 0 && (
+              <div className='py-12 text-center text-muted-foreground'>
+                No employees of the month found.
+              </div>
+            )}
+
+          {/* Pagination */}
+          {getAllEmployeesOfTheMonthData &&
+            getAllEmployeesOfTheMonthData?.meta.count > 0 && (
+              <div className='flex md:flex-row flex-col items-center md:justify-between justify-center gap-3 py-4'>
+                <div className='text-sm text-muted-foreground'>
+                  {getAllEmployeesOfTheMonthData &&
+                    ` Showing ${params.page} to ${
+                      getAllEmployeesOfTheMonthData.meta.page *
+                      getAllEmployeesOfTheMonthData.data.length
+                    } of ${getAllEmployeesOfTheMonthData.meta.count} results`}
+                </div>
+                <div className='flex items-center space-x-2'>
+                  <Button
+                    variant='outline'
+                    size='sm'
+                    onClick={() =>
+                      setParams((prev) => ({
+                        ...prev,
+                        page: (+params.page - 1).toString(),
+                      }))
+                    }
+                    disabled={+params.page === 1}
+                  >
+                    <ChevronLeft className='h-4 w-4' />
+                    Previous
+                  </Button>
+                  <Button
+                    variant='outline'
+                    size='sm'
+                    onClick={() =>
+                      setParams((prev) => ({
+                        ...prev,
+                        page: (+params.page + 1).toString(),
+                      }))
+                    }
+                    disabled={
+                      +params.page ===
+                      (getAllEmployeesOfTheMonthData &&
+                        getAllEmployeesOfTheMonthData.meta.totalPages)
+                    }
+                  >
+                    Next
+                    <ChevronRight className='h-4 w-4' />
+                  </Button>
+                </div>
+              </div>
+            )}
+        </div>
       </div>
       <AlertModal
         isOpen={openCreateEmployeeOfTheMonth}

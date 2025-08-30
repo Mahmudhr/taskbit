@@ -92,41 +92,6 @@ export default function CreateEmployeeOfTheMonthForm({
   }));
 
   const onSubmit = async (data: z.infer<typeof FormSchema>) => {
-    console.log({ data });
-    // const payload: {
-    //   year: number;
-    //   month: number;
-    //   description?: string | null;
-    //   is_view: boolean;
-    //   userId?: number | undefined;
-    // } = {
-    //   year: Number(values.year),
-    //   month: Number(values.month),
-    //   description: values.description || null,
-    //   is_view: false,
-    //   assignedToId: values.assignedToId,
-    // };
-    // startTransition(async () => {
-    //   try {
-    //     const res = await fetch('/api/employee-of-month', {
-    //       method: 'POST',
-    //       headers: { 'Content-Type': 'application/json' },
-    //       body: JSON.stringify(payload),
-    //     });
-    //     const body = await res.json();
-    //     if (body?.success) {
-    //       toast.success('Employee of the month created');
-    //       setIsOpen(false);
-    //     } else {
-    //       toast.error(body?.message || 'Failed to create record');
-    //     }
-    //   } catch (err) {
-    //     const message =
-    //       err instanceof Error ? err.message : 'Failed to create record';
-    //     toast.error(message);
-    //   }
-    // });
-
     startTransition(() => {
       toast.promise(createEmployeeOfTheMonthMutationAsync(data), {
         loading: 'Creating Employee of the Month...',
@@ -139,30 +104,9 @@ export default function CreateEmployeeOfTheMonthForm({
     });
   };
 
-  //   console.log({ options });
-
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className='space-y-4'>
-        {/* user search & select */}
-
-        {/* <div>
-          <ReactAsyncSelect<SearchUserOption>
-            name='user'
-            label='Select User (optional)'
-            loadOptions={handleSearch}
-            value={null}
-            //   onInputChange={handleSearch}
-            onChange={(opt) => {
-              if (opt) {
-                addUser(opt);
-              }
-            }}
-            isClearable
-            placeholder='Search users by name or email'
-          />
-        </div> */}
-
         <FormField
           control={form.control}
           name='assignedToId'
