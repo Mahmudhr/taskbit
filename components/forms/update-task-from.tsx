@@ -328,7 +328,23 @@ export default function UpdateTaskForm({
             </FormItem>
           )}
         />
-
+        <FormField
+          control={form.control}
+          name='link'
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Link</FormLabel>
+              <FormControl>
+                <Input
+                  className='w-full'
+                  placeholder={'Enter task delivery link (optional)'}
+                  {...field}
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
         <FormField
           control={form.control}
           name='amount'

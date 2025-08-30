@@ -12,6 +12,7 @@ export type CreateTaskType = {
   startDate?: Date | null;
   assignedUserIds?: number[];
   targetDate?: Date | null;
+  link?: string;
 };
 
 export type UpdateUserTaskDeliveryType = {
