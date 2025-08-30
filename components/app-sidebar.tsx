@@ -64,6 +64,11 @@ const adminMenuItems = [
     url: '/dashboard/clients',
     icon: Users,
   },
+  {
+    title: 'Employee of the month',
+    url: '/dashboard/employee-of-the-month',
+    icon: Users,
+  },
 ];
 
 const userMenuItems = [

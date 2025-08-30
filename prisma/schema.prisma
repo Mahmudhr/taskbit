@@ -28,6 +28,8 @@ model User {
   
   // Many-to-many relationship with tasks through TaskAssignment
   taskAssignments TaskAssignment[] @relation("UserTaskAssignments")
+  // Employee of the Month relation (records where user was selected)
+  employeeOfMonths EmployeeOfMonth[]
   
   createdTasks    Task[]    @relation("CreatedTasks")
   payments        Payment[] @relation("UserPayments")
@@ -215,4 +217,23 @@ enum ClientStatus {
 enum TaskAssignmentStatus {
   ACTIVE
   REMOVED
+}
+
+// Employee of the Month records
+model EmployeeOfMonth {
+  id          Int      @id @default(autoincrement())
+  userId      Int?     @map("user_id")
+  year        Int
+  month       Int
+  is_view     Boolean  @default(false)
+  description String?  
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  // user can be empty (not selected yet)
+  user User? @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // ensure only one employee is selected per year+month
+  @@unique([year, month])
+  @@map("employee_of_months")
 }

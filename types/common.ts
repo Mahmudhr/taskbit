@@ -235,3 +235,19 @@ export type DashboardAllCalcType = {
   totalPrice: number;
   netIncome: number;
 };
+
+export type EmployeeOfTheMonthType = {
+  id: number;
+  description: string | null;
+  is_view: boolean;
+  month: number;
+  year: number;
+  createdAt: Date | string;
+  updatedAt: Date | string;
+  userId: number | null;
+  user: {
+    id: number;
+    name: string;
+    email: string;
+  } | null;
+};
