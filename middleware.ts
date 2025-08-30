@@ -15,6 +15,7 @@ const ADMIN_PATHS = [
   '/dashboard/users',
   '/dashboard/clients',
   '/dashboard/dashboard',
+  '/dashboard/employee-of-the-month',
 ];
 
 export default withAuth(

@@ -18,6 +18,8 @@ interface ModalProps {
   title: string;
   reset?: () => void;
   hideClose?: boolean;
+  overlayClassName?: string;
+  contentClassName?: string;
 }
 
 export default function AlertModal({
@@ -28,6 +30,8 @@ export default function AlertModal({
   title,
   reset,
   hideClose,
+  overlayClassName,
+  contentClassName,
 }: ModalProps) {
   const onOpenChange = () => {
     setIsOpen(false);
@@ -39,7 +43,10 @@ export default function AlertModal({
   };
   return (
     <AlertDialog open={isOpen} onOpenChange={onOpenChange}>
-      <AlertDialogContent>
+      <AlertDialogContent
+        overlayClassName={overlayClassName}
+        className={contentClassName}
+      >
         <AlertDialogHeader>
           <div
             style={{
