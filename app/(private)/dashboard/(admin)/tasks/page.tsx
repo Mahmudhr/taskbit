@@ -25,6 +25,7 @@ import {
   AlertCircle,
   CheckCircle,
   Users,
+  FileSpreadsheet,
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import AlertModal from '@/components/alert-modal';
@@ -60,6 +61,7 @@ import TaskFilter from '@/components/filters/task-filter';
 import { Skeleton } from '@/components/ui/skeleton';
 import TaskAssignee from '@/components/task-assignee';
 import CreateReceivablePaymentForm from '@/components/forms/create-recievale-payment-form';
+import ExportTaskForm from '@/components/forms/export-task-form';
 
 const statusTabs = [
   { label: 'All', value: '' },
@@ -713,6 +715,7 @@ export default function TasksPage() {
   const [viewTask, setViewTask] = useState<TaskType | null>(null);
   const [viewTaskModal, setViewTaskModal] = useState(false);
   const [openSalaryFilter, setOpenSalaryFilter] = useState(false);
+  const [openExport, setOpenExport] = useState(false);
   const [createReceivablePaymentOpen, setCreateReceivablePaymentOpen] =
     useState(false);
 
@@ -1044,6 +1047,13 @@ export default function TasksPage() {
             >
               <ListFilter className='mr-2 h-4 w-4' />
               Filter
+            </Button>
+            <Button
+              onClick={() => setOpenExport(true)}
+              className='w-full sm:w-auto'
+            >
+              <FileSpreadsheet className='mr-2 h-4 w-4' />
+              Export
             </Button>
           </div>
           <div className='flex flex-wrap gap-2'>
@@ -1437,6 +1447,14 @@ export default function TasksPage() {
           params={params}
           setOpenTaskFilter={setOpenSalaryFilter}
         />
+      </Modal>
+      <Modal
+        isOpen={openExport}
+        setIsOpen={setOpenExport}
+        title='Export Tasks'
+        description=' '
+      >
+        <ExportTaskForm setIsOpen={setOpenSalaryFilter} />
       </Modal>
     </div>
   );
