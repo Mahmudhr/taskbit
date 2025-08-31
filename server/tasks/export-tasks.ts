@@ -2,13 +2,14 @@
 
 import { prisma } from '@/prisma/db';
 import ExcelJS from 'exceljs';
-import { paperTypeConvert, taskStatusConvert } from '@/lib/utils';
+import { paperTypeConvert } from '@/lib/utils';
 
 type ExportTasksParams = {
   startDate?: Date;
   endDate?: Date;
   month?: number;
   year?: number;
+  clientId?: string;
 };
 
 export async function exportTasksToXLSX({
@@ -16,69 +17,46 @@ export async function exportTasksToXLSX({
   endDate,
   month,
   year,
+  clientId,
 }: ExportTasksParams) {
   try {
-    // Build date filter condition based on duration (delivery date)
-    let dateFilter = {};
+    // Build filter conditions
+    const filters: Record<string, unknown> = {
+      isDeleted: false, // Only include non-deleted tasks
+    };
+
+    // Add client filter if provided
+    if (clientId) {
+      filters.clientId = clientId;
+    }
+
+    // Add date filter condition based on duration (delivery date)
     if (startDate && endDate) {
-      dateFilter = {
-        duration: {
-          gte: startDate,
-          lte: endDate,
-        },
+      filters.duration = {
+        gte: startDate,
+        lte: endDate,
       };
     } else if (month && year) {
       const firstDayOfMonth = new Date(year, month - 1, 1);
       const lastDayOfMonth = new Date(year, month, 0);
-      dateFilter = {
-        duration: {
-          gte: firstDayOfMonth,
-          lte: lastDayOfMonth,
-        },
+      filters.duration = {
+        gte: firstDayOfMonth,
+        lte: lastDayOfMonth,
       };
     }
 
     // Fetch tasks with related data
     const tasks = await prisma.task.findMany({
-      where: {
-        ...dateFilter,
-        isDeleted: false, // Only include non-deleted tasks
-      },
+      where: filters,
       select: {
         id: true,
         title: true,
-        description: true,
-        status: true,
-        link: true,
-        note: true,
-        amount: true,
-        startDate: true,
         duration: true,
         paper_type: true,
-        taskAssignments: {
-          where: {
-            status: 'ACTIVE',
-          },
-          select: {
-            user: {
-              select: {
-                name: true,
-                email: true,
-              },
-            },
-          },
-        },
+
         client: {
           select: {
             name: true,
-          },
-        },
-        payments: {
-          where: {
-            status: 'COMPLETED',
-          },
-          select: {
-            amount: true,
           },
         },
       },
@@ -93,39 +71,14 @@ export async function exportTasksToXLSX({
 
     // Set column widths
     worksheet.columns = [
-      { width: 8 }, // Serial
-      { width: 30 }, // Title
-      { width: 40 }, // Description
-      { width: 15 }, // Status
-      { width: 30 }, // Link
-      { width: 30 }, // Note
-      { width: 12 }, // Total Amount
-      { width: 12 }, // Paid Amount
-      { width: 12 }, // Due Amount
-      { width: 15 }, // Assign Date
+      { width: 60 }, // Title
       { width: 15 }, // Delivery Date
       { width: 15 }, // Paper Type
-      { width: 40 }, // Assigned Users
       { width: 30 }, // Client
     ];
 
     // Add headers
-    const headers = [
-      'Serial',
-      'Title',
-      'Description',
-      'Status',
-      'Link',
-      'Note',
-      'Total Amount',
-      'Paid Amount',
-      'Due Amount',
-      'Assign Date',
-      'Delivery Date',
-      'Paper Type',
-      'Assigned Users',
-      'Client',
-    ];
+    const headers = ['Title', 'Delivery Date', 'Paper Type', 'Client'];
     worksheet.addRow(headers);
 
     // Style header row
@@ -138,20 +91,20 @@ export async function exportTasksToXLSX({
     };
 
     // Add data rows
-    tasks.forEach((task, index) => {
-      const assignedUsersStr = task.taskAssignments
-        .map(
-          (assignment) => `${assignment.user.name} (${assignment.user.email})`
-        )
-        .join(', ');
+    tasks.forEach((task) => {
+      // const assignedUsersStr = task.taskAssignments
+      //   .map(
+      //     (assignment) => `${assignment.user.name} (${assignment.user.email})`
+      //   )
+      //   .join(', ');
 
-      const startDate = task.startDate
-        ? new Date(task.startDate).toLocaleDateString('en-GB', {
-            day: '2-digit',
-            month: '2-digit',
-            year: 'numeric',
-          })
-        : '';
+      // const startDate = task.startDate
+      //   ? new Date(task.startDate).toLocaleDateString('en-GB', {
+      //       day: '2-digit',
+      //       month: '2-digit',
+      //       year: 'numeric',
+      //     })
+      //   : '';
       const endDate = task.duration
         ? new Date(task.duration).toLocaleDateString('en-GB', {
             day: '2-digit',
@@ -160,28 +113,18 @@ export async function exportTasksToXLSX({
           })
         : '';
 
-      const totalAmount = task.amount ? Number(task.amount) : 0;
-      const paidAmount = task.payments.reduce(
-        (sum, payment) => sum + (payment.amount || 0),
-        0
-      );
-      const dueAmount = totalAmount - paidAmount;
+      // const totalAmount = task.amount ? Number(task.amount) : 0;
+      // const paidAmount = task.payments.reduce(
+      //   (sum, payment) => sum + (payment.amount || 0),
+      //   0
+      // );
+      // const dueAmount = totalAmount - paidAmount;
 
       worksheet.addRow([
-        index + 1,
         task.title || '',
-        task.description || '',
-        taskStatusConvert[task.status as keyof typeof taskStatusConvert] || '',
-        task.link || '',
-        task.note || '',
-        totalAmount.toFixed(2),
-        paidAmount.toFixed(2),
-        dueAmount.toFixed(2),
-        startDate,
         endDate,
         paperTypeConvert[task.paper_type as keyof typeof paperTypeConvert] ||
           '',
-        assignedUsersStr,
         task.client?.name || 'N/A',
       ]);
     });
@@ -210,7 +153,7 @@ export async function exportTasksToXLSX({
         horizontal:
           columnIndex >= 6 && columnIndex <= 8
             ? ('right' as const)
-            : ('left' as const), // Financial columns are right-aligned
+            : ('left' as const),
       };
 
       // Apply the alignment to all cells in the column

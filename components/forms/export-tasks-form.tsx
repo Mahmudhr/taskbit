@@ -19,6 +19,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { SearchClientOption, useClient } from '@/hooks/use-client';
+import ReactAsyncSelect from '../react-async-select';
+import { Card } from '../ui/card';
 
 export default function ExportTasksForm() {
   const [isLoading, setIsLoading] = useState(false);
@@ -29,6 +32,10 @@ export default function ExportTasksForm() {
   const [endDate, setEndDate] = useState<Date>();
   const [month, setMonth] = useState<string>();
   const [year, setYear] = useState<string>();
+  const [selectedClient, setSelectedClient] =
+    useState<SearchClientOption | null>(null);
+
+  const { searchClients } = useClient();
 
   const currentYear = new Date().getFullYear();
   const years = Array.from({ length: 5 }, (_, i) =>
@@ -55,6 +62,8 @@ export default function ExportTasksForm() {
       setIsLoading(true);
 
       let params = {};
+
+      // Add date/month-year parameters
       if (exportType === 'date-range' && startDate && endDate) {
         params = { startDate, endDate };
       } else if (exportType === 'month-year' && month && year) {
@@ -62,6 +71,11 @@ export default function ExportTasksForm() {
       } else {
         alert('Please select all required fields');
         return;
+      }
+
+      // Add client ID if a client is selected
+      if (selectedClient) {
+        params = { ...params, clientId: selectedClient.value };
       }
 
       const buffer = await exportTasksToXLSX(params);
@@ -98,6 +112,31 @@ export default function ExportTasksForm() {
       </div>
 
       <div className='space-y-4'>
+        <ReactAsyncSelect<SearchClientOption>
+          label='Client'
+          name='clientId'
+          loadOptions={async (inputValue: string) => {
+            const options = await searchClients(inputValue);
+            return options;
+          }}
+          onChange={(option) => {
+            setSelectedClient(option);
+          }}
+          isClearable
+          placeholder='Search client by name or email...'
+        />
+
+        {selectedClient && (
+          <Card className='mt-4 p-4 break-words whitespace-pre-line w-full'>
+            <div className='font-semibold break-words whitespace-pre-line text-left'>
+              {selectedClient.user.name}
+            </div>
+            <div className='text-xs text-muted-foreground break-all text-left'>
+              {selectedClient.user.email}
+            </div>
+          </Card>
+        )}
+
         <Select
           value={exportType}
           onValueChange={(value: 'date-range' | 'month-year') =>
