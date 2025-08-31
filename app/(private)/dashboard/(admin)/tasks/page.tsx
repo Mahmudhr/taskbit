@@ -61,7 +61,7 @@ import TaskFilter from '@/components/filters/task-filter';
 import { Skeleton } from '@/components/ui/skeleton';
 import TaskAssignee from '@/components/task-assignee';
 import CreateReceivablePaymentForm from '@/components/forms/create-recievale-payment-form';
-import ExportTaskForm from '@/components/forms/export-task-form';
+import ExportTasksForm from '@/components/forms/export-tasks-form';
 
 const statusTabs = [
   { label: 'All', value: '' },
@@ -250,7 +250,7 @@ const TaskCard = ({
             </div>
             <div className='flex-1'>
               <p className='text-xs text-muted-foreground dark:text-gray-400'>
-                Start Date
+                Assigned Date
               </p>
               <p className='font-medium text-sm dark:text-gray-200'>
                 {task.startDate
@@ -266,7 +266,7 @@ const TaskCard = ({
             </div>
             <div className='flex-1'>
               <p className='text-xs text-muted-foreground dark:text-gray-400'>
-                Due Date
+                Delivery Date
               </p>
               <p className='font-medium text-sm dark:text-gray-200'>
                 {task.duration
@@ -1454,7 +1454,7 @@ export default function TasksPage() {
         title='Export Tasks'
         description=' '
       >
-        <ExportTaskForm setIsOpen={setOpenSalaryFilter} />
+        <ExportTasksForm />
       </Modal>
     </div>
   );
