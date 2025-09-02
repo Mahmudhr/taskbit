@@ -79,36 +79,24 @@ export const getAllDashboardData = async (data?: string) => {
     }
   }
 
-  // Salaries: filter by createdAt (month/year)
+  // Salaries: filter by month/year fields
   const salaryWhere: Prisma.SalaryWhereInput = {};
   if (month && year) {
     const monthNum = parseInt(month);
     const yearNum = parseInt(year);
     if (monthNum >= 1 && monthNum <= 12 && yearNum > 0) {
-      salaryWhere.createdAt = buildMonthRange(yearNum, monthNum);
+      salaryWhere.month = monthNum;
+      salaryWhere.year = yearNum;
     }
   } else if (month) {
     const monthNum = parseInt(month);
     if (monthNum >= 1 && monthNum <= 12) {
-      const currentYear = new Date().getFullYear();
-      const years = [
-        currentYear - 2,
-        currentYear - 1,
-        currentYear,
-        currentYear + 1,
-        currentYear + 2,
-      ];
-      salaryWhere.OR = years.map((y) => ({
-        createdAt: buildMonthRange(y, monthNum),
-      }));
+      salaryWhere.month = monthNum;
     }
   } else if (year) {
     const yearNum = parseInt(year);
     if (yearNum > 0) {
-      salaryWhere.createdAt = {
-        gte: new Date(yearNum, 0, 1, 0, 0, 0, 0),
-        lte: new Date(yearNum, 11, 31, 23, 59, 59, 999),
-      };
+      salaryWhere.year = yearNum;
     }
   }
 
