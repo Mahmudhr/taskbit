@@ -75,22 +75,18 @@ const getStatusBadge = (status: string) => {
   );
 };
 
-// ✅ Helper function to check if user has received salary this month
 const checkSalaryStatus = (user: UserType) => {
+  const currentMonthNumber = dayjs().month() + 1;
+  const currentYear = dayjs().year();
+
   if (!user.salary || user.salary === 0) {
-    return { isPaid: true, status: 'no-salary' }; // No salary set
+    return { isPaid: true, status: 'no-salary' };
   }
 
-  const currentDate = new Date();
-  const currentMonth = currentDate.getMonth();
-  const currentYear = currentDate.getFullYear();
-
-  // Check if user has received payment this month
   const hasCurrentMonthPayment = user.salaries?.some((payment) => {
-    const paymentDate = new Date(payment.createdAt);
     return (
-      paymentDate.getMonth() === currentMonth &&
-      paymentDate.getFullYear() === currentYear &&
+      payment.month === currentMonthNumber &&
+      payment.year === currentYear &&
       payment.status === 'PAID'
     );
   });
