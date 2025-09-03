@@ -28,10 +28,13 @@ export default function ExportTasksForm() {
   const [exportType, setExportType] = useState<'date-range' | 'month-year'>(
     'date-range'
   );
+  const [paymentStatus, setPaymentStatus] = useState<'all' | 'paid' | 'due'>(
+    'all'
+  );
   const [startDate, setStartDate] = useState<Date>();
   const [endDate, setEndDate] = useState<Date>();
   const [month, setMonth] = useState<string>();
-  const [year, setYear] = useState<string>();
+
   const [selectedClient, setSelectedClient] =
     useState<SearchClientOption | null>(null);
 
@@ -41,6 +44,8 @@ export default function ExportTasksForm() {
   const years = Array.from({ length: 5 }, (_, i) =>
     (currentYear - 2 + i).toString()
   );
+
+  const [year, setYear] = useState<string>(currentYear.toString());
 
   const months = [
     { value: '1', label: 'January' },
@@ -78,7 +83,12 @@ export default function ExportTasksForm() {
         params = { ...params, clientId: selectedClient.value };
       }
 
-      const buffer = await exportTasksToXLSX(params);
+      const payload = {
+        ...params,
+        paymentStatus,
+      };
+
+      const buffer = await exportTasksToXLSX(payload);
 
       // Create a Blob from the buffer
       const blob = new Blob([buffer], {
@@ -137,20 +147,35 @@ export default function ExportTasksForm() {
           </Card>
         )}
 
-        <Select
-          value={exportType}
-          onValueChange={(value: 'date-range' | 'month-year') =>
-            setExportType(value)
-          }
-        >
-          <SelectTrigger>
-            <SelectValue placeholder='Select export type' />
-          </SelectTrigger>
-          <SelectContent className='z-[999]'>
-            <SelectItem value='date-range'>Date Range</SelectItem>
-            <SelectItem value='month-year'>Month & Year</SelectItem>
-          </SelectContent>
-        </Select>
+        <div className='flex gap-3'>
+          <Select
+            value={exportType}
+            onValueChange={(value: 'date-range' | 'month-year') =>
+              setExportType(value)
+            }
+          >
+            <SelectTrigger>
+              <SelectValue placeholder='Select export type' />
+            </SelectTrigger>
+            <SelectContent className='z-[999]'>
+              <SelectItem value='date-range'>Date Range</SelectItem>
+              <SelectItem value='month-year'>Month & Year</SelectItem>
+            </SelectContent>
+          </Select>
+          <Select
+            value={paymentStatus}
+            onValueChange={(value: 'paid' | 'due') => setPaymentStatus(value)}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder='Select payment status' />
+            </SelectTrigger>
+            <SelectContent className='z-[999]'>
+              <SelectItem value='all'>All</SelectItem>
+              <SelectItem value='paid'>Paid</SelectItem>
+              <SelectItem value='due'>Due</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
 
         {exportType === 'date-range' ? (
           <div className='flex items-center gap-4'>
@@ -215,7 +240,7 @@ export default function ExportTasksForm() {
               </SelectContent>
             </Select>
 
-            <Select value={year} onValueChange={setYear}>
+            <Select value={year} onValueChange={setYear} defaultValue={year}>
               <SelectTrigger className='w-[240px]'>
                 <SelectValue placeholder='Select year' />
               </SelectTrigger>

@@ -10,6 +10,7 @@ type ExportTasksParams = {
   month?: number;
   year?: number;
   clientId?: string;
+  paymentStatus?: 'paid' | 'due' | 'all';
 };
 
 export async function exportTasksToXLSX({
@@ -18,6 +19,7 @@ export async function exportTasksToXLSX({
   month,
   year,
   clientId,
+  paymentStatus,
 }: ExportTasksParams) {
   try {
     // Build filter conditions
@@ -53,7 +55,11 @@ export async function exportTasksToXLSX({
         title: true,
         duration: true,
         paper_type: true,
-
+        amount: true,
+        payments: {
+          where: { status: 'COMPLETED' },
+          select: { amount: true },
+        },
         client: {
           select: {
             name: true,
@@ -71,14 +77,25 @@ export async function exportTasksToXLSX({
 
     // Set column widths
     worksheet.columns = [
-      { width: 60 }, // Title
+      { width: 65 }, // Title
       { width: 15 }, // Delivery Date
       { width: 15 }, // Paper Type
       { width: 30 }, // Client
+      { width: 16 }, // Paper Type
+      { width: 16 }, // Paper Type
+      { width: 16 }, // Paper Type
     ];
 
     // Add headers
-    const headers = ['Title', 'Delivery Date', 'Paper Type', 'Client'];
+    const headers = [
+      'Title',
+      'Delivery Date',
+      'Paper Type',
+      'Client',
+      'Total Amount',
+      'Paid Amount',
+      'Due Amount',
+    ];
     worksheet.addRow(headers);
 
     // Style header row
@@ -90,44 +107,53 @@ export async function exportTasksToXLSX({
       fgColor: { argb: 'E0E6F3' },
     };
 
-    // Add data rows
-    tasks.forEach((task) => {
-      // const assignedUsersStr = task.taskAssignments
-      //   .map(
-      //     (assignment) => `${assignment.user.name} (${assignment.user.email})`
-      //   )
-      //   .join(', ');
-
-      // const startDate = task.startDate
-      //   ? new Date(task.startDate).toLocaleDateString('en-GB', {
-      //       day: '2-digit',
-      //       month: '2-digit',
-      //       year: 'numeric',
-      //     })
-      //   : '';
-      const endDate = task.duration
-        ? new Date(task.duration).toLocaleDateString('en-GB', {
-            day: '2-digit',
-            month: '2-digit',
-            year: 'numeric',
-          })
-        : '';
-
-      // const totalAmount = task.amount ? Number(task.amount) : 0;
-      // const paidAmount = task.payments.reduce(
-      //   (sum, payment) => sum + (payment.amount || 0),
-      //   0
-      // );
-      // const dueAmount = totalAmount - paidAmount;
-
-      worksheet.addRow([
-        task.title || '',
-        endDate,
-        paperTypeConvert[task.paper_type as keyof typeof paperTypeConvert] ||
-          '',
-        task.client?.name || 'N/A',
-      ]);
-    });
+    // Add data rows with paid/due calculation and filtering
+    tasks
+      .map((task) => {
+        const endDate = task.duration
+          ? new Date(task.duration).toLocaleDateString('en-GB', {
+              day: '2-digit',
+              month: '2-digit',
+              year: 'numeric',
+            })
+          : '';
+        const totalAmount = task.amount ? Number(task.amount) : 0;
+        const paidAmount = task.payments.reduce(
+          (sum, payment) => sum + (payment.amount || 0),
+          0
+        );
+        const dueAmount = totalAmount - paidAmount;
+        return {
+          ...task,
+          endDate,
+          totalAmount,
+          paidAmount,
+          dueAmount,
+        };
+      })
+      .filter((task) => {
+        if (paymentStatus === 'paid') return task.dueAmount === 0;
+        if (paymentStatus === 'due') return task.dueAmount > 0;
+        return true;
+      })
+      .forEach((task) => {
+        const totalAmount = task.amount ? Number(task.amount) : 0;
+        const paidAmount = task.payments.reduce(
+          (sum, payment) => sum + (payment.amount || 0),
+          0
+        );
+        const dueAmount = totalAmount - paidAmount;
+        worksheet.addRow([
+          task.title || '',
+          task.endDate,
+          paperTypeConvert[task.paper_type as keyof typeof paperTypeConvert] ||
+            '',
+          task.client?.name || 'N/A',
+          totalAmount.toFixed(2),
+          paidAmount.toFixed(2),
+          dueAmount.toFixed(2),
+        ]);
+      });
 
     // Apply styles to all cells
     worksheet.eachRow((row, rowNumber) => {
