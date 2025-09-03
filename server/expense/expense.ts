@@ -6,15 +6,18 @@ import { Prisma } from '@prisma/client';
 export async function createExpense({
   title,
   amount,
+  createdAt,
 }: {
   title: string;
   amount: number;
+  createdAt: Date;
 }) {
   try {
     const expense = await prisma.expense.create({
       data: {
         title,
         amount,
+        createdAt,
       },
     });
 

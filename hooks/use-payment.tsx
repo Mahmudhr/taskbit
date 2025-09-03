@@ -35,6 +35,7 @@ export function usePayment(options?: string) {
       status,
       userId,
       taskId,
+      createdAt,
     }: CreatePayment) => {
       const result = await createPayment({
         paymentType,
@@ -43,6 +44,7 @@ export function usePayment(options?: string) {
         status,
         userId,
         taskId,
+        createdAt,
       });
 
       if (!result.success) {

@@ -25,6 +25,7 @@ import { toast } from 'sonner';
 import { usePayment } from '@/hooks/use-payment';
 import { useSession } from 'next-auth/react';
 import { Loader2Icon } from 'lucide-react';
+import { formatDateToString } from '@/lib/utils';
 
 const paymentTypes = [
   { label: 'Bank Transfer', value: 'BANK_TRANSFER' },
@@ -50,6 +51,10 @@ const FormSchema = z.object({
     .min(1, { message: 'Amount must be greater than 0' }),
   status: z.enum(['PENDING', 'COMPLETED', 'FAILED'], {
     errorMap: () => ({ message: 'Please select a status' }),
+  }),
+  createdAt: z.date({
+    required_error: 'Date is required',
+    invalid_type_error: 'Date must be a valid date',
   }),
 });
 
@@ -87,6 +92,7 @@ export default function CreatePaymentForm({
       status: data.status,
       userId: session.user.id,
       taskId: taskId,
+      createdAt: data.createdAt || new Date(),
     };
     startTransition(() => {
       toast.promise(createPaymentMutationAsync(payload), {
@@ -191,6 +197,33 @@ export default function CreatePaymentForm({
                   ))}
                 </SelectContent>
               </Select>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name='createdAt'
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Date</FormLabel>
+              <FormControl>
+                <Input
+                  className='w-full'
+                  type='date'
+                  placeholder='Select start date'
+                  value={formatDateToString(field.value)}
+                  onChange={(e) => {
+                    const dateValue = e.target.value
+                      ? new Date(e.target.value)
+                      : null;
+                    field.onChange(dateValue);
+                  }}
+                  onBlur={field.onBlur}
+                  name={field.name}
+                  ref={field.ref}
+                />
+              </FormControl>
               <FormMessage />
             </FormItem>
           )}

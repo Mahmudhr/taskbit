@@ -10,6 +10,7 @@ export async function createPayment({
   status,
   userId,
   taskId,
+  createdAt,
 }: {
   paymentType: PaymentType;
   referenceNumber: string;
@@ -17,6 +18,7 @@ export async function createPayment({
   status: PaymentStatus;
   userId: string;
   taskId: number;
+  createdAt: Date;
 }) {
   try {
     const task = await prisma.task.findUnique({
@@ -74,6 +76,7 @@ export async function createPayment({
           status,
           userId: +userId,
           taskId: +taskId,
+          createdAt,
         },
       });
 

@@ -18,7 +18,7 @@ import { Loader2Icon } from 'lucide-react';
 
 import { toast } from 'sonner';
 import { useExpenses } from '@/hooks/use-expense';
-import { getErrorMessage } from '@/lib/utils';
+import { formatDateToString, getErrorMessage } from '@/lib/utils';
 
 // Zod validation schema - matching your expense model
 const createExpenseSchema = z.object({
@@ -30,6 +30,10 @@ const createExpenseSchema = z.object({
   amount: z.coerce
     .number()
     .min(1, { message: 'Amount must be greater than 0' }),
+  createdAt: z.date({
+    required_error: 'Date is required',
+    invalid_type_error: 'Date must be a valid date',
+  }),
 });
 
 export default function CreateExpenseForm({
@@ -73,6 +77,7 @@ export default function CreateExpenseForm({
     const payload = {
       amount: data.amount,
       title: data.title,
+      createdAt: data.createdAt || new Date(),
     };
 
     startTransition(() => {
@@ -112,7 +117,7 @@ export default function CreateExpenseForm({
           name='amount'
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Reference Number</FormLabel>
+              <FormLabel>Amount</FormLabel>
               <FormControl>
                 <Input
                   className='w-full'
@@ -121,6 +126,34 @@ export default function CreateExpenseForm({
                   min={1}
                   step={0.1}
                   {...field}
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
+          name='createdAt'
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Date</FormLabel>
+              <FormControl>
+                <Input
+                  className='w-full'
+                  type='date'
+                  placeholder='Select start date'
+                  value={formatDateToString(field.value)}
+                  onChange={(e) => {
+                    const dateValue = e.target.value
+                      ? new Date(e.target.value)
+                      : null;
+                    field.onChange(dateValue);
+                  }}
+                  onBlur={field.onBlur}
+                  name={field.name}
+                  ref={field.ref}
                 />
               </FormControl>
               <FormMessage />

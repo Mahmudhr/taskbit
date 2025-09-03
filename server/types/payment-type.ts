@@ -7,4 +7,5 @@ export type CreatePayment = {
   status: $Enums.PaymentStatus;
   userId: string;
   taskId: number;
+  createdAt: Date;
 };
