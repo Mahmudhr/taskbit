@@ -134,78 +134,104 @@ export const getAllDashboardData = async (data?: string) => {
   }
 
   try {
-    // Get all tasks (filtered by duration)
-    const allTasks = await prisma.task.findMany({
-      where: taskWhere,
-      select: {
-        amount: true,
-      },
-    });
+    // Run all queries in parallel
+    const [
+      taskAgg,
+      paymentAgg,
+      expenseAgg,
+      salaryAgg,
+      recentPayments,
+      recentExpenses,
+      recentSalaries,
+    ] = await Promise.all([
+      prisma.task.aggregate({
+        where: taskWhere,
+        _sum: { amount: true },
+        _count: { _all: true },
+      }),
+      prisma.payment.aggregate({
+        where: paymentWhere,
+        _sum: { amount: true },
+        _count: { _all: true },
+      }),
+      prisma.expense.aggregate({
+        where: expenseWhere,
+        _sum: { amount: true },
+        _count: { _all: true },
+      }),
+      prisma.salary.aggregate({
+        where: salaryWhere,
+        _sum: { amount: true },
+        _count: { _all: true },
+      }),
+      prisma.payment.findMany({
+        orderBy: { createdAt: 'desc' },
+        include: {
+          user: { select: { name: true, email: true } },
+          task: { select: { title: true } },
+        },
+        take: 10,
+      }),
+      prisma.expense.findMany({
+        orderBy: { createdAt: 'desc' },
+        take: 10,
+      }),
+      prisma.salary.findMany({
+        orderBy: { createdAt: 'desc' },
+        include: {
+          user: { select: { name: true, email: true } },
+        },
+        take: 10,
+      }),
+    ]);
 
-    // Get all payments
-    const allPayments = await prisma.payment.findMany({
+    // For payment status breakdown, fetch only status fields
+    const paymentStatusCounts = await prisma.payment.groupBy({
+      by: ['status'],
       where: paymentWhere,
-      select: {
-        amount: true,
-        status: true,
-      },
+      _count: { _all: true },
+      _sum: { amount: true },
     });
 
-    // Get all expenses
-    const allExpenses = await prisma.expense.findMany({
-      where: expenseWhere,
-      select: {
-        amount: true,
-      },
-    });
-
-    // Get all salaries
-    const allSalaries = await prisma.salary.findMany({
+    // For salary status breakdown
+    const salaryStatusCounts = await prisma.salary.groupBy({
+      by: ['status'],
       where: salaryWhere,
-      select: {
-        amount: true,
-        status: true,
-      },
+      _count: { _all: true },
+      _sum: { amount: true },
     });
 
     // Calculate payment totals
-    const totalPayments = allPayments.reduce(
-      (total, payment) => total + payment.amount,
-      0
-    );
-    const completedPayments = allPayments
-      .filter((payment) => payment.status === 'COMPLETED')
-      .reduce((total, payment) => total + payment.amount, 0);
-    const pendingPayments = allPayments
-      .filter((payment) => payment.status === 'PENDING')
-      .reduce((total, payment) => total + payment.amount, 0);
-    const failedPayments = allPayments
-      .filter((payment) => payment.status === 'FAILED')
-      .reduce((total, payment) => total + payment.amount, 0);
+    const totalPayments = paymentAgg._sum.amount || 0;
+    const totalPaymentsCount = paymentAgg._count._all || 0;
+    const completedPayments =
+      paymentStatusCounts.find((p) => p.status === 'COMPLETED')?._sum.amount ||
+      0;
+    const pendingPayments =
+      paymentStatusCounts.find((p) => p.status === 'PENDING')?._sum.amount || 0;
+    const failedPayments =
+      paymentStatusCounts.find((p) => p.status === 'FAILED')?._sum.amount || 0;
 
     // Calculate salary totals
-    const totalSalaries = allSalaries.reduce(
-      (total, salary) => total + salary.amount,
-      0
-    );
-    const paidSalaries = allSalaries
-      .filter((salary) => salary.status === 'PAID')
-      .reduce((total, salary) => total + salary.amount, 0);
+    const totalSalaries = salaryAgg._sum.amount || 0;
+    const totalSalariesCount = salaryAgg._count._all || 0;
+    const paidSalaries =
+      salaryStatusCounts.find((s) => s.status === 'PAID')?._sum.amount || 0;
+    const paidSalariesCount =
+      salaryStatusCounts.find((s) => s.status === 'PAID')?._count._all || 0;
+    const pendingSalariesCount =
+      salaryStatusCounts.find((s) => s.status === 'PENDING')?._count._all || 0;
 
     // Calculate expense totals (expenses + paid salaries)
-    const totalExpenses =
-      allExpenses.reduce((total, expense) => total + expense.amount, 0) +
-      paidSalaries;
+    const totalExpenses = (expenseAgg._sum.amount || 0) + paidSalaries;
+    const totalExpensesCount = expenseAgg._count._all || 0;
 
     // Calculate business metrics
     const totalOutgoing = totalExpenses;
     const totalIncoming = completedPayments;
 
     // Total task price
-    const totalTaskPrice = allTasks.reduce(
-      (sum, t) => sum + (t.amount || 0),
-      0
-    );
+    const totalTaskPrice = taskAgg._sum.amount || 0;
 
     // Due = total task price - total received
     const due = totalTaskPrice - completedPayments;
@@ -214,47 +240,27 @@ export const getAllDashboardData = async (data?: string) => {
 
     // Get counts for dashboard cards
     const paymentCounts = {
-      total: allPayments.length,
-      completed: allPayments.filter((p) => p.status === 'COMPLETED').length,
-      pending: allPayments.filter((p) => p.status === 'PENDING').length,
-      failed: allPayments.filter((p) => p.status === 'FAILED').length,
+      total: totalPaymentsCount,
+      completed:
+        paymentStatusCounts.find((p) => p.status === 'COMPLETED')?._count
+          ._all || 0,
+      pending:
+        paymentStatusCounts.find((p) => p.status === 'PENDING')?._count._all ||
+        0,
+      failed:
+        paymentStatusCounts.find((p) => p.status === 'FAILED')?._count._all ||
+        0,
     };
 
     const expenseCounts = {
-      total: allExpenses.length,
+      total: totalExpensesCount,
     };
 
     const salaryCounts = {
-      total: allSalaries.length,
-      paid: allSalaries.filter((s) => s.status === 'PAID').length,
-      pending: allSalaries.filter((s) => s.status === 'PENDING').length,
+      total: totalSalariesCount,
+      paid: paidSalariesCount,
+      pending: pendingSalariesCount,
     };
-
-    // Get ALL recent data for dashboard widgets
-    const recentPayments = await prisma.payment.findMany({
-      orderBy: { createdAt: 'desc' },
-      include: {
-        user: {
-          select: { name: true, email: true },
-        },
-        task: {
-          select: { title: true },
-        },
-      },
-    });
-
-    const recentExpenses = await prisma.expense.findMany({
-      orderBy: { createdAt: 'desc' },
-    });
-
-    const recentSalaries = await prisma.salary.findMany({
-      orderBy: { createdAt: 'desc' },
-      include: {
-        user: {
-          select: { name: true, email: true },
-        },
-      },
-    });
 
     return {
       success: true,
@@ -282,7 +288,7 @@ export const getAllDashboardData = async (data?: string) => {
         salaries: {
           total: totalSalaries,
           paid: paidSalaries,
-          pending: allSalaries.filter((s) => s.status === 'PENDING').length,
+          pending: pendingSalariesCount,
         },
         counts: {
           payments: paymentCounts,
