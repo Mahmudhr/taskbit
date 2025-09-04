@@ -23,6 +23,7 @@ import DashboardFilter from '@/components/filters/dashboard-filter';
 import { Button } from '@/components/ui/button';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { currentMonth, generateQueryString } from '@/lib/utils';
+import Loading from '@/components/loading';
 
 // Updated formatCurrency function with Bangladeshi Taka
 export const formatCurrency = (amount: number) => {
@@ -47,27 +48,29 @@ export default function DashboardPage() {
 
   const queryString = generateQueryString(params);
 
+  const { fetchDashboardMutationData, fetchDashboardMutation } =
+    useDashboard(queryString);
+  const {
+    fetchCurrentDashboardMutationData: fetchDashboardDataCurrentMonthData,
+    fetchCurrentDashboardMutation,
+  } = useCurrentDashboard(`?month=${currentMonth}`);
+
   useEffect(() => {
     router.push(queryString);
   }, [queryString, router]);
 
-  const { fetchDashboardMutationData } = useDashboard(queryString);
-  const {
-    fetchCurrentDashboardMutationData: fetchDashboardDataCurrentMonthData,
-  } = useCurrentDashboard(`?month=${currentMonth}`);
+  if (
+    fetchDashboardMutation?.isLoading ||
+    fetchCurrentDashboardMutation?.isLoading
+  ) {
+    return <Loading />;
+  }
 
   if (
     !fetchDashboardMutationData?.data ||
     !fetchDashboardDataCurrentMonthData?.data
   ) {
-    return (
-      <div className='flex items-center justify-center min-h-screen'>
-        <div className='text-center'>
-          <div className='animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto'></div>
-          <p className='mt-2 text-muted-foreground'>Loading dashboard...</p>
-        </div>
-      </div>
-    );
+    return <div>No data found</div>;
   }
 
   const { financial, payments, expenses, salaries, counts, insights, recent } =
