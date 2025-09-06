@@ -1251,7 +1251,7 @@ export default function TasksPage() {
           </div>
         </CardContent>
       </Card>
-      <div className='flex gap-2 my-4'>
+      <div className='flex flex-wrap gap-2 my-4'>
         {statusTabs.map((tab) => (
           <Button
             key={tab.value}
