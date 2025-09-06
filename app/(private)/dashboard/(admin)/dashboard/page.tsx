@@ -77,7 +77,7 @@ export default function DashboardPage() {
     fetchDashboardMutationData.data;
 
   return (
-    <div className='space-y-6 p-6'>
+    <div className='space-y-6 md:p-6 p-0'>
       {/* Header */}
       <div className='flex flex-col md:flex-row gap-4 items-center justify-between'>
         <div>
