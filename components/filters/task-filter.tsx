@@ -44,7 +44,8 @@ export default function TaskFilter({
 }: TaskFilterProps) {
   const [dateFilter, setDateFilter] = useState('ALL');
   const [taskCreateDate, setTaskCreateDate] = useState('ALL');
-  const { fetchClientsSelectOptions } = useClient();
+  const { fetchClientsSelectOptions, fetchClientsSelectOptionQuery } =
+    useClient();
 
   const currentYear = new Date().getFullYear();
   const years = Array.from({ length: 5 }, (_, i) => currentYear - i);
@@ -147,12 +148,31 @@ export default function TaskFilter({
             <SelectValue placeholder='Filter by client' />
           </SelectTrigger>
           <SelectContent className='z-[9999]'>
-            <SelectItem value='ALL'>All Status</SelectItem>
-            {fetchClientsSelectOptions?.map((client) => (
-              <SelectItem key={client.id} value={String(client.name)}>
-                {client.name}
-              </SelectItem>
-            ))}
+            <SelectItem value='ALL'>All Clients</SelectItem>
+            {fetchClientsSelectOptionQuery?.isLoading ? (
+              // Client filter skeleton
+              <>
+                <div className='px-2 py-1.5'>
+                  <div className='h-4 bg-gray-200 rounded animate-pulse'></div>
+                </div>
+                <div className='px-2 py-1.5'>
+                  <div className='h-4 bg-gray-200 rounded animate-pulse'></div>
+                </div>
+                <div className='px-2 py-1.5'>
+                  <div className='h-4 bg-gray-200 rounded animate-pulse'></div>
+                </div>
+              </>
+            ) : fetchClientsSelectOptions?.length ? (
+              fetchClientsSelectOptions?.map((client) => (
+                <SelectItem key={client.id} value={String(client.name)}>
+                  {client.name}
+                </SelectItem>
+              ))
+            ) : (
+              <div className='px-2 py-1.5 text-sm text-muted-foreground'>
+                No clients found
+              </div>
+            )}
           </SelectContent>
         </Select>
       </div>

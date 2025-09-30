@@ -84,9 +84,17 @@ export const paperTypeConvert = {
   CONFERENCE: 'Conference',
   SURVEY: 'Survey',
   JOURNAL: 'Journal',
+  BOOK_CHAPTER: 'Book Chapter',
   Journal_Q1: 'Journal Q1',
+  Journal_Q2: 'Journal Q2',
+  Journal_Q3: 'Journal Q3',
+  Journal_Q4: 'Journal Q4',
   THESIS: 'Thesis',
   Bicent_RESEARCH: 'Bicent Research',
+  ASSIGNMENT: 'Assignment',
+  RESEARCH: 'Research',
+  REWRITE: 'Rewrite',
+  OTHERS: 'Others',
 };
 
 export const allTaskStatus = ['PENDING', 'IN_PROGRESS', 'COMPLETED'];

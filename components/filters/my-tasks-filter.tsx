@@ -83,6 +83,17 @@ export default function MyTasksFilter({
             <SelectItem value='CONFERENCE'>Conference</SelectItem>
             <SelectItem value='SURVEY'>Survey</SelectItem>
             <SelectItem value='JOURNAL'>Journal</SelectItem>
+            <SelectItem value='BOOK_CHAPTER'>Book Chapter</SelectItem>
+            <SelectItem value='Journal_Q1'>Journal Q1</SelectItem>
+            <SelectItem value='Journal_Q2'>Journal Q2</SelectItem>
+            <SelectItem value='Journal_Q3'>Journal Q3</SelectItem>
+            <SelectItem value='Journal_Q4'>Journal Q4</SelectItem>
+            <SelectItem value='THESIS'>Thesis</SelectItem>
+            <SelectItem value='Bicent_RESEARCH'>Bicent Research</SelectItem>
+            <SelectItem value='ASSIGNMENT'>Assignment</SelectItem>
+            <SelectItem value='RESEARCH'>Research</SelectItem>
+            <SelectItem value='REWRITE'>Rewrite</SelectItem>
+            <SelectItem value='OTHERS'>Others</SelectItem>
           </SelectContent>
         </Select>
       </div>
