@@ -27,7 +27,6 @@ import { Card } from '../ui/card';
 import { useState } from 'react';
 import {
   allTaskStatus,
-  formatDateToString,
   getErrorMessage,
   paperTypeConvert,
   taskStatusConvert,
@@ -39,6 +38,7 @@ import { SearchClientOption, useClient } from '@/hooks/use-client';
 import { Textarea } from '../ui/textarea';
 import { Badge } from '../ui/badge';
 import { UserSearchAndSelect } from '../ui/user-search-and-select';
+import { DatePicker } from '../ui/date-picker';
 
 const FormSchema = z.object({
   title: z.string().min(2, { message: 'Title must be at least 2 characters.' }),
@@ -55,7 +55,7 @@ const FormSchema = z.object({
   paper_type: z.nativeEnum(PaperType),
   assignedUserIds: z.array(z.number()).optional(),
   clientId: z.coerce.number().optional(),
-  duration: z.string().optional(),
+  duration: z.date().optional().nullable(),
   startDate: z.date().optional().nullable(),
 });
 
@@ -81,7 +81,7 @@ export default function CreateTaskForm({ setIsOpen }: CreateTaskFormProps) {
       status: TaskStatus.PENDING,
       assignedUserIds: [],
       clientId: 0,
-      duration: '',
+      duration: null,
       startDate: null,
     },
   });
@@ -221,43 +221,53 @@ export default function CreateTaskForm({ setIsOpen }: CreateTaskFormProps) {
         <div>
           <div className='space-y-2'>
             <FormLabel>Client</FormLabel>
-            <UserSearchAndSelect
-              placeholder='Search user by name or email...'
-              search={async (query: string) => {
-                const results = await searchClients(query);
-                // Ensure user.email is always a string
-                return results.map((option) => ({
-                  ...option,
-                  user: {
-                    ...option.user,
-                    email: option.user.email ?? '',
-                  },
-                }));
-              }}
-              onSelect={(option) => setSelectedClient(option)}
+            <FormField
+              control={form.control}
+              name='clientId'
+              render={({ field }) => (
+                <UserSearchAndSelect
+                  placeholder='Search user by name or email...'
+                  search={async (query: string) => {
+                    const results = await searchClients(query);
+                    return results.map((option) => ({
+                      ...option,
+                      user: {
+                        ...option.user,
+                        email: option.user.email ?? '',
+                      },
+                    }));
+                  }}
+                  onSelect={(option) => {
+                    setSelectedClient(option);
+                    field.onChange(option ? option.value : 0);
+                  }}
+                />
+              )}
             />
           </div>
-          {selectedClient && (
-            <Card className='mt-4 p-4 break-words whitespace-pre-line w-full flex justify-between items-start'>
-              <div>
-                <div className='font-semibold break-words whitespace-pre-line text-left'>
-                  {selectedClient.user.name}
+
+          <div>
+            {selectedClient && (
+              <Card className='mt-4 p-4 break-words whitespace-pre-line w-full flex justify-between'>
+                <div>
+                  <div className='font-semibold break-words whitespace-pre-line text-left'>
+                    {selectedClient.user.name}
+                  </div>
+                  <div className='text-xs text-gray-600 break-all text-left'>
+                    {selectedClient.user.email}
+                  </div>
                 </div>
-                <div className='text-xs text-muted-foreground break-all text-left'>
-                  {selectedClient.user.email}
+                <div
+                  onClick={() => {
+                    setSelectedClient(null);
+                    form.setValue('clientId', 0);
+                  }}
+                >
+                  <X className='w-4 h-4 cursor-pointer' />
                 </div>
-              </div>
-              <Button
-                type='button'
-                variant='ghost'
-                size='sm'
-                className='h-4 w-4 p-0 hover:bg-destructive hover:text-destructive-foreground'
-                onClick={() => setSelectedClient(null)}
-              >
-                <X className='h-3 w-3' />
-              </Button>
-            </Card>
-          )}
+              </Card>
+            )}
+          </div>
         </div>
 
         <FormField
@@ -342,22 +352,12 @@ export default function CreateTaskForm({ setIsOpen }: CreateTaskFormProps) {
           name='startDate'
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Start Date</FormLabel>
+              <FormLabel>Assigned Date</FormLabel>
               <FormControl>
-                <Input
-                  className='w-full'
-                  type='date'
-                  placeholder='Select start date'
-                  value={formatDateToString(field.value)}
-                  onChange={(e) => {
-                    const dateValue = e.target.value
-                      ? new Date(e.target.value)
-                      : null;
-                    field.onChange(dateValue);
-                  }}
-                  onBlur={field.onBlur}
-                  name={field.name}
-                  ref={field.ref}
+                <DatePicker
+                  value={field.value ? new Date(field.value) : undefined}
+                  onChange={field.onChange}
+                  placeholder='Select assigned date'
                 />
               </FormControl>
               <FormMessage />
@@ -370,13 +370,12 @@ export default function CreateTaskForm({ setIsOpen }: CreateTaskFormProps) {
           name='duration'
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Duration</FormLabel>
+              <FormLabel>Delivery Date</FormLabel>
               <FormControl>
-                <Input
-                  className='w-full'
-                  type='date'
-                  placeholder='Select date'
-                  {...field}
+                <DatePicker
+                  value={field.value ? new Date(field.value) : undefined}
+                  onChange={field.onChange}
+                  placeholder='Select delivery date'
                 />
               </FormControl>
               <FormMessage />

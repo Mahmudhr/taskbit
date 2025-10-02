@@ -23,23 +23,23 @@ import {
 import { toast } from 'sonner';
 import { useTransition, useState, useEffect } from 'react';
 import { useSearchUser, SearchUserOption } from '@/hooks/use-search-user';
-import ReactAsyncSelect from '../react-async-select';
+
 import { Card } from '../ui/card';
 import {
   allTaskStatus,
-  formatDateToString,
   getErrorMessage,
   paperTypeConvert,
   taskStatusConvert,
 } from '@/lib/utils';
 import { useTask } from '@/hooks/use-task';
-import { Loader2Icon, X, Users } from 'lucide-react';
+import { Loader2Icon, X } from 'lucide-react';
 import { PaperType, TaskStatus } from '@prisma/client';
+import { DatePicker } from '@/components/ui/date-picker';
 import { TaskType } from '@/types/common';
-import { useSession } from 'next-auth/react';
 import { SearchClientOption, useClient } from '@/hooks/use-client';
 import { Textarea } from '../ui/textarea';
 import { Badge } from '../ui/badge';
+import { UserSearchAndSelect } from '../ui/user-search-and-select';
 
 const FormSchema = z.object({
   title: z.string().min(2, { message: 'Title must be at least 2 characters.' }),
@@ -56,9 +56,8 @@ const FormSchema = z.object({
   paper_type: z.nativeEnum(PaperType),
   assignedUserIds: z.array(z.number()).optional(),
   clientId: z.coerce.number().optional(),
-  duration: z.string().optional(),
+  duration: z.date().optional(),
   startDate: z.date().optional(),
-  targetDate: z.date().optional(),
 });
 
 type UpdateTaskFormProps = {
@@ -75,7 +74,7 @@ export default function UpdateTaskForm({
   const [selectedUsers, setSelectedUsers] = useState<SearchUserOption[]>([]);
   const [selectedClient, setSelectedClient] =
     useState<SearchClientOption | null>(null);
-  const { data: session } = useSession();
+
   const { search } = useSearchUser();
   const { searchClients } = useClient();
 
@@ -89,12 +88,9 @@ export default function UpdateTaskForm({
       status: data?.status || TaskStatus.PENDING,
       assignedUserIds: [],
       clientId: data?.clientId || 0,
-      duration: data?.duration
-        ? new Date(data.duration).toISOString().split('T')[0]
-        : '',
+      duration: data?.duration || undefined,
       paper_type: data?.paper_type || 'CONFERENCE',
       startDate: data?.startDate || undefined,
-      targetDate: data?.target_date || undefined,
     },
   });
 
@@ -211,123 +207,100 @@ export default function UpdateTaskForm({
           )}
         />
 
-        <FormItem>
-          <FormLabel className='flex items-center gap-2'>
-            <Users className='h-4 w-4' />
-            Assign To Users
-          </FormLabel>
-
-          {/* User Search */}
-          <ReactAsyncSelect<SearchUserOption>
-            label=''
-            name='userSearch'
-            loadOptions={async (inputValue: string) => {
-              const options = await search(inputValue);
-              const currentUserEmail = session?.user?.email;
-              return options.filter(
-                (option) =>
-                  option.user.email !== currentUserEmail &&
-                  !selectedUsers.some((u) => u.value === option.value)
-              );
-            }}
-            onChange={(option) => {
-              if (option) {
-                addUser(option);
-              }
-            }}
-            value={null} // Always null to allow multiple selections
-            isClearable
+        <div className='space-y-2'>
+          <FormLabel>Assign To Users</FormLabel>
+          <UserSearchAndSelect
             placeholder='Search user by name or email...'
+            search={search}
+            onSelect={(option) => addUser(option)}
           />
+        </div>
 
-          <FormMessage />
-
-          {/* Selected Users Display */}
-          {selectedUsers.length > 0 && (
-            <div className='mt-4 space-y-2'>
-              <div className='text-sm font-medium text-gray-700'>
-                Selected Users ({selectedUsers.length}):
-              </div>
-              <div className='flex flex-wrap gap-2'>
-                {selectedUsers.map((user) => (
-                  <Badge
-                    key={user.value}
-                    variant='secondary'
-                    className='flex items-center gap-2 px-3 py-1'
-                  >
-                    <div className='flex flex-col items-start'>
-                      <span className='font-medium'>{user.user.name}</span>
-                      <span className='text-xs opacity-70'>
-                        {user.user.email}
-                      </span>
-                    </div>
-                    <Button
-                      type='button'
-                      variant='ghost'
-                      size='sm'
-                      className='h-4 w-4 p-0 hover:bg-destructive hover:text-destructive-foreground'
-                      onClick={() => removeUser(user.value)}
-                    >
-                      <X className='h-3 w-3' />
-                    </Button>
-                  </Badge>
-                ))}
-              </div>
+        {/* Selected Users Display */}
+        {selectedUsers.length > 0 && (
+          <div className='mt-4 space-y-2'>
+            <div className='text-sm font-medium text-muted-foreground'>
+              Selected Users ({selectedUsers.length}):
             </div>
-          )}
-
-          {/* Empty State */}
-          {selectedUsers.length === 0 && (
-            <div className='mt-2 text-sm text-gray-500 italic'>
-              No users assigned yet. Search and select users above.
-            </div>
-          )}
-        </FormItem>
-        <FormField
-          control={form.control}
-          name='clientId'
-          render={({ field }) => (
-            <FormItem>
-              <ReactAsyncSelect<SearchClientOption>
-                label='Client'
-                name='clientId'
-                value={selectedClient}
-                loadOptions={async (inputValue: string) => {
-                  const options = await searchClients(inputValue);
-                  return options;
-                }}
-                onChange={(option) => {
-                  field.onChange(option ? option.value : 0);
-                  setSelectedClient(option);
-                }}
-                isClearable
-                placeholder='Search client by name or email...'
-              />
-              <FormMessage />
-              {selectedClient && (
-                <Card className='mt-4 p-4 break-words whitespace-pre-line w-full flex justify-between'>
-                  <div>
-                    <div className='font-semibold break-words whitespace-pre-line text-left'>
-                      {selectedClient.user.name}
-                    </div>
-                    <div className='text-xs text-gray-600 break-all text-left'>
-                      {selectedClient.user.email}
-                    </div>
+            <div className='flex flex-wrap gap-2'>
+              {selectedUsers.map((user) => (
+                <Badge
+                  key={user.value}
+                  variant='secondary'
+                  className='flex items-center gap-2 px-3 py-1'
+                >
+                  <div className='flex flex-col items-start'>
+                    <span className='font-medium'>{user.user.name}</span>
+                    <span className='text-xs opacity-70'>
+                      {user.user.email}
+                    </span>
                   </div>
-                  <div
-                    onClick={() => {
-                      setSelectedClient(null);
-                      field.onChange(0);
-                      form.setValue('clientId', 0);
-                    }}
+                  <Button
+                    type='button'
+                    variant='ghost'
+                    size='sm'
+                    className='h-4 w-4 p-0 hover:bg-destructive hover:text-destructive-foreground'
+                    onClick={() => removeUser(user.value)}
                   >
-                    <X className='w-4 h-4 cursor-pointer' />
-                  </div>
-                </Card>
+                    <X className='h-3 w-3' />
+                  </Button>
+                </Badge>
+              ))}
+            </div>
+          </div>
+        )}
+
+        <div>
+          <div className='space-y-2'>
+            <FormLabel>Client</FormLabel>
+            <FormField
+              control={form.control}
+              name='clientId'
+              render={({ field }) => (
+                <UserSearchAndSelect
+                  placeholder='Search user by name or email...'
+                  search={async (query: string) => {
+                    const results = await searchClients(query);
+                    return results.map((option) => ({
+                      ...option,
+                      user: {
+                        ...option.user,
+                        email: option.user.email ?? '',
+                      },
+                    }));
+                  }}
+                  onSelect={(option) => {
+                    setSelectedClient(option);
+                    field.onChange(option ? option.value : 0);
+                  }}
+                />
               )}
-            </FormItem>
-          )}
-        />
+            />
+          </div>
+
+          <div>
+            {selectedClient && (
+              <Card className='mt-4 p-4 break-words whitespace-pre-line w-full flex justify-between'>
+                <div>
+                  <div className='font-semibold break-words whitespace-pre-line text-left'>
+                    {selectedClient.user.name}
+                  </div>
+                  <div className='text-xs text-gray-600 break-all text-left'>
+                    {selectedClient.user.email}
+                  </div>
+                </div>
+                <div
+                  onClick={() => {
+                    setSelectedClient(null);
+                    form.setValue('clientId', 0);
+                  }}
+                >
+                  <X className='w-4 h-4 cursor-pointer' />
+                </div>
+              </Card>
+            )}
+          </div>
+        </div>
         <FormField
           control={form.control}
           name='link'
@@ -424,16 +397,15 @@ export default function UpdateTaskForm({
 
         <FormField
           control={form.control}
-          name='duration'
+          name='startDate'
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Duration</FormLabel>
+              <FormLabel>Assigned Date</FormLabel>
               <FormControl>
-                <Input
-                  className='w-full'
-                  type='date'
-                  placeholder='Select date'
-                  {...field}
+                <DatePicker
+                  value={field.value}
+                  onChange={field.onChange}
+                  placeholder='Select assigned date'
                 />
               </FormControl>
               <FormMessage />
@@ -443,52 +415,15 @@ export default function UpdateTaskForm({
 
         <FormField
           control={form.control}
-          name='startDate'
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Start Date</FormLabel>
-              <FormControl>
-                <Input
-                  className='w-full'
-                  type='date'
-                  placeholder='Select start date'
-                  value={formatDateToString(field.value)}
-                  onChange={(e) => {
-                    const dateValue = e.target.value
-                      ? new Date(e.target.value)
-                      : null;
-                    field.onChange(dateValue);
-                  }}
-                  onBlur={field.onBlur}
-                  name={field.name}
-                  ref={field.ref}
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <FormField
-          control={form.control}
-          name='targetDate'
+          name='duration'
           render={({ field }) => (
             <FormItem>
               <FormLabel>Delivery Date</FormLabel>
               <FormControl>
-                <Input
-                  className='w-full'
-                  type='date'
-                  placeholder='Select start date'
-                  value={formatDateToString(field.value)}
-                  onChange={(e) => {
-                    const dateValue = e.target.value
-                      ? new Date(e.target.value)
-                      : null;
-                    field.onChange(dateValue);
-                  }}
-                  onBlur={field.onBlur}
-                  name={field.name}
-                  ref={field.ref}
+                <DatePicker
+                  value={field.value ? new Date(field.value) : undefined}
+                  onChange={field.onChange}
+                  placeholder='Select delivery date'
                 />
               </FormControl>
               <FormMessage />

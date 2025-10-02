@@ -30,15 +30,27 @@ export const UserSearchAndSelect = ({
   const [isOpen, setIsOpen] = useState(false);
 
   useEffect(() => {
-    const fetchOptions = async () => {
-      const results = await search(inputValue);
+    let isCancelled = false;
+    const timeoutId = setTimeout(async () => {
+      if (isOpen && !isCancelled) {
+        try {
+          const results = await search(inputValue);
+          if (!isCancelled) {
+            setOptions(results);
+          }
+        } catch (error) {
+          if (!isCancelled) {
+            console.error('Search error:', error);
+            setOptions([]);
+          }
+        }
+      }
+    }, 300);
 
-      setOptions(results);
+    return () => {
+      isCancelled = true;
+      clearTimeout(timeoutId);
     };
-
-    if (isOpen) {
-      fetchOptions();
-    }
   }, [inputValue, search, isOpen]);
 
   const handleInputFocus = () => {
