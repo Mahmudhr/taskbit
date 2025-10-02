@@ -6,7 +6,6 @@ import { Button } from '@/components/ui/button';
 import { SearchUserOption } from '@/hooks/use-search-user';
 import { useSearchUser } from '@/hooks/use-search-user';
 import { toast } from 'sonner';
-import ReactAsyncSelect from '../react-async-select';
 import { Textarea } from '../ui/textarea';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -26,9 +25,10 @@ import {
   SelectValue,
 } from '../ui/select';
 import { Card } from '../ui/card';
-import { useSession } from 'next-auth/react';
 import useEmployeeOfTheMonth from '@/hooks/use-employee-of-the-month';
 import { getErrorMessage } from '@/lib/utils';
+import { X } from 'lucide-react';
+import { UserSearchAndSelect } from '../ui/user-search-and-select';
 
 const months = [
   { label: 'January', value: 1 },
@@ -70,7 +70,7 @@ export default function CreateEmployeeOfTheMonthForm({
   const [selectedUser, setSelectedUser] = useState<SearchUserOption | null>(
     null
   );
-  const { data: session } = useSession();
+
   const { createEmployeeOfTheMonthMutationAsync } = useEmployeeOfTheMonth();
   //   const [options, setOptions] = useState<SearchUserOption[]>([]);
   //   const [addUser, setAddUser] = useState<SearchUserOption | null>(null);
@@ -107,42 +107,57 @@ export default function CreateEmployeeOfTheMonthForm({
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className='space-y-4'>
-        <FormField
-          control={form.control}
-          name='assignedToId'
-          render={({ field }) => (
-            <FormItem>
-              <ReactAsyncSelect<SearchUserOption>
-                label='Assign To'
-                name='assignedToId'
-                loadOptions={async (inputValue: string) => {
-                  const options = await search(inputValue);
-                  const currentUserEmail = session?.user?.email;
-                  return options.filter(
-                    (option) => option.user.email !== currentUserEmail
-                  );
-                }}
-                onChange={(option) => {
-                  field.onChange(option ? option.value : 0);
-                  setSelectedUser(option);
-                }}
-                isClearable
-                placeholder='Search user by name or email...'
-              />
-              <FormMessage />
-              {selectedUser && (
-                <Card className='mt-4 p-4 break-words whitespace-pre-line w-full'>
+        <div>
+          <div className='space-y-2'>
+            <FormLabel>Client</FormLabel>
+            <FormField
+              control={form.control}
+              name='assignedToId'
+              render={({ field }) => (
+                <UserSearchAndSelect
+                  placeholder='Search user by name or email...'
+                  search={async (query: string) => {
+                    const results = await search(query);
+                    return results.map((option) => ({
+                      ...option,
+                      user: {
+                        ...option.user,
+                        email: option.user.email ?? '',
+                      },
+                    }));
+                  }}
+                  onSelect={(option) => {
+                    setSelectedUser(option);
+                    field.onChange(option ? option.value : 0);
+                  }}
+                />
+              )}
+            />
+          </div>
+
+          <div>
+            {selectedUser && (
+              <Card className='mt-4 p-4 break-words whitespace-pre-line w-full flex justify-between'>
+                <div>
                   <div className='font-semibold break-words whitespace-pre-line text-left'>
                     {selectedUser.user.name}
                   </div>
                   <div className='text-xs text-gray-600 break-all text-left'>
                     {selectedUser.user.email}
                   </div>
-                </Card>
-              )}
-            </FormItem>
-          )}
-        />
+                </div>
+                <div
+                  onClick={() => {
+                    setSelectedUser(null);
+                    form.setValue('assignedToId', 0);
+                  }}
+                >
+                  <X className='w-4 h-4 cursor-pointer' />
+                </div>
+              </Card>
+            )}
+          </div>
+        </div>
 
         <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
           <FormField

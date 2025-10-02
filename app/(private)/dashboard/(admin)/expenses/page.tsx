@@ -791,7 +791,7 @@ export default function ExpensePage() {
       <AlertModal
         isOpen={openUpdateExpense}
         setIsOpen={setOpenUpdateExpense}
-        title='Create new expense'
+        title='Update new expense'
         description=' '
       >
         <UpdateExpenseForm

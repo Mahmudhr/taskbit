@@ -338,7 +338,7 @@ export default function EmployeeOfTheMonthPage() {
       <AlertModal
         isOpen={openCreateEmployeeOfTheMonth}
         setIsOpen={setOpenCreateEmployeeOfTheMonth}
-        title='Create new expense'
+        title='Create Employee of the month'
         description=' '
       >
         <CreateEmployeeOfTheMonthForm

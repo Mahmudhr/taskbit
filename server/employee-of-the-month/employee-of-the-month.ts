@@ -18,7 +18,7 @@ export async function createEmployeeOfTheMonth(
     });
     if (existingMonth) {
       throw new Error(
-        `Monthly salary for ${month}/${year} already exists for this user`
+        `Employee of the Month for ${month}/${year} already exists`
       );
     }
 
