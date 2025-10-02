@@ -119,7 +119,7 @@ export default function MyTasksFilter({
       <div className='space-y-4'>
         <div className='space-y-2'>
           <label className='block text-sm font-medium text-gray-700'>
-            Duration Date Filter
+            Delivery Date Filter
           </label>
           <Select value={dateFilter} onValueChange={setDateFilter}>
             <SelectTrigger>
