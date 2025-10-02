@@ -42,18 +42,22 @@ export const createClient = async (data: CreateClientType) => {
   }
 };
 
-export const searchClients = async (query: string) => {
-  if (!query || query.trim() === '') return [];
+export const searchClients = async (query?: string) => {
   try {
+    const whereClause = {
+      status: 'ACTIVE' as const,
+      isDeleted: false,
+      ...(query && query.trim() !== ''
+        ? {
+            OR: [
+              { name: { contains: query, mode: 'insensitive' as const } },
+              { email: { contains: query, mode: 'insensitive' as const } },
+            ],
+          }
+        : {}),
+    };
     const users = await prisma.client.findMany({
-      where: {
-        OR: [
-          { name: { contains: query, mode: 'insensitive' } },
-          { email: { contains: query, mode: 'insensitive' } },
-        ],
-        status: 'ACTIVE',
-        isDeleted: false,
-      },
+      where: whereClause,
       select: {
         id: true,
         name: true,
@@ -65,6 +69,7 @@ export const searchClients = async (query: string) => {
       },
       take: 10,
     });
+
     return users;
   } catch {
     throw new Error('Failed to search users');

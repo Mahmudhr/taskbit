@@ -216,18 +216,23 @@ export const UpdateUser = async ({
  * @param query string to search (name or email)
  * @returns array of users with id, name, email
  */
-export const searchUsers = async (query: string) => {
-  if (!query || query.trim() === '') return [];
+export const searchUsers = async (query?: string) => {
   try {
+    const whereClause = {
+      status: 'ACTIVE' as const,
+      isDeleted: false,
+      ...(query && query.trim() !== ''
+        ? {
+            OR: [
+              { name: { contains: query, mode: 'insensitive' as const } },
+              { email: { contains: query, mode: 'insensitive' as const } },
+            ],
+          }
+        : {}),
+    };
+
     const users = await prisma.user.findMany({
-      where: {
-        OR: [
-          { name: { contains: query, mode: 'insensitive' } },
-          { email: { contains: query, mode: 'insensitive' } },
-        ],
-        status: 'ACTIVE',
-        isDeleted: false,
-      },
+      where: whereClause,
       select: {
         id: true,
         name: true,

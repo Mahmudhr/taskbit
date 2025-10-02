@@ -275,6 +275,21 @@ const TaskCard = ({
               </p>
             </div>
           </div>
+          <div className='flex items-center gap-3'>
+            <div className='bg-orange-50 dark:bg-orange-900/30 p-2 rounded-lg'>
+              <Clock className='w-4 h-4 text-orange-600 dark:text-orange-400' />
+            </div>
+            <div className='flex-1'>
+              <p className='text-xs text-muted-foreground dark:text-gray-400'>
+                Created At
+              </p>
+              <p className='font-medium text-sm dark:text-gray-200'>
+                {task.createdAt
+                  ? dayjs(task.createdAt).format('DD MMM')
+                  : 'Not Set'}
+              </p>
+            </div>
+          </div>
         </div>
 
         {/* Payment Information */}

@@ -33,7 +33,7 @@ export default function SearchAndSelect<T = SearchAndSelectOption>({
   const modifiedOptions = defaultOption ? [defaultOption, ...options] : options;
 
   return (
-    <div className='flex flex-col gap-1'>
+    <div className='flex flex-col gap-1 w-full'>
       <label
         htmlFor={name}
         className='block text-sm font-semibold text-gray-700 whitespace-nowrap'

@@ -23,7 +23,6 @@ import {
 import { toast } from 'sonner';
 import { useTransition } from 'react';
 import { useSearchUser, SearchUserOption } from '@/hooks/use-search-user';
-import ReactAsyncSelect from '../react-async-select';
 import { Card } from '../ui/card';
 import { useState } from 'react';
 import {
@@ -34,12 +33,12 @@ import {
   taskStatusConvert,
 } from '@/lib/utils';
 import { useTask } from '@/hooks/use-task';
-import { Loader2Icon, X, Users } from 'lucide-react';
+import { Loader2Icon, X } from 'lucide-react';
 import { PaperType, TaskStatus } from '@prisma/client';
-import { useSession } from 'next-auth/react';
 import { SearchClientOption, useClient } from '@/hooks/use-client';
 import { Textarea } from '../ui/textarea';
 import { Badge } from '../ui/badge';
+import { UserSearchAndSelect } from '../ui/user-search-and-select';
 
 const FormSchema = z.object({
   title: z.string().min(2, { message: 'Title must be at least 2 characters.' }),
@@ -72,7 +71,6 @@ export default function CreateTaskForm({ setIsOpen }: CreateTaskFormProps) {
     useState<SearchClientOption | null>(null);
   const { search } = useSearchUser();
   const { searchClients } = useClient();
-  const { data: session } = useSession();
 
   const form = useForm<z.infer<typeof FormSchema>>({
     resolver: zodResolver(FormSchema),
@@ -170,112 +168,97 @@ export default function CreateTaskForm({ setIsOpen }: CreateTaskFormProps) {
           )}
         />
 
-        <FormItem>
-          <FormLabel className='flex items-center gap-2'>
-            <Users className='h-4 w-4' />
-            Assign To Users
-          </FormLabel>
-
-          {/* User Search */}
-          <ReactAsyncSelect<SearchUserOption>
-            label=''
-            name='userSearch'
-            loadOptions={async (inputValue: string) => {
-              const options = await search(inputValue);
-              const currentUserEmail = session?.user?.email;
-              return options.filter(
-                (option) =>
-                  option.user.email !== currentUserEmail &&
-                  !selectedUsers.some((u) => u.value === option.value)
-              );
-            }}
-            onChange={(option) => {
-              if (option) {
-                addUser(option);
-              }
-            }}
-            value={null} // Always null to allow multiple selections
-            isClearable
+        <div className='space-y-2'>
+          <FormLabel>Assign To Users</FormLabel>
+          <UserSearchAndSelect
             placeholder='Search user by name or email...'
+            search={search}
+            onSelect={(option) => addUser(option)}
           />
+        </div>
 
-          <FormMessage />
-
-          {/* Selected Users Display */}
-          {selectedUsers.length > 0 && (
-            <div className='mt-4 space-y-2'>
-              <div className='text-sm font-medium text-muted-foreground'>
-                Selected Users ({selectedUsers.length}):
-              </div>
-              <div className='flex flex-wrap gap-2'>
-                {selectedUsers.map((user) => (
-                  <Badge
-                    key={user.value}
-                    variant='secondary'
-                    className='flex items-center gap-2 px-3 py-1'
+        {/* Selected Users Display */}
+        {selectedUsers.length > 0 && (
+          <div className='mt-4 space-y-2'>
+            <div className='text-sm font-medium text-muted-foreground'>
+              Selected Users ({selectedUsers.length}):
+            </div>
+            <div className='flex flex-wrap gap-2'>
+              {selectedUsers.map((user) => (
+                <Badge
+                  key={user.value}
+                  variant='secondary'
+                  className='flex items-center gap-2 px-3 py-1'
+                >
+                  <div className='flex flex-col items-start'>
+                    <span className='font-medium'>{user.user.name}</span>
+                    <span className='text-xs opacity-70'>
+                      {user.user.email}
+                    </span>
+                  </div>
+                  <Button
+                    type='button'
+                    variant='ghost'
+                    size='sm'
+                    className='h-4 w-4 p-0 hover:bg-destructive hover:text-destructive-foreground'
+                    onClick={() => removeUser(user.value)}
                   >
-                    <div className='flex flex-col items-start'>
-                      <span className='font-medium'>{user.user.name}</span>
-                      <span className='text-xs opacity-70'>
-                        {user.user.email}
-                      </span>
-                    </div>
-                    <Button
-                      type='button'
-                      variant='ghost'
-                      size='sm'
-                      className='h-4 w-4 p-0 hover:bg-destructive hover:text-destructive-foreground'
-                      onClick={() => removeUser(user.value)}
-                    >
-                      <X className='h-3 w-3' />
-                    </Button>
-                  </Badge>
-                ))}
+                    <X className='h-3 w-3' />
+                  </Button>
+                </Badge>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Empty State */}
+        {selectedUsers.length === 0 && (
+          <div className='mt-2 text-sm text-muted-foreground italic'>
+            No users assigned yet. Search and select users above.
+          </div>
+        )}
+
+        <div>
+          <div className='space-y-2'>
+            <FormLabel>Client</FormLabel>
+            <UserSearchAndSelect
+              placeholder='Search user by name or email...'
+              search={async (query: string) => {
+                const results = await searchClients(query);
+                // Ensure user.email is always a string
+                return results.map((option) => ({
+                  ...option,
+                  user: {
+                    ...option.user,
+                    email: option.user.email ?? '',
+                  },
+                }));
+              }}
+              onSelect={(option) => setSelectedClient(option)}
+            />
+          </div>
+          {selectedClient && (
+            <Card className='mt-4 p-4 break-words whitespace-pre-line w-full flex justify-between items-start'>
+              <div>
+                <div className='font-semibold break-words whitespace-pre-line text-left'>
+                  {selectedClient.user.name}
+                </div>
+                <div className='text-xs text-muted-foreground break-all text-left'>
+                  {selectedClient.user.email}
+                </div>
               </div>
-            </div>
+              <Button
+                type='button'
+                variant='ghost'
+                size='sm'
+                className='h-4 w-4 p-0 hover:bg-destructive hover:text-destructive-foreground'
+                onClick={() => setSelectedClient(null)}
+              >
+                <X className='h-3 w-3' />
+              </Button>
+            </Card>
           )}
-
-          {/* Empty State */}
-          {selectedUsers.length === 0 && (
-            <div className='mt-2 text-sm text-muted-foreground italic'>
-              No users assigned yet. Search and select users above.
-            </div>
-          )}
-        </FormItem>
-
-        <FormField
-          control={form.control}
-          name='clientId'
-          render={({ field }) => (
-            <FormItem>
-              <ReactAsyncSelect<SearchClientOption>
-                label='Client'
-                name='clientId'
-                loadOptions={async (inputValue: string) => {
-                  const options = await searchClients(inputValue);
-                  return options;
-                }}
-                onChange={(option) => {
-                  field.onChange(option ? option.value : 0);
-                  setSelectedClient(option);
-                }}
-                isClearable
-                placeholder='Search client by name or email...'
-              />
-              <FormMessage />
-              {selectedClient && (
-                <Card className='mt-4 p-4 break-words whitespace-pre-line w-full'>
-                  <div className='font-semibold break-words whitespace-pre-line text-left'>
-                    {selectedClient.user.name}
-                  </div>
-                  <div className='text-xs text-muted-foreground break-all text-left'>
-                    {selectedClient.user.email}
-                  </div>
-                </Card>
-              )}
-            </FormItem>
-          )}
-        />
+        </div>
 
         <FormField
           control={form.control}
