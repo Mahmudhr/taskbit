@@ -1147,7 +1147,7 @@ export default function TasksPage() {
 
             {params.due_date && (
               <div className='pl-3 pr-2 py-1 border dark:border-gray-600 dark:bg-gray-700/50 flex gap-2 items-center rounded-full text-sm dark:text-gray-200'>
-                Due Date: {dayjs(params.due_date).format('DD-MM-YYYY')}
+                Delivery Date: {dayjs(params.due_date).format('DD-MM-YYYY')}
                 <span
                   onClick={() => {
                     setParams((prev) => ({

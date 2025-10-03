@@ -217,7 +217,7 @@ export default function MyTasksPage() {
             )}
             {params.due_date && (
               <div className='pl-3 pr-2 py-1 border flex gap-2 items-center rounded-full text-sm'>
-                Due Date: {dayjs(params.due_date).format('DD-MM-YYYY')}
+                Delivery Date: {dayjs(params.due_date).format('DD-MM-YYYY')}
                 <span
                   onClick={() => {
                     setParams((prev) => ({
@@ -246,7 +246,7 @@ export default function MyTasksPage() {
                 <TableRow>
                   <TableHead>Serial</TableHead>
                   <TableHead>Task Title</TableHead>
-                  <TableHead>Due Date</TableHead>
+                  <TableHead>Delivery Date</TableHead>
                   <TableHead>Link</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>Paper Type</TableHead>
@@ -387,7 +387,9 @@ export default function MyTasksPage() {
                   </div>
                   <div className='space-y-3 text-sm'>
                     <div className='flex justify-between text-xs'>
-                      <span className='text-muted-foreground'>Due Date:</span>
+                      <span className='text-muted-foreground'>
+                        Delivery Date:
+                      </span>
                       <span>
                         {task.duration
                           ? dayjs(task.duration).format('DD-MM-YYYY')

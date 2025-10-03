@@ -188,7 +188,7 @@ export default function TaskFilter({
               <SelectValue placeholder='Filter by date' />
             </SelectTrigger>
             <SelectContent className='z-[999]'>
-              <SelectItem value='ALL'>Due Date Time</SelectItem>
+              <SelectItem value='ALL'>Delivery Time</SelectItem>
               <SelectItem value='DUE_MONTH_YEAR'>Month & Year</SelectItem>
               <SelectItem value='DUE_DATE'>Specific Date</SelectItem>
             </SelectContent>
