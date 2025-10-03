@@ -416,7 +416,7 @@ export default function ClientsPage() {
       <AlertModal
         isOpen={addUserOpen}
         setIsOpen={setAddUserOpen}
-        title='Create new user'
+        title='Create new client'
         description=' '
       >
         <CreateClientForm setIsOpen={setAddUserOpen} />
@@ -424,7 +424,7 @@ export default function ClientsPage() {
       <AlertModal
         isOpen={updateUserModal}
         setIsOpen={setUpdateUserModal}
-        title='Update user'
+        title='Update Client'
         description=' '
       >
         <UpdateClientForm setIsOpen={setUpdateUserModal} data={updateUser} />
