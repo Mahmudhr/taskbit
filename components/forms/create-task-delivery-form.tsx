@@ -28,10 +28,10 @@ import { useEffect, useState, useTransition } from 'react';
 import { Textarea } from '../ui/textarea';
 import { toast } from 'sonner';
 import { useUserTask } from '@/hooks/use-user-task';
-import ReactAsyncSelect from '../react-async-select';
 import { SearchUserOption, useSearchMember } from '@/hooks/use-search-user';
 import { Badge } from '../ui/badge';
 import { useSession } from 'next-auth/react';
+import { UserSearchAndSelect } from '../ui/user-search-and-select';
 
 export type CreateTaskDeliveryFormProps = {
   setIsOpen: (isOpen: boolean) => void;
@@ -178,32 +178,34 @@ export default function CreateTaskDeliveryForm({
             </FormItem>
           )}
         />
-        <FormField
-          control={form.control}
-          name='link'
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>
-                Link{' '}
-                {watchedStatus === TaskStatus.COMPLETED && (
-                  <span className='text-red-500'>*</span>
-                )}
-              </FormLabel>
-              <FormControl>
-                <Input
-                  className='w-full'
-                  placeholder={
-                    watchedStatus === TaskStatus.COMPLETED
-                      ? 'Enter task delivery link (required)'
-                      : 'Enter task delivery link (optional)'
-                  }
-                  {...field}
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+        {session?.user?.role !== 'EMPLOYEE' && (
+          <FormField
+            control={form.control}
+            name='link'
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>
+                  Link{' '}
+                  {watchedStatus === TaskStatus.COMPLETED && (
+                    <span className='text-red-500'>*</span>
+                  )}
+                </FormLabel>
+                <FormControl>
+                  <Input
+                    className='w-full'
+                    placeholder={
+                      watchedStatus === TaskStatus.COMPLETED
+                        ? 'Enter task delivery link (required)'
+                        : 'Enter task delivery link (optional)'
+                    }
+                    {...field}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        )}
         <FormItem>
           <FormLabel className='flex items-center gap-2'>
             <Users className='h-4 w-4' />
@@ -211,26 +213,10 @@ export default function CreateTaskDeliveryForm({
           </FormLabel>
 
           {/* User Search */}
-          <ReactAsyncSelect<SearchUserOption>
-            label=''
-            name='userSearch'
-            loadOptions={async (inputValue: string) => {
-              const options = await search(inputValue);
-              const currentUserEmail = session?.user?.email;
-              return options.filter(
-                (option) =>
-                  option.user.email !== currentUserEmail &&
-                  !selectedUsers.some((u) => u.value === option.value)
-              );
-            }}
-            onChange={(option) => {
-              if (option) {
-                addUser(option);
-              }
-            }}
-            value={null} // Always null to allow multiple selections
-            isClearable
+          <UserSearchAndSelect
             placeholder='Search user by name or email...'
+            search={search}
+            onSelect={(option) => addUser(option)}
           />
 
           <FormMessage />

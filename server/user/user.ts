@@ -251,18 +251,22 @@ export const searchUsers = async (query?: string) => {
   }
 };
 export const searchMember = async (query: string) => {
-  if (!query || query.trim() === '') return [];
   try {
+    const whereClause = {
+      status: 'ACTIVE' as const,
+      isDeleted: false,
+      role: $Enums.Role.EMPLOYEE,
+      ...(query && query.trim() !== ''
+        ? {
+            OR: [
+              { name: { contains: query, mode: 'insensitive' as const } },
+              { email: { contains: query, mode: 'insensitive' as const } },
+            ],
+          }
+        : {}),
+    };
     const users = await prisma.user.findMany({
-      where: {
-        OR: [
-          { name: { contains: query, mode: 'insensitive' } },
-          { email: { contains: query, mode: 'insensitive' } },
-        ],
-        status: 'ACTIVE',
-        isDeleted: false,
-        role: 'EMPLOYEE',
-      },
+      where: whereClause,
       select: {
         id: true,
         name: true,
