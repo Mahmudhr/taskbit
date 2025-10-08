@@ -108,7 +108,7 @@ export default function CreateSalaryForm({
   const form = useForm<z.infer<typeof FormSchema>>({
     resolver: zodResolver(FormSchema),
     defaultValues: {
-      amount: salary || 0, // ✅ Set default amount to salary if available
+      amount: salary || 0,
       month: new Date().getMonth() + 1,
       year: new Date().getFullYear(),
       status: 'PAID',
@@ -118,21 +118,16 @@ export default function CreateSalaryForm({
     },
   });
 
-  // ✅ Watch salary type to handle amount field behavior
   const watchedSalaryType = form.watch('salaryType');
 
-  // ✅ Effect to handle amount field based on salary type
   useEffect(() => {
     if (watchedSalaryType === 'MONTHLY') {
-      // Set amount to user's salary and disable field
       form.setValue('amount', salary || 0);
     } else {
-      // Reset amount to 0 for other types and enable field
       form.setValue('amount', 0);
     }
   }, [watchedSalaryType, salary, form]);
 
-  // ✅ Check if amount field should be disabled
   const isAmountDisabled = watchedSalaryType === 'MONTHLY';
 
   function onSubmit(data: z.infer<typeof FormSchema>) {
@@ -189,7 +184,7 @@ export default function CreateSalaryForm({
                         : 'Enter amount'
                     }
                     min={1}
-                    disabled={isAmountDisabled} // ✅ Disable when Monthly is selected
+                    disabled={isAmountDisabled}
                     {...field}
                   />
                 </FormControl>
@@ -256,6 +251,15 @@ export default function CreateSalaryForm({
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent className='z-[9999]'>
+                    {/* {watchedSalaryType === 'MONTHLY' &&
+                      months.slice(0, currentMonthNumber).map((month) => (
+                        <SelectItem
+                          key={month.value}
+                          value={month.value.toString()}
+                        >
+                          {month.label}
+                        </SelectItem>
+                      ))} */}
                     {months.map((month) => (
                       <SelectItem
                         key={month.value}

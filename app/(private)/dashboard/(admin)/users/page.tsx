@@ -76,7 +76,7 @@ const getStatusBadge = (status: string) => {
 };
 
 const checkSalaryStatus = (user: UserType) => {
-  const currentMonthNumber = dayjs().month() + 1;
+  const currentMonthNumber = dayjs().month();
   const currentYear = dayjs().year();
 
   if (!user.salary || user.salary === 0) {
