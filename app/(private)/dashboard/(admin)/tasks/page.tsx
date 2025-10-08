@@ -133,6 +133,11 @@ const TaskCard = ({
               #{index + 1}
             </div>
             <div className='flex-1 min-w-0'>
+              {task.unique_id && (
+                <Badge variant='outline' className='text-[9px] mb-1'>
+                  {task.unique_id}
+                </Badge>
+              )}
               <p
                 className='font-semibold text-lg mb-1 dark:text-gray-100 break-all'
                 title={task.title}
@@ -396,6 +401,12 @@ const TaskRow = ({
             #{index + 1}
           </div>
           <div className='flex-1 min-w-0'>
+            {task.unique_id && (
+              <Badge variant='outline' className='text-[9px] mb-1'>
+                {task.unique_id}
+              </Badge>
+            )}
+
             <h3
               className='font-semibold text-lg truncate mb-1 dark:text-gray-100 text-wrap break-all'
               title={task.title}

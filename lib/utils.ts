@@ -125,3 +125,17 @@ export const catchError = (error: unknown) => {
 };
 
 export const currentMonth = dayjs().month() + 1;
+
+export function generateUniqueId(prefix = 'TB', randomLength = 6): string {
+  const day = dayjs().date();
+  const month = dayjs().month() + 1;
+
+  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+  let rand = '';
+  for (let i = 0; i < randomLength; i++) {
+    const idx = Math.floor(Math.random() * chars.length);
+    rand += chars[idx];
+  }
+
+  return `${prefix}-${day}-${month}-${rand}`;
+}

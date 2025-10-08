@@ -13,6 +13,7 @@ export type CreateTaskType = {
   assignedUserIds?: number[];
   targetDate?: Date | null;
   link?: string;
+  unique_id?: string;
 };
 
 export type UpdateUserTaskDeliveryType = {

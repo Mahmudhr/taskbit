@@ -27,6 +27,7 @@ import { Card } from '../ui/card';
 import { useState } from 'react';
 import {
   allTaskStatus,
+  generateUniqueId,
   getErrorMessage,
   paperTypeConvert,
   taskStatusConvert,
@@ -115,6 +116,7 @@ export default function CreateTaskForm({ setIsOpen }: CreateTaskFormProps) {
       clientId: data.clientId === 0 ? undefined : data.clientId,
       duration: data.duration ? new Date(data.duration) : new Date(),
       assignedUserIds: data.assignedUserIds || [],
+      unique_id: generateUniqueId(),
     };
 
     startTransition(() => {

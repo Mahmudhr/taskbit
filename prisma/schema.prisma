@@ -69,6 +69,7 @@ model Task {
   duration        DateTime?
   startDate       DateTime? @map("start_date")
   targetDate      DateTime? @map("target_date")
+  unique_id       String?    @unique @map("unique_id")
   
   // Many-to-many relationship with users through TaskAssignment
   taskAssignments TaskAssignment[] @relation("TaskAssignments")

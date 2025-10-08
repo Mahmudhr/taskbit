@@ -6,7 +6,7 @@ import {
   CreateTaskType,
   UpdateUserTaskDeliveryType,
 } from '../types/tasks-type';
-import { catchError } from '@/lib/utils';
+import { catchError, generateUniqueId } from '@/lib/utils';
 
 export async function createTasks(data: CreateTaskType) {
   const {
@@ -20,6 +20,7 @@ export async function createTasks(data: CreateTaskType) {
     startDate,
     assignedUserIds,
     targetDate,
+    unique_id,
   } = data;
 
   try {
@@ -33,6 +34,7 @@ export async function createTasks(data: CreateTaskType) {
       startDate: Date | null;
       clientId?: number;
       targetDate: Date | null;
+      unique_id?: string;
     } = {
       title,
       description,
@@ -42,6 +44,7 @@ export async function createTasks(data: CreateTaskType) {
       duration,
       startDate: startDate ? new Date(startDate) : null,
       targetDate: targetDate ? new Date(targetDate) : null,
+      unique_id: unique_id ? unique_id : generateUniqueId(),
     };
 
     if (clientId) {
@@ -285,6 +288,7 @@ export async function updateTask(id: number, data: CreateTaskType) {
     assignedUserIds,
     targetDate,
     link,
+    unique_id,
   } = data;
 
   try {
@@ -304,6 +308,7 @@ export async function updateTask(id: number, data: CreateTaskType) {
           startDate: startDate ? new Date(startDate) : null,
           targetDate,
           link,
+          unique_id,
         },
       });
 
@@ -627,6 +632,7 @@ export const fetchAllTasks = async (data?: string) => {
         { title: { contains: search, mode: 'insensitive' } },
         { description: { contains: search, mode: 'insensitive' } },
         { client: { name: { contains: search, mode: 'insensitive' } } },
+        { unique_id: { contains: search, mode: 'insensitive' } },
       ],
     });
   }
@@ -634,6 +640,12 @@ export const fetchAllTasks = async (data?: string) => {
   if (status && status !== 'ALL') {
     whereConditions.push({ status: status as TaskStatus });
   }
+
+  // if (unique_id) {
+  //   whereConditions.push({
+  //     unique_id: { contains: unique_id, mode: 'insensitive' },
+  //   });
+  // }
 
   if (paper_type && paper_type !== 'ALL') {
     whereConditions.push({ paper_type: paper_type as PaperType });
@@ -786,6 +798,7 @@ export const fetchAllTasks = async (data?: string) => {
         paid,
         receivable,
         receivableAmounts: task.receivableAmounts,
+        unique_id: task.unique_id,
       };
     });
 
