@@ -134,7 +134,7 @@ const TaskCard = ({
             </div>
             <div className='flex-1 min-w-0'>
               {task.unique_id && (
-                <Badge variant='outline' className='text-[9px] mb-1'>
+                <Badge variant='outline' className='mb-1'>
                   {task.unique_id}
                 </Badge>
               )}
@@ -402,7 +402,7 @@ const TaskRow = ({
           </div>
           <div className='flex-1 min-w-0'>
             {task.unique_id && (
-              <Badge variant='outline' className='text-[9px] mb-1'>
+              <Badge variant='outline' className='mb-1'>
                 {task.unique_id}
               </Badge>
             )}
