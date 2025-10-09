@@ -58,6 +58,7 @@ const FormSchema = z.object({
   clientId: z.coerce.number().optional(),
   duration: z.date().optional().nullable(),
   startDate: z.date().optional().nullable(),
+  unique_id: z.string().min(2).max(100),
 });
 
 type CreateTaskFormProps = {
@@ -116,7 +117,6 @@ export default function CreateTaskForm({ setIsOpen }: CreateTaskFormProps) {
       clientId: data.clientId === 0 ? undefined : data.clientId,
       duration: data.duration ? new Date(data.duration) : new Date(),
       assignedUserIds: data.assignedUserIds || [],
-      unique_id: generateUniqueId(),
     };
 
     startTransition(() => {
@@ -271,6 +271,36 @@ export default function CreateTaskForm({ setIsOpen }: CreateTaskFormProps) {
             )}
           </div>
         </div>
+
+        <FormField
+          control={form.control}
+          name='unique_id'
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Unique ID</FormLabel>
+              <div className='flex gap-2 w-full'>
+                <FormControl>
+                  <Input
+                    className='w-full'
+                    placeholder='Enter unique ID or generate'
+                    {...field}
+                  />
+                </FormControl>
+                <Button
+                  type='button'
+                  variant='outline'
+                  onClick={() => {
+                    const id = generateUniqueId();
+                    field.onChange(id);
+                  }}
+                >
+                  Generate
+                </Button>
+              </div>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
 
         <FormField
           control={form.control}
