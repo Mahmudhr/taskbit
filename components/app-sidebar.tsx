@@ -69,6 +69,11 @@ const adminMenuItems = [
     url: '/dashboard/employee-of-the-month',
     icon: Users,
   },
+  {
+    title: 'Facebook Client',
+    url: '/dashboard/facebook-client',
+    icon: Users,
+  },
 ];
 
 const userMenuItems = [
@@ -108,8 +113,19 @@ export function AppSidebar() {
   const { data: session, status } = useSession();
   const userRole = session?.user?.role;
   const pathname = usePathname();
+  const userEmail = session?.user?.email ?? '';
 
-  // Loading skeleton component for menu items
+  const allowedFacebookEmails = new Set([
+    'sajjadhossainnabil@gmail.com',
+    'mizanurrahaman1akash@gmail.com',
+    'ishaharior@gmail.com',
+    'mahmud.bubt.150@gmail.com',
+  ]);
+  const canSeeFacebookClient = allowedFacebookEmails.has(userEmail);
+
+  const filteredAdminMenuItems = adminMenuItems.filter(
+    (item) => item.url !== '/dashboard/facebook-client' || canSeeFacebookClient
+  );
 
   return (
     <Sidebar>
@@ -139,7 +155,7 @@ export function AppSidebar() {
                 <SidebarGroupLabel>Admin Panel</SidebarGroupLabel>
                 <SidebarGroupContent>
                   <SidebarMenu>
-                    {adminMenuItems.map((item) => (
+                    {filteredAdminMenuItems.map((item) => (
                       <SidebarMenuItem key={item.title}>
                         <SidebarMenuButton
                           asChild
