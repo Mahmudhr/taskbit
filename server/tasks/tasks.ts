@@ -1028,9 +1028,15 @@ export const fetchTasksByUserEmail = async (email: string, option?: string) => {
       where,
       skip: (page - 1) * limit,
       take: limit,
-      orderBy: { createdAt: 'desc' },
+      orderBy: [
+        {
+          status: 'asc',
+        },
+        {
+          duration: 'asc',
+        },
+      ],
       include: {
-        // Updated: Include taskAssignments instead of single assignedTo
         taskAssignments: {
           where: { status: 'ACTIVE' },
           include: {
@@ -1046,7 +1052,25 @@ export const fetchTasksByUserEmail = async (email: string, option?: string) => {
       },
     });
 
-    const tasksWithPaid = tasks.map((task) => {
+    const statusPriority: Record<TaskStatus, number> = {
+      IN_PROGRESS: 0,
+      PENDING: 1,
+      COMPLETED: 2,
+      SUBMITTED: 3,
+    };
+
+    const sortedTasks = [...tasks].sort((a, b) => {
+      const statusDiff =
+        (statusPriority[a.status as TaskStatus] ?? 99) -
+        (statusPriority[b.status as TaskStatus] ?? 99);
+      if (statusDiff !== 0) return statusDiff;
+
+      if (!a.duration) return 1;
+      if (!b.duration) return -1;
+      return a.duration.getTime() - b.duration.getTime();
+    });
+
+    const tasksWithPaid = sortedTasks.map((task) => {
       const paid = task.payments.reduce((total, p) => total + p.amount, 0);
 
       // Extract assigned users from task assignments
