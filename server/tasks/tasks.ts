@@ -288,7 +288,6 @@ export async function updateTask(id: number, data: CreateTaskType) {
     assignedUserIds,
     targetDate,
     link,
-    unique_id,
   } = data;
 
   try {
@@ -308,7 +307,6 @@ export async function updateTask(id: number, data: CreateTaskType) {
           startDate: startDate ? new Date(startDate) : null,
           targetDate,
           link,
-          unique_id,
         },
       });
 
