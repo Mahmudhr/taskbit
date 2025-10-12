@@ -155,6 +155,11 @@ export default function TaskDetails({ task }: { task: TaskType }) {
 
       <div>
         <h4 className='text-sm font-medium mb-4'>Task Details</h4>
+        <DetailItem
+          label='Unique Id'
+          value={task.unique_id || 'Not provided'}
+          fieldName='Unique Id'
+        />
         <div className='grid grid-cols-1 gap-4'>
           <DetailItem
             label='Description'
@@ -179,23 +184,27 @@ export default function TaskDetails({ task }: { task: TaskType }) {
           />
           <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
             <DetailItem
-              label='Duration'
+              label='Assigned Date'
               value={
-                task.duration
-                  ? dayjs(task.duration).format('DD-MM-YYYY')
-                  : 'Not set'
+                task.startDate
+                  ? dayjs(task.startDate).format('DD MMM YYYY')
+                  : 'Not Set'
               }
-              fieldName='Duration'
+              fieldName='Assigned Date'
             />
             <DetailItem
               label='Created At'
-              value={dayjs(task.createdAt).format('DD-MM-YYYY, h:mm a')}
+              value={dayjs(task.createdAt).format('DD MMM YYYY')}
               fieldName='Created At'
             />
             <DetailItem
-              label='Updated At'
-              value={dayjs(task.updatedAt).format('DD-MM-YYYY, h:mm a')}
-              fieldName='Updated At'
+              label='Delivery Date'
+              value={
+                task.duration
+                  ? dayjs(task.duration).format('DD MMM YYYY')
+                  : 'Not Set'
+              }
+              fieldName='Delivery Date'
             />
           </div>
         </div>
