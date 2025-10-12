@@ -84,7 +84,11 @@ export default function CreateTaskDeliveryForm({
     defaultValues: {
       title: data?.title || '',
       link: data?.link || '',
-      status: data?.status || TaskStatus.PENDING,
+      status:
+        session?.user?.role === 'EMPLOYEE' &&
+        data?.status === TaskStatus.COMPLETED
+          ? TaskStatus.IN_PROGRESS
+          : data?.status || TaskStatus.PENDING,
       note: data?.note || '',
     },
   });
@@ -206,64 +210,90 @@ export default function CreateTaskDeliveryForm({
             )}
           />
         )}
-        <FormItem>
-          <FormLabel className='flex items-center gap-2'>
-            <Users className='h-4 w-4' />
-            Assign To Users
-          </FormLabel>
+        {session?.user?.role !== 'EMPLOYEE' && (
+          <FormItem>
+            <FormLabel className='flex items-center gap-2'>
+              <Users className='h-4 w-4' />
+              Assign To Users
+            </FormLabel>
 
-          {/* User Search */}
-          <UserSearchAndSelect
-            placeholder='Search user by name or email...'
-            search={search}
-            onSelect={(option) => addUser(option)}
-          />
+            {/* User Search */}
+            <UserSearchAndSelect
+              placeholder='Search user by name or email...'
+              search={search}
+              onSelect={(option) => addUser(option)}
+            />
 
-          <FormMessage />
+            <FormMessage />
 
-          {/* Selected Users Display */}
-          {selectedUsers.length > 0 && (
-            <div className='mt-4 space-y-2'>
-              <div className='text-sm font-medium text-muted-foreground'>
-                Selected Users ({selectedUsers.length}):
+            {/* Selected Users Display */}
+            {selectedUsers.length > 0 && (
+              <div className='mt-4 space-y-2'>
+                <div className='text-sm font-medium text-muted-foreground'>
+                  Selected Users ({selectedUsers.length}):
+                </div>
+                <div className='flex flex-wrap gap-2'>
+                  {selectedUsers.map((user) => (
+                    <Badge
+                      key={user.value}
+                      variant='secondary'
+                      className='flex items-center gap-2 px-3 py-1'
+                    >
+                      <div className='flex flex-col items-start'>
+                        <span className='font-medium'>{user.user.name}</span>
+                        <span className='text-xs opacity-70'>
+                          {user.user.email}
+                        </span>
+                      </div>
+                      {session?.user?.email !== user.user.email && (
+                        <Button
+                          type='button'
+                          variant='ghost'
+                          size='sm'
+                          className='h-4 w-4 p-0 hover:bg-destructive hover:text-destructive-foreground'
+                          onClick={() => removeUser(user.value)}
+                        >
+                          <X className='h-3 w-3' />
+                        </Button>
+                      )}
+                    </Badge>
+                  ))}
+                </div>
               </div>
-              <div className='flex flex-wrap gap-2'>
-                {selectedUsers.map((user) => (
-                  <Badge
-                    key={user.value}
-                    variant='secondary'
-                    className='flex items-center gap-2 px-3 py-1'
-                  >
-                    <div className='flex flex-col items-start'>
-                      <span className='font-medium'>{user.user.name}</span>
-                      <span className='text-xs opacity-70'>
-                        {user.user.email}
-                      </span>
-                    </div>
-                    {session?.user?.email !== user.user.email && (
-                      <Button
-                        type='button'
-                        variant='ghost'
-                        size='sm'
-                        className='h-4 w-4 p-0 hover:bg-destructive hover:text-destructive-foreground'
-                        onClick={() => removeUser(user.value)}
-                      >
-                        <X className='h-3 w-3' />
-                      </Button>
-                    )}
-                  </Badge>
-                ))}
-              </div>
-            </div>
-          )}
+            )}
 
-          {/* Empty State */}
-          {selectedUsers.length === 0 && (
-            <div className='mt-2 text-sm text-muted-foreground italic'>
-              No users assigned yet. Search and select users above.
+            {/* Empty State */}
+            {selectedUsers.length === 0 && (
+              <div className='mt-2 text-sm text-muted-foreground italic'>
+                No users assigned yet. Search and select users above.
+              </div>
+            )}
+          </FormItem>
+        )}
+
+        {session?.user?.role === 'EMPLOYEE' && selectedUsers.length > 0 && (
+          <div className='mt-4 space-y-2'>
+            <div className='text-sm font-medium text-muted-foreground'>
+              Selected Users ({selectedUsers.length}):
             </div>
-          )}
-        </FormItem>
+            <div className='flex flex-wrap gap-2'>
+              {selectedUsers.map((user) => (
+                <Badge
+                  key={user.value}
+                  variant='secondary'
+                  className='flex items-center gap-2 px-3 py-1'
+                >
+                  <div className='flex flex-col items-start'>
+                    <span className='font-medium'>{user.user.name}</span>
+                    <span className='text-xs opacity-70'>
+                      {user.user.email}
+                    </span>
+                  </div>
+                </Badge>
+              ))}
+            </div>
+          </div>
+        )}
 
         <FormField
           control={form.control}
@@ -274,7 +304,6 @@ export default function CreateTaskDeliveryForm({
               <Select
                 onValueChange={(value) => {
                   field.onChange(value);
-                  // Trigger validation for the link field when status changes
                   form.trigger('link');
                 }}
                 defaultValue={field.value}
@@ -285,7 +314,13 @@ export default function CreateTaskDeliveryForm({
                   </SelectTrigger>
                 </FormControl>
                 <SelectContent className='z-[9999]'>
-                  {allTaskStatus.map((status) => (
+                  {(session?.user?.role === 'EMPLOYEE'
+                    ? allTaskStatus.filter(
+                        (status) =>
+                          status === 'PENDING' || status === 'IN_PROGRESS'
+                      )
+                    : allTaskStatus
+                  ).map((status) => (
                     <SelectItem key={status} value={status}>
                       {
                         taskStatusConvert[
