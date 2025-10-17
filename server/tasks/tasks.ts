@@ -7,6 +7,7 @@ import {
   UpdateUserTaskDeliveryType,
 } from '../types/tasks-type';
 import { catchError, generateUniqueId } from '@/lib/utils';
+import { sendTaskAssignmentEmail } from '@/lib/email';
 
 export async function createTasks(data: CreateTaskType) {
   const {
@@ -69,7 +70,11 @@ export async function createTasks(data: CreateTaskType) {
             isDeleted: false,
             status: 'ACTIVE',
           },
-          select: { id: true, name: true },
+          select: {
+            id: true,
+            name: true,
+            email: true,
+          },
         });
 
         if (existingUsers.length !== userIdsToAssign.length) {
@@ -91,6 +96,24 @@ export async function createTasks(data: CreateTaskType) {
         await tx.taskAssignment.createMany({
           data: taskAssignments,
         });
+
+        const baseUrl =
+          process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+        const taskUrl = `${baseUrl}/dashboard/my-tasks`;
+
+        await Promise.all(
+          existingUsers.map((user) =>
+            sendTaskAssignmentEmail({
+              userEmail: user.email,
+              userName: user.name,
+              taskTitle: title,
+              taskLink: taskUrl,
+              duration,
+            }).catch((error) => {
+              console.error(`Failed to send email to ${user.email}:`, error);
+            })
+          )
+        );
       }
 
       return newTask;
