@@ -766,7 +766,6 @@ export const fetchAllTasks = async (data?: string) => {
       take: limit,
       orderBy: { duration: 'asc' },
       include: {
-        // Updated: Include taskAssignments instead of single assignedTo
         taskAssignments: {
           where: { status: 'ACTIVE' },
           include: {
@@ -776,22 +775,31 @@ export const fetchAllTasks = async (data?: string) => {
           },
         },
         client: { select: { id: true, name: true, email: true } },
-        payments: { where: { status: 'COMPLETED' } },
+        payments: {
+          select: {
+            id: true,
+            amount: true,
+            status: true,
+            referenceNumber: true,
+            paymentType: true,
+            createdAt: true,
+          },
+        },
         receivableAmounts: { select: { id: true, amount: true, status: true } },
         createdBy: { select: { id: true, name: true, email: true } },
       },
     });
 
-    // Calculate paid amount for each task and format assigned users
     let tasksWithPaid = tasks.map((task) => {
-      const paid = task.payments.reduce((total, p) => total + p.amount, 0);
+      const paid = task.payments
+        .filter((p) => p.status === 'COMPLETED')
+        .reduce((total, p) => total + (p.amount || 0), 0);
 
       const receivable = task.receivableAmounts.reduce(
         (total, r) => total + r.amount,
         0
       );
 
-      // Extract assigned users from task assignments
       const assignedUsers = task.taskAssignments.map(
         (assignment) => assignment.user
       );
@@ -1092,7 +1100,9 @@ export const fetchTasksByUserEmail = async (email: string, option?: string) => {
     });
 
     const tasksWithPaid = sortedTasks.map((task) => {
-      const paid = task.payments.reduce((total, p) => total + p.amount, 0);
+      const paid = task.payments
+        .filter((p) => p.status === 'COMPLETED')
+        .reduce((total, p) => total + (p.amount || 0), 0);
 
       // Extract assigned users from task assignments
       const assignedUsers = task.taskAssignments.map(
@@ -1549,7 +1559,7 @@ export const fetchAllTaskWithCalculation = async (data?: string) => {
     select: {
       id: true,
       amount: true,
-      payments: { select: { amount: true } },
+      payments: { where: { status: 'COMPLETED' }, select: { amount: true } },
       receivableAmounts: { select: { amount: true } },
     },
   });

@@ -57,6 +57,7 @@ export function usePayment(options?: string) {
       queryClient.invalidateQueries({ queryKey: ['payments'] });
       queryClient.invalidateQueries({ queryKey: ['dashboard'] });
       queryClient.invalidateQueries({ queryKey: ['tasks'] });
+      queryClient.invalidateQueries({ queryKey: ['tasks-calc'] });
       queryClient.invalidateQueries({ queryKey: ['payments-calculation'] });
       queryClient.invalidateQueries({
         queryKey: ['dashboard', `?month=${currentMonth}`],
@@ -99,6 +100,7 @@ export function usePayment(options?: string) {
       queryClient.invalidateQueries({ queryKey: ['payments'] });
       queryClient.invalidateQueries({ queryKey: ['dashboard'] });
       queryClient.invalidateQueries({ queryKey: ['payments-calculation'] });
+      queryClient.invalidateQueries({ queryKey: ['tasks-calc'] });
       queryClient.invalidateQueries({ queryKey: ['tasks'] });
       queryClient.invalidateQueries({
         queryKey: ['dashboard', `?month=${currentMonth}`],

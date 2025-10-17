@@ -72,7 +72,14 @@ export type TaskType = {
     email: string | null;
   } | null;
 
-  payments: FlatPaymentType[];
+  payments: {
+    id: number;
+    amount: number;
+    status: $Enums.PaymentStatus;
+    referenceNumber: string;
+    paymentType: $Enums.PaymentType;
+    createdAt: Date;
+  }[];
   startDate?: Date | null;
   assignedUsers:
     | {
