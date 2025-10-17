@@ -98,8 +98,9 @@ export async function createTasks(data: CreateTaskType) {
         });
 
         const baseUrl =
-          process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
-        const taskUrl = `${baseUrl}/dashboard/my-tasks`;
+          process.env.NEXT_PUBLIC_APP_URL || 'https://taskbit-pi.vercel.app';
+        const encodedTitle = encodeURIComponent(title);
+        const taskUrl = `${baseUrl}/dashboard/my-tasks?search=${encodedTitle}&page=1`;
 
         await Promise.all(
           existingUsers.map((user) =>
