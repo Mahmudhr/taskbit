@@ -790,10 +790,27 @@ export const fetchAllTasks = async (data?: string) => {
       },
     });
 
+    // Get paid amounts aggregation for all tasks
+    const taskIds = tasks.map((task) => task.id);
+    const paidAggregates = await prisma.payment.groupBy({
+      by: ['taskId'],
+      where: {
+        taskId: { in: taskIds },
+        status: 'COMPLETED',
+      },
+      _sum: {
+        amount: true,
+      },
+    });
+
+    // Create a map for quick lookup
+    const paidMap = new Map();
+    paidAggregates.forEach((agg) => {
+      paidMap.set(agg.taskId, agg._sum.amount || 0);
+    });
+
     let tasksWithPaid = tasks.map((task) => {
-      const paid = task.payments
-        .filter((p) => p.status === 'COMPLETED')
-        .reduce((total, p) => total + (p.amount || 0), 0);
+      const paid = paidMap.get(task.id) || 0;
 
       const assignedUsers = task.taskAssignments.map(
         (assignment) => assignment.user
