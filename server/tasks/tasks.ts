@@ -786,7 +786,6 @@ export const fetchAllTasks = async (data?: string) => {
             createdAt: true,
           },
         },
-        receivableAmounts: { select: { id: true, amount: true, status: true } },
         createdBy: { select: { id: true, name: true, email: true } },
       },
     });
@@ -795,11 +794,6 @@ export const fetchAllTasks = async (data?: string) => {
       const paid = task.payments
         .filter((p) => p.status === 'COMPLETED')
         .reduce((total, p) => total + (p.amount || 0), 0);
-
-      const receivable = task.receivableAmounts.reduce(
-        (total, r) => total + r.amount,
-        0
-      );
 
       const assignedUsers = task.taskAssignments.map(
         (assignment) => assignment.user
@@ -826,8 +820,6 @@ export const fetchAllTasks = async (data?: string) => {
         note: task.note,
         createdBy: task.createdBy,
         paid,
-        receivable,
-        receivableAmounts: task.receivableAmounts,
         unique_id: task.unique_id,
       };
     });
