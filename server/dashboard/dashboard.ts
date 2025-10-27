@@ -376,39 +376,30 @@ export const getAllDashboardCalc = async (data?: string) => {
 
   const where = whereConditions.length > 0 ? { AND: whereConditions } : {};
 
-  // Fetch all tasks
-  const allTasks = await prisma.task.findMany({
-    where: {
-      ...where,
-      isDeleted: false,
-    },
-    select: {
-      amount: true,
-    },
-  });
+  const [taskStats, paymentStats, expenseStats] = await Promise.all([
+    prisma.task.aggregate({
+      where: {
+        ...where,
+        isDeleted: false,
+      },
+      _sum: { amount: true },
+    }),
 
-  // Fetch all payments
-  const allPayments = await prisma.payment.findMany({
-    where,
-    select: {
-      amount: true,
-    },
-  });
+    prisma.payment.aggregate({
+      where,
+      _sum: { amount: true },
+    }),
 
-  // Fetch all expenses
-  const allExpenses = await prisma.expense.findMany({
-    where,
-    select: {
-      amount: true,
-    },
-  });
+    prisma.expense.aggregate({
+      where,
+      _sum: { amount: true },
+    }),
+  ]);
 
-  // Calculate totals
-  const totalPrice = allTasks.reduce((sum, t) => sum + (t.amount || 0), 0);
-  const received = allPayments.reduce((sum, p) => sum + (p.amount || 0), 0);
+  const totalPrice = taskStats._sum.amount || 0;
+  const received = paymentStats._sum.amount || 0;
+  const expense = expenseStats._sum.amount || 0;
   const due = totalPrice - received;
-  const expense = allExpenses.reduce((sum, e) => sum + (e.amount || 0), 0);
-
   const netIncome = received - expense;
 
   return {

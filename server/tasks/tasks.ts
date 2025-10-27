@@ -1229,7 +1229,6 @@ export const fetchAllTaskCalculation = async (data?: string) => {
 
   const whereConditions: Prisma.TaskWhereInput[] = [{ isDeleted: false }];
 
-  // Track if any filter other than status is present
   let hasOtherFilter = false;
 
   if (search) {
@@ -1325,7 +1324,6 @@ export const fetchAllTaskCalculation = async (data?: string) => {
     });
   }
 
-  // Only apply status filter if another filter is present
   if (status && status !== 'ALL' && hasOtherFilter) {
     whereConditions.push({ status: status as TaskStatus });
   }
@@ -1546,7 +1544,6 @@ export const fetchAllTaskWithCalculation = async (data?: string) => {
     }
   }
 
-  // Only apply status filter if another filter is present
   if (status && status !== 'ALL' && hasOtherFilter) {
     whereConditions.push({ status: status as TaskStatus });
   }
@@ -1554,28 +1551,37 @@ export const fetchAllTaskWithCalculation = async (data?: string) => {
   const where: Prisma.TaskWhereInput =
     whereConditions.length > 0 ? { AND: whereConditions } : {};
 
-  // Fetch tasks with payments and receivableAmounts
-  const tasks = await prisma.task.findMany({
-    where,
-    select: {
-      id: true,
-      amount: true,
-      payments: { where: { status: 'COMPLETED' }, select: { amount: true } },
-      receivableAmounts: { select: { amount: true } },
-    },
-  });
+  const [taskStats, paymentStats, taskWithPayments] = await Promise.all([
+    // Get task count and total amount
+    prisma.task.aggregate({
+      where,
+      _count: { id: true },
+      _sum: { amount: true },
+    }),
 
-  // Calculate totals
-  const totalAmount = tasks.reduce((sum, t) => sum + (t.amount || 0), 0);
-  const totalTaskCount = tasks.length;
+    prisma.payment.aggregate({
+      where: {
+        status: 'COMPLETED',
+        task: where,
+      },
+      _sum: { amount: true },
+    }),
 
-  let paidAmount = 0;
-  let paidTaskCount = 0;
-  tasks.forEach((t) => {
-    const taskPaid = t.payments.reduce((sum, p) => sum + (p.amount || 0), 0);
-    paidAmount += taskPaid;
-    if (taskPaid > 0) paidTaskCount += 1;
-  });
+    prisma.task.findMany({
+      where: {
+        ...where,
+        payments: {
+          some: { status: 'COMPLETED' },
+        },
+      },
+      select: { id: true },
+    }),
+  ]);
+
+  const totalAmount = taskStats._sum.amount || 0;
+  const totalTaskCount = taskStats._count.id || 0;
+  const paidAmount = paymentStats._sum.amount || 0;
+  const paidTaskCount = taskWithPayments.length;
 
   return {
     totalAmount,
