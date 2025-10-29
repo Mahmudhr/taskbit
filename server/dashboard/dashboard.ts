@@ -201,55 +201,58 @@ export const getAllDashboardData = async (data?: string) => {
       _sum: { amount: true },
     });
 
-    // Calculate payment totals
+    // Create maps for efficient status lookups
+    const paymentStatusMap = new Map();
+    const salaryStatusMap = new Map();
+
+    paymentStatusCounts.forEach((p) => {
+      paymentStatusMap.set(p.status, {
+        amount: p._sum.amount || 0,
+        count: p._count._all || 0,
+      });
+    });
+
+    salaryStatusCounts.forEach((s) => {
+      salaryStatusMap.set(s.status, {
+        amount: s._sum.amount || 0,
+        count: s._count._all || 0,
+      });
+    });
+
+    // Calculate payment totals with efficient lookups
     const totalPayments = paymentAgg._sum.amount || 0;
     const totalPaymentsCount = paymentAgg._count._all || 0;
-    const completedPayments =
-      paymentStatusCounts.find((p) => p.status === 'COMPLETED')?._sum.amount ||
-      0;
-    const pendingPayments =
-      paymentStatusCounts.find((p) => p.status === 'PENDING')?._sum.amount || 0;
-    const failedPayments =
-      paymentStatusCounts.find((p) => p.status === 'FAILED')?._sum.amount || 0;
+    const completedPayments = paymentStatusMap.get('COMPLETED')?.amount || 0;
+    const pendingPayments = paymentStatusMap.get('PENDING')?.amount || 0;
+    const failedPayments = paymentStatusMap.get('FAILED')?.amount || 0;
 
-    // Calculate salary totals
+    // Calculate salary totals with efficient lookups
     const totalSalaries = salaryAgg._sum.amount || 0;
     const totalSalariesCount = salaryAgg._count._all || 0;
-    const paidSalaries =
-      salaryStatusCounts.find((s) => s.status === 'PAID')?._sum.amount || 0;
-    const paidSalariesCount =
-      salaryStatusCounts.find((s) => s.status === 'PAID')?._count._all || 0;
-    const pendingSalariesCount =
-      salaryStatusCounts.find((s) => s.status === 'PENDING')?._count._all || 0;
+    const paidSalaries = salaryStatusMap.get('PAID')?.amount || 0;
+    const paidSalariesCount = salaryStatusMap.get('PAID')?.count || 0;
+    const pendingSalariesCount = salaryStatusMap.get('PENDING')?.count || 0;
 
     // Calculate expense totals (expenses + paid salaries)
     const totalExpenses = (expenseAgg._sum.amount || 0) + paidSalaries;
     const totalExpensesCount = expenseAgg._count._all || 0;
 
     // Calculate business metrics
-    const totalOutgoing = totalExpenses;
-    const totalIncoming = completedPayments;
-
-    // Total task price
     const totalTaskPrice = taskAgg._sum.amount || 0;
-
-    // Due = total task price - total received
+    const totalIncoming = completedPayments;
+    const totalOutgoing = totalExpenses;
     const due = totalTaskPrice - completedPayments;
-
     const netProfit = totalIncoming - totalOutgoing;
 
-    // Get counts for dashboard cards
+    // Pre-calculate percentage base for reuse
+    const incomeBase = totalIncoming > 0 ? totalIncoming : 1; // Avoid division by zero
+
+    // Get counts for dashboard cards using efficient lookups
     const paymentCounts = {
       total: totalPaymentsCount,
-      completed:
-        paymentStatusCounts.find((p) => p.status === 'COMPLETED')?._count
-          ._all || 0,
-      pending:
-        paymentStatusCounts.find((p) => p.status === 'PENDING')?._count._all ||
-        0,
-      failed:
-        paymentStatusCounts.find((p) => p.status === 'FAILED')?._count._all ||
-        0,
+      completed: paymentStatusMap.get('COMPLETED')?.count || 0,
+      pending: paymentStatusMap.get('PENDING')?.count || 0,
+      failed: paymentStatusMap.get('FAILED')?.count || 0,
     };
 
     const expenseCounts = {
@@ -271,9 +274,7 @@ export const getAllDashboardData = async (data?: string) => {
           netProfit,
           due,
           profitMargin:
-            totalIncoming > 0
-              ? Math.round((netProfit / totalIncoming) * 100)
-              : 0,
+            totalIncoming > 0 ? Math.round((netProfit / incomeBase) * 100) : 0,
           totalTaskPrice,
         },
         payments: {
@@ -298,16 +299,14 @@ export const getAllDashboardData = async (data?: string) => {
         insights: {
           expensePercentage:
             totalIncoming > 0
-              ? Math.round((totalExpenses / totalIncoming) * 100)
+              ? Math.round((totalExpenses / incomeBase) * 100)
               : 0,
           salaryPercentage:
             totalIncoming > 0
-              ? Math.round((paidSalaries / totalIncoming) * 100)
+              ? Math.round((paidSalaries / incomeBase) * 100)
               : 0,
           profitMargin:
-            totalIncoming > 0
-              ? Math.round((netProfit / totalIncoming) * 100)
-              : 0,
+            totalIncoming > 0 ? Math.round((netProfit / incomeBase) * 100) : 0,
         },
         recent: {
           payments: recentPayments,
