@@ -570,10 +570,10 @@ export async function updateUserTaskDelivery(
 
 export const fetchAllTasks = async (data?: string) => {
   const params = new URLSearchParams(data || '');
-
   const search = params.get('search') || '';
   const page = parseInt(params.get('page') ?? '1') || 1;
   const limit = 10;
+
   const status = params.get('status') || '';
   const paper_type = params.get('paper_type') || '';
   const client = params.get('client') || '';
@@ -583,7 +583,6 @@ export const fetchAllTasks = async (data?: string) => {
   const due_date = params.get('due_date') || '';
   const due_month = params.get('due_month') || '';
   const due_year = params.get('due_year') || '';
-
   const task_create = params.get('task_create') || '';
   const task_create_month = params.get('task_create_month') || '';
   const task_create_year = params.get('task_create_year') || '';
@@ -593,264 +592,140 @@ export const fetchAllTasks = async (data?: string) => {
     return Number.isFinite(n) && n >= 1 && n <= 12 ? n : undefined;
   };
 
-  const buildDayRange = (d: Date): Prisma.DateTimeFilter => ({
-    gte: new Date(d.getFullYear(), d.getMonth(), d.getDate(), 0, 0, 0, 0),
-    lte: new Date(d.getFullYear(), d.getMonth(), d.getDate(), 23, 59, 59, 999),
+  const buildRange = (start: Date, end: Date): Prisma.DateTimeFilter => ({
+    gte: start,
+    lte: end,
   });
 
-  const buildMonthRange = (y: number, m: number): Prisma.DateTimeFilter => ({
-    gte: new Date(y, m - 1, 1, 0, 0, 0, 0),
-    lte: new Date(y, m, 0, 23, 59, 59, 999),
-  });
-
-  const getYearSpan = async (
-    field: 'duration' | 'createdAt'
-  ): Promise<{ start: number; end: number }> => {
-    if (field === 'duration') {
-      const minRec = await prisma.task.findFirst({
-        where: { NOT: { duration: null } },
-        orderBy: { duration: 'asc' },
-        select: { duration: true },
-      });
-
-      const maxRec = await prisma.task.findFirst({
-        where: { NOT: { duration: null } },
-        orderBy: { duration: 'desc' },
-        select: { duration: true },
-      });
-
-      if (minRec?.duration && maxRec?.duration) {
-        return {
-          start: new Date(minRec.duration).getFullYear(),
-          end: new Date(maxRec.duration).getFullYear(),
-        };
-      }
-    } else {
-      const minRec = await prisma.task.findFirst({
-        orderBy: { createdAt: 'asc' },
-        select: { createdAt: true },
-      });
-      const maxRec = await prisma.task.findFirst({
-        orderBy: { createdAt: 'desc' },
-        select: { createdAt: true },
-      });
-      if (minRec?.createdAt && maxRec?.createdAt) {
-        return {
-          start: new Date(minRec.createdAt).getFullYear(),
-          end: new Date(maxRec.createdAt).getFullYear(),
-        };
-      }
-    }
-
-    const nowY = new Date().getFullYear();
-    return { start: nowY - 10, end: nowY + 1 };
-  };
-
-  const whereConditions: Prisma.TaskWhereInput[] = [{ isDeleted: false }];
-
-  if (search) {
-    whereConditions.push({
+  const where: Prisma.TaskWhereInput = {
+    isDeleted: false,
+    ...(search && {
       OR: [
         { title: { contains: search, mode: 'insensitive' } },
         { description: { contains: search, mode: 'insensitive' } },
-        { client: { name: { contains: search, mode: 'insensitive' } } },
         { unique_id: { contains: search, mode: 'insensitive' } },
+        { client: { name: { contains: search, mode: 'insensitive' } } },
       ],
-    });
-  }
-
-  if (status && status !== 'ALL') {
-    whereConditions.push({ status: status as TaskStatus });
-  }
-
-  // if (unique_id) {
-  //   whereConditions.push({
-  //     unique_id: { contains: unique_id, mode: 'insensitive' },
-  //   });
-  // }
-
-  if (paper_type && paper_type !== 'ALL') {
-    whereConditions.push({ paper_type: paper_type as PaperType });
-  }
-
-  if (assignedUser && assignedUser !== 'ALL') {
-    whereConditions.push({
-      taskAssignments: {
-        some: {
-          status: 'ACTIVE',
-          user: {
-            name: { contains: assignedUser, mode: 'insensitive' },
-          },
-        },
-      },
-    });
-  }
-
-  let dueDateFilter: Prisma.DateTimeFilter | undefined;
-  if (due_date) {
-    const d = new Date(due_date);
-    if (!isNaN(d.getTime())) dueDateFilter = buildDayRange(d);
-  } else if (due_month && due_year) {
-    const m = monthToInt(due_month);
-    const y = parseInt(due_year);
-    if (m && y > 0) dueDateFilter = buildMonthRange(y, m);
-  } else if (due_year) {
-    const y = parseInt(due_year);
-    if (y > 0)
-      dueDateFilter = {
-        gte: new Date(y, 0, 1, 0, 0, 0, 0),
-        lte: new Date(y, 11, 31, 23, 59, 59, 999),
-      };
-  }
-
-  if (dueDateFilter) {
-    whereConditions.push({ duration: dueDateFilter });
-  } else if (due_month && !due_year && !due_date) {
-    const m = monthToInt(due_month);
-    if (m) {
-      const span = await getYearSpan('duration');
-      const orRanges: Prisma.TaskWhereInput[] = [];
-      for (let y = span.start; y <= span.end; y++) {
-        orRanges.push({ duration: buildMonthRange(y, m) });
-      }
-      if (orRanges.length) whereConditions.push({ OR: orRanges });
-    }
-  }
-
-  let taskCreateFilter: Prisma.DateTimeFilter | undefined;
-  if (task_create) {
-    const d = new Date(task_create);
-    if (!isNaN(d.getTime())) taskCreateFilter = buildDayRange(d);
-  } else if (task_create_month && task_create_year) {
-    const m = monthToInt(task_create_month);
-    const y = parseInt(task_create_year);
-    if (m && y > 0) taskCreateFilter = buildMonthRange(y, m);
-  } else if (task_create_year) {
-    const y = parseInt(task_create_year);
-    if (y > 0)
-      taskCreateFilter = {
-        gte: new Date(y, 0, 1, 0, 0, 0, 0),
-        lte: new Date(y, 11, 31, 23, 59, 59, 999),
-      };
-  }
-
-  if (taskCreateFilter) {
-    whereConditions.push({ createdAt: taskCreateFilter });
-  } else if (task_create_month && !task_create_year && !task_create) {
-    const m = monthToInt(task_create_month);
-    if (m) {
-      const span = await getYearSpan('createdAt');
-      const orRanges: Prisma.TaskWhereInput[] = [];
-      for (let y = span.start; y <= span.end; y++) {
-        orRanges.push({ createdAt: buildMonthRange(y, m) });
-      }
-      if (orRanges.length) whereConditions.push({ OR: orRanges });
-    }
-  }
-
-  if (client && client !== 'ALL') {
-    whereConditions.push({
-      client: { name: { contains: client, mode: 'insensitive' } },
-    });
-  }
-
-  const where: Prisma.TaskWhereInput =
-    whereConditions.length > 0 ? { AND: whereConditions } : {};
-
-  try {
-    const count = await prisma.task.count({ where });
-    const totalPages = Math.ceil(count / limit);
-
-    const tasks = await prisma.task.findMany({
-      where,
-      skip: (page - 1) * limit,
-      take: limit,
-      orderBy: { duration: 'asc' },
-      include: {
+    }),
+    ...(status && status !== 'ALL' && { status: status as TaskStatus }),
+    ...(paper_type &&
+      paper_type !== 'ALL' && { paper_type: paper_type as PaperType }),
+    ...(client &&
+      client !== 'ALL' && {
+        client: { name: { contains: client, mode: 'insensitive' } },
+      }),
+    ...(assignedUser &&
+      assignedUser !== 'ALL' && {
         taskAssignments: {
-          where: { status: 'ACTIVE' },
-          include: {
-            user: {
-              select: { id: true, name: true, email: true },
-            },
+          some: {
+            status: 'ACTIVE',
+            user: { name: { contains: assignedUser, mode: 'insensitive' } },
           },
         },
-        client: { select: { id: true, name: true, email: true } },
-        payments: {
-          select: {
-            id: true,
-            amount: true,
-            status: true,
-            referenceNumber: true,
-            paymentType: true,
-            createdAt: true,
-          },
-        },
-        createdBy: { select: { id: true, name: true, email: true } },
-      },
-    });
+      }),
+  };
 
-    // Get paid amounts aggregation for all tasks
-    const taskIds = tasks.map((task) => task.id);
-    const paidAggregates = await prisma.payment.groupBy({
-      by: ['taskId'],
-      where: {
-        taskId: { in: taskIds },
-        status: 'COMPLETED',
-      },
-      _sum: {
-        amount: true,
-      },
-    });
+  // ---- Date Filters ----
+  const createDateFilter = (day?: string, month?: string, year?: string) => {
+    const m = monthToInt(month || '');
+    const y = parseInt(year || '');
+    const d = day ? new Date(day) : null;
 
-    // Create a map for quick lookup
-    const paidMap = new Map();
-    paidAggregates.forEach((agg) => {
-      paidMap.set(agg.taskId, agg._sum.amount || 0);
-    });
-
-    let tasksWithPaid = tasks.map((task) => {
-      const paid = paidMap.get(task.id) || 0;
-
-      const assignedUsers = task.taskAssignments.map(
-        (assignment) => assignment.user
+    if (d && !isNaN(d.getTime()))
+      return buildRange(
+        new Date(d.setHours(0, 0, 0, 0)),
+        new Date(d.setHours(23, 59, 59, 999))
       );
 
+    if (m && y > 0)
+      return buildRange(
+        new Date(y, m - 1, 1),
+        new Date(y, m, 0, 23, 59, 59, 999)
+      );
+
+    if (y > 0)
+      return buildRange(
+        new Date(y, 0, 1),
+        new Date(y, 11, 31, 23, 59, 59, 999)
+      );
+
+    return undefined;
+  };
+
+  const dueFilter = createDateFilter(due_date, due_month, due_year);
+  const taskCreateFilter = createDateFilter(
+    task_create,
+    task_create_month,
+    task_create_year
+  );
+
+  if (dueFilter) where.duration = dueFilter;
+  if (taskCreateFilter) where.createdAt = taskCreateFilter;
+
+  try {
+    // Fetch count and data in parallel for better performance
+    const [count, tasks] = await Promise.all([
+      prisma.task.count({ where }),
+      prisma.task.findMany({
+        where,
+        skip: (page - 1) * limit,
+        take: limit,
+        orderBy: { duration: 'asc' },
+        include: {
+          taskAssignments: {
+            where: { status: 'ACTIVE' },
+            include: {
+              user: { select: { id: true, name: true, email: true } },
+            },
+          },
+          client: { select: { id: true, name: true, email: true } },
+          payments: {
+            select: {
+              id: true,
+              amount: true,
+              status: true,
+              referenceNumber: true,
+              paymentType: true,
+              createdAt: true,
+            },
+          },
+          createdBy: { select: { id: true, name: true, email: true } },
+        },
+      }),
+    ]);
+
+    const taskIds = tasks.map((t) => t.id);
+    const paidData = await prisma.payment.groupBy({
+      by: ['taskId'],
+      where: { taskId: { in: taskIds }, status: 'COMPLETED' },
+      _sum: { amount: true },
+    });
+
+    const paidMap = Object.fromEntries(
+      paidData.map((p) => [p.taskId, p._sum.amount || 0])
+    );
+
+    let result = tasks.map((task) => {
+      const paid = paidMap[task.id] || 0;
+      const assignedUsers = task.taskAssignments.map((t) => t.user);
+
       return {
-        id: task.id,
-        title: task.title,
-        description: task.description,
-        link: task.link,
-        status: task.status,
-        paper_type: task.paper_type,
-        createdAt: task.createdAt,
-        updatedAt: task.updatedAt,
-        duration: task.duration,
-        clientId: task.clientId,
-        createdById: task.createdById,
-        amount: task.amount,
-        target_date: task.targetDate,
-        startDate: task.startDate,
+        ...task,
         assignedUsers,
-        client: task.client,
-        payments: task.payments,
-        note: task.note,
-        createdBy: task.createdBy,
         paid,
-        unique_id: task.unique_id,
       };
     });
 
-    // Payment status filter (note: this is post-query; if you want count/totalPages to reflect this,
-    // you'd need to move the logic into the DB via HAVING/SUM on relations or a computed field)
     if (paymentStatus && paymentStatus !== 'all') {
-      tasksWithPaid = tasksWithPaid.filter((task) => {
-        const remaining = task.amount - task.paid;
-        return paymentStatus === 'paid' ? remaining <= 0 : remaining > 0;
-      });
+      result = result.filter((t) =>
+        paymentStatus === 'paid'
+          ? t.amount - t.paid <= 0
+          : t.amount - t.paid > 0
+      );
     }
 
-    return { meta: { count, page, limit, totalPages }, data: tasksWithPaid };
+    const totalPages = Math.ceil(count / limit);
+    return { meta: { count, page, limit, totalPages }, data: result };
   } catch (error) {
     console.error('Error fetching tasks:', error);
     throw new Error('Failed to load tasks');
