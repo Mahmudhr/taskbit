@@ -1435,7 +1435,7 @@ export const fetchAllTaskWithCalculation = async (data?: string) => {
   const where: Prisma.TaskWhereInput =
     whereConditions.length > 0 ? { AND: whereConditions } : {};
 
-  const [taskStats, paymentStats, taskWithPayments] = await Promise.all([
+  const [taskStats, paymentStats, paidTaskCount] = await Promise.all([
     // Get task count and total amount
     prisma.task.aggregate({
       where,
@@ -1451,21 +1451,19 @@ export const fetchAllTaskWithCalculation = async (data?: string) => {
       _sum: { amount: true },
     }),
 
-    prisma.task.findMany({
+    prisma.task.count({
       where: {
         ...where,
         payments: {
           some: { status: 'COMPLETED' },
         },
       },
-      select: { id: true },
     }),
   ]);
 
   const totalAmount = taskStats._sum.amount || 0;
   const totalTaskCount = taskStats._count.id || 0;
   const paidAmount = paymentStats._sum.amount || 0;
-  const paidTaskCount = taskWithPayments.length;
 
   return {
     totalAmount,
