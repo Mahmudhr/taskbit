@@ -56,11 +56,11 @@ export default function ForgotPasswordForm({
       toast.promise(sendForgotPasswordEmail(data), {
         loading: 'Sending reset link...',
         success: (res: { success: boolean; message: string }) => {
-          setEmail(data.email);
-          setSendLink(true);
           if (!res.success) {
             throw new Error(res.message);
           }
+          setEmail(data.email);
+          setSendLink(true);
           return res.message;
         },
         error: (err) => getErrorMessage(err),

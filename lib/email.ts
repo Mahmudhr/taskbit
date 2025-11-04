@@ -18,7 +18,9 @@ export async function sendTaskAssignmentEmail({
 }) {
   try {
     const { data, error } = await resend.emails.send({
-      from: 'TaskBit <notifications@zentechventure.com>',
+      from: `TaskBit <${
+        process.env.EMAIL_FROM_ADDRESS || 'notifications@zentechventure.com'
+      } >`,
       to: userEmail,
       subject: `New Task Assignment: ${taskTitle}`,
       html: `

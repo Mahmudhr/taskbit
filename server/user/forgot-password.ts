@@ -31,9 +31,10 @@ export async function sendForgotPasswordEmail(data: { email: string }) {
       },
     });
 
-    // Send email with reset code
     const { error } = await resend.emails.send({
-      from: 'TaskBit <notifications@zentechventure.com>',
+      from: `TaskBit <${
+        process.env.EMAIL_FROM_ADDRESS || 'notifications@zentechventure.com'
+      } >`,
       to: email,
       subject: 'Password Reset Code - TaskBit',
       html: `
