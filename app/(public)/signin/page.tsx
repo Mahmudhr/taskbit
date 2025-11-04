@@ -28,6 +28,7 @@ import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { toast } from 'sonner';
 import { Eye, EyeOff, Loader2Icon } from 'lucide-react';
+import Link from 'next/link';
 
 const FormSchema = z.object({
   email: z
@@ -99,7 +100,7 @@ export default function SignInPage() {
         </CardHeader>
         <CardContent>
           <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className='space-y-6'>
+            <form onSubmit={form.handleSubmit(onSubmit)} className='space-y-4'>
               <FormField
                 control={form.control}
                 name='email'
@@ -139,6 +140,14 @@ export default function SignInPage() {
                     )}
 
                     <FormMessage />
+                    <div className='ml-auto mt-0'>
+                      <Link
+                        href='/forgot-password'
+                        className='text-sm text-primary'
+                      >
+                        Forgot password?
+                      </Link>
+                    </div>
                   </FormItem>
                 )}
               />

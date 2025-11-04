@@ -158,6 +158,16 @@ model ReceivableAmount {
   @@map("receivable_amounts")
 }
 
+model ForgotPassword {
+  id        Int      @id @default(autoincrement())
+  code      String   @unique
+  is_valid  Boolean  @default(true)
+  createdAt DateTime @default(now()) @map("created_at")
+  email     String?     
+
+  @@map("forgot_passwords")
+}
+
 enum Role {
   ADMIN
   USER
@@ -245,3 +255,4 @@ model EmployeeOfMonth {
   @@unique([year, month])
   @@map("employee_of_months")
 }
+

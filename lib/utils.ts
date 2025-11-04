@@ -139,3 +139,19 @@ export function generateUniqueId(prefix = 'TB', randomLength = 6): string {
 
   return `${prefix}-${day}-${month}-${rand}`;
 }
+
+export const generateUnique6DigitCode = (() => {
+  const used = new Set<number>();
+
+  return () => {
+    if (used.size >= 900000) throw new Error('All codes used');
+
+    while (true) {
+      const code = Math.floor(100000 + Math.random() * 900000);
+      if (!used.has(code)) {
+        used.add(code);
+        return code;
+      }
+    }
+  };
+})();
