@@ -1,8 +1,10 @@
 'use server';
 
 import { prisma } from '@/prisma/db';
-import { CreateClientType } from '../types/client-type';
+import { CreateClientType, CreateNewClientType } from '../types/client-type';
 import { $Enums } from '@prisma/client';
+import bcrypt from 'bcryptjs';
+import { catchError } from '@/lib/utils';
 
 export const createClient = async (data: CreateClientType) => {
   try {
@@ -265,3 +267,134 @@ export async function deleteClient(id: number) {
     throw new Error('Failed to delete client');
   }
 }
+
+export const createNewClient = async (data: CreateNewClientType) => {
+  const { email, password, name, phone } = data;
+
+  try {
+    const existingUser = await prisma.user.findUnique({
+      where: { email: data.email },
+    });
+
+    if (existingUser) {
+      throw new Error('User with this email already exists');
+    }
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+    await prisma.user.create({
+      data: {
+        name,
+        email,
+        phone,
+        password: hashedPassword,
+        role: 'CLIENT',
+      },
+    });
+    return {
+      success: true,
+      message: 'User registered successfully',
+    };
+  } catch (error) {
+    return catchError(error);
+  }
+};
+
+export const fetchAllNewClients = async (data?: string) => {
+  const params = new URLSearchParams(data);
+  const search = params.get('search') || '';
+  const page = parseInt(params.get('page') ?? '1') || 1;
+  const status = params.get('status');
+  const role = params.get('role');
+  const limit = 10;
+
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const whereClause: any = {
+      AND: [
+        { OR: [{ isDeleted: false }] },
+        { role: 'CLIENT' },
+        {
+          OR: [
+            {
+              name: {
+                contains: search,
+                mode: 'insensitive',
+              },
+            },
+            {
+              email: {
+                contains: search,
+                mode: 'insensitive',
+              },
+            },
+            {
+              phone: {
+                contains: search,
+                mode: 'insensitive',
+              },
+            },
+          ],
+        },
+      ],
+    };
+
+    // Add status filter if provided
+    if (status && status !== 'all') {
+      whereClause.AND.push({
+        status: status.toUpperCase(),
+      });
+    }
+
+    // Add role filter if provided
+    if (role && role !== 'all') {
+      whereClause.AND.push({
+        role: role.toUpperCase(),
+      });
+    }
+
+    const count = await prisma.user.count({
+      where: whereClause,
+    });
+
+    const totalPages = Math.ceil(count / limit);
+
+    const users = await prisma.user.findMany({
+      where: whereClause,
+      skip: (page - 1) * limit,
+      take: limit,
+      orderBy: {
+        createdAt: 'desc',
+      },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        phone: true,
+        whatsapp: true,
+        bkashNumber: true,
+        nagadNumber: true,
+        bankAccountNumber: true,
+        branchName: true,
+        bankName: true,
+        swiftCode: true,
+        role: true,
+        status: true,
+        createdAt: true,
+        updatedAt: true,
+        payments: true,
+      },
+    });
+
+    return {
+      data: users,
+      meta: {
+        count,
+        page,
+        limit,
+        totalPages,
+      },
+    };
+  } catch {
+    throw new Error('Failed to load users');
+  }
+};

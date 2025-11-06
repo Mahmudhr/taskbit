@@ -13,7 +13,9 @@ import {
   updateUserProfile,
 } from '../server/user/user';
 import { CreateUserType } from '../server/types/user-type';
-import { Meta, Response, UserType } from '@/types/common';
+import { Meta, NewClientType, Response, UserType } from '@/types/common';
+import { createNewClient, fetchAllNewClients } from '@/server/client/client';
+import { CreateNewClientType } from '@/server/types/client-type';
 
 export function useUser(options?: string) {
   const queryClient = useQueryClient();
@@ -23,6 +25,16 @@ export function useUser(options?: string) {
     queryKey: ['users', options],
     queryFn: async () => {
       const res = await fetchAllUser(options);
+      return res;
+    },
+    placeholderData: keepPreviousData,
+  });
+
+  // Fetch clients
+  const fetchNewClientsQuery = useQuery<Response<NewClientType[], Meta>>({
+    queryKey: ['new-clients', options],
+    queryFn: async () => {
+      const res = await fetchAllNewClients(options);
       return res;
     },
     placeholderData: keepPreviousData,
@@ -39,6 +51,20 @@ export function useUser(options?: string) {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['users'] });
+    },
+  });
+
+  const createNewClientMutation = useMutation({
+    mutationFn: async (data: CreateNewClientType) => {
+      const result = await createNewClient(data);
+      if (!result.success) {
+        throw new Error(result.message || 'Failed to create user');
+      }
+      return result;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['users'] });
+      queryClient.invalidateQueries({ queryKey: ['new-clients'] });
     },
   });
 
@@ -60,9 +86,14 @@ export function useUser(options?: string) {
   return {
     fetchUsers: fetchUsersQuery.data,
     fetchUsersQuery,
+    fetchNewClients: fetchNewClientsQuery.data,
+    fetchNewClientsQuery,
     createUser: createUserMutation.mutate,
     createUserAsync: createUserMutation.mutateAsync,
     createUserMutation,
+    createNewClient: createNewClientMutation.mutate,
+    createNewClientAsync: createNewClientMutation.mutateAsync,
+    createNewClientMutation,
     deleteUser: deleteUserMutation.mutate,
     deleteUserAsync: deleteUserMutation.mutateAsync,
     deleteUserMutation,

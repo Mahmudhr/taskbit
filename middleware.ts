@@ -1,11 +1,7 @@
 import { withAuth } from 'next-auth/middleware';
 import { NextResponse } from 'next/server';
 
-const USER_ALLOWED_PATHS = [
-  '/dashboard/my-tasks',
-  '/dashboard/my-payments',
-  '/dashboard/profile',
-];
+const USER_ALLOWED_PATHS = ['/dashboard/my-tasks', '/dashboard/my-payments'];
 
 const ADMIN_PATHS = [
   '/dashboard/payments',
@@ -18,11 +14,19 @@ const ADMIN_PATHS = [
   '/dashboard/employee-of-the-month',
 ];
 
+const CLIENT_PATHS = ['/dashboard/client-tasks'];
+
+const COMMON_PATHS = ['/dashboard/profile'];
+
 export default withAuth(
   function middleware(req) {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const role = (req.nextauth?.token as any)?.user?.role;
     const path = req.nextUrl.pathname;
+
+    if (COMMON_PATHS.some((commonPath) => path.startsWith(commonPath))) {
+      return NextResponse.next();
+    }
 
     if (role === 'USER' || role === 'EMPLOYEE') {
       if (ADMIN_PATHS.some((adminPath) => path.startsWith(adminPath))) {
@@ -35,6 +39,25 @@ export default withAuth(
 
       if (!isAllowedPath) {
         return NextResponse.redirect(new URL('/dashboard/my-tasks', req.url));
+      }
+    }
+
+    if (role === 'CLIENT') {
+      if (
+        ADMIN_PATHS.some((clientPath) => path.startsWith(clientPath)) ||
+        USER_ALLOWED_PATHS.some((clientPath) => path.startsWith(clientPath))
+      ) {
+        return NextResponse.redirect(
+          new URL('/dashboard/client-tasks', req.url)
+        );
+      }
+      const isAllowedPath = CLIENT_PATHS.some((clientPath) =>
+        path.startsWith(clientPath)
+      );
+      if (!isAllowedPath) {
+        return NextResponse.redirect(
+          new URL('/dashboard/client-tasks', req.url)
+        );
       }
     }
 

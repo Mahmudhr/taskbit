@@ -65,6 +65,11 @@ const adminMenuItems = [
     icon: Users,
   },
   {
+    title: 'New Clients',
+    url: '/dashboard/new-clients',
+    icon: Users,
+  },
+  {
     title: 'Employee of the month',
     url: '/dashboard/employee-of-the-month',
     icon: Users,
@@ -86,6 +91,14 @@ const userMenuItems = [
     title: 'My Payments',
     url: '/dashboard/my-payments',
     icon: CreditCard,
+  },
+];
+
+const clientMenuItems = [
+  {
+    title: 'Client Tasks',
+    url: '/dashboard/client-tasks',
+    icon: CheckSquare,
   },
 ];
 
@@ -156,6 +169,28 @@ export function AppSidebar() {
                 <SidebarGroupContent>
                   <SidebarMenu>
                     {filteredAdminMenuItems.map((item) => (
+                      <SidebarMenuItem key={item.title}>
+                        <SidebarMenuButton
+                          asChild
+                          isActive={pathname === item.url}
+                        >
+                          <Link href={item.url}>
+                            <item.icon />
+                            <span>{item.title}</span>
+                          </Link>
+                        </SidebarMenuButton>
+                      </SidebarMenuItem>
+                    ))}
+                  </SidebarMenu>
+                </SidebarGroupContent>
+              </SidebarGroup>
+            )}
+            {userRole === 'CLIENT' && (
+              <SidebarGroup>
+                <SidebarGroupLabel>Client Panel</SidebarGroupLabel>
+                <SidebarGroupContent>
+                  <SidebarMenu>
+                    {clientMenuItems.map((item) => (
                       <SidebarMenuItem key={item.title}>
                         <SidebarMenuButton
                           asChild

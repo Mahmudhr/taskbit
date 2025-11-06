@@ -7,3 +7,12 @@ export type CreateClientType = {
   company?: string;
   status?: $Enums.ClientStatus;
 };
+
+export type CreateNewClientType = {
+  email: string;
+  password: string;
+  name: string;
+  phone: string;
+  // role: 'CLIENT';
+  status: 'ACTIVE' | 'INACTIVE';
+};

@@ -259,3 +259,22 @@ export type EmployeeOfTheMonthType = {
     email: string;
   } | null;
 };
+
+export type NewClientType = {
+  id: number;
+  name: string;
+  email: string;
+  password?: string;
+  phone: string | null;
+  whatsapp: string | null;
+  bkashNumber: string | null;
+  nagadNumber: string | null;
+  bankAccountNumber: string | null;
+  branchName: string | null;
+  bankName: string | null;
+  swiftCode: string | null;
+  role: $Enums.Role;
+  status: $Enums.UserStatus;
+  createdAt?: Date;
+  updatedAt?: Date;
+};

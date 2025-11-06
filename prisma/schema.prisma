@@ -172,6 +172,7 @@ enum Role {
   ADMIN
   USER
   EMPLOYEE
+  CLIENT
 }
 
 enum UserStatus {

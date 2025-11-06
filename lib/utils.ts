@@ -54,6 +54,7 @@ export const roleConvert = {
   ADMIN: 'Admin',
   USER: 'User',
   EMPLOYEE: 'Employee',
+  CLIENT: 'Client',
 };
 
 export const userStatusConvert = {

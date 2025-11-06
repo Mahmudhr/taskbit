@@ -51,6 +51,7 @@ export const fetchAllUser = async (data?: string) => {
     const whereClause: any = {
       AND: [
         { OR: [{ isDeleted: false }] },
+        { role: { not: 'CLIENT' } },
         {
           OR: [
             {
