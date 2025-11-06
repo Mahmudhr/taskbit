@@ -79,6 +79,11 @@ const adminMenuItems = [
     url: '/dashboard/facebook-client',
     icon: Users,
   },
+  {
+    title: 'Correction Lists',
+    url: '/dashboard/correction-lists',
+    icon: CheckSquare,
+  },
 ];
 
 const userMenuItems = [
@@ -137,7 +142,10 @@ export function AppSidebar() {
   const canSeeFacebookClient = allowedFacebookEmails.has(userEmail);
 
   const filteredAdminMenuItems = adminMenuItems.filter(
-    (item) => item.url !== '/dashboard/facebook-client' || canSeeFacebookClient
+    (item) =>
+      (item.url !== '/dashboard/facebook-client' &&
+        item.url !== '/dashboard/correction-lists') ||
+      canSeeFacebookClient
   );
 
   return (
