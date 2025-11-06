@@ -11,7 +11,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
-import { Search, X, ListFilter } from 'lucide-react';
+import { Search, X, ListFilter, Plus } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useUserTask } from '@/hooks/use-user-task';
 import { useRouter, useSearchParams } from 'next/navigation';
@@ -92,6 +92,10 @@ export default function ClientTasksPage() {
     <div className='space-y-6'>
       <div className='flex items-center justify-between'>
         <h1 className='text-xl md:text-3xl font-bold'>Client Tasks</h1>
+        <Button>
+          <Plus className='mr-2 h-4 w-4' />
+          Create new Task
+        </Button>
       </div>
 
       <Card>
