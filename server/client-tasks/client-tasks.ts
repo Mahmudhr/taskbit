@@ -84,177 +84,18 @@ export async function createClientTasks(data: CreateNewClientTaskType) {
   }
 }
 
-/**
- * Update a client task - only the creator can update
- */
-export async function updateClientTask(
-  taskId: number,
-  userId: number,
-  data: Partial<CreateNewClientTaskType>
-) {
+export const deleteClientTask = async (taskId: number) => {
   try {
-    // Verify that the user has CLIENT role
-    const user = await prisma.user.findUnique({
-      where: { id: userId },
-      select: { role: true, status: true },
-    });
-
-    if (!user) {
-      throw new Error('User not found');
-    }
-
-    if (user.role !== 'CLIENT') {
-      throw new Error(
-        'Access denied - Only CLIENT role users can update client tasks'
-      );
-    }
-
-    // Verify that the task exists and belongs to the current user
-    const existingTask = await prisma.clientTasks.findFirst({
-      where: {
-        id: taskId,
-        createdById: userId,
-        isDeleted: false,
-      },
-    });
-
-    if (!existingTask) {
-      throw new Error('Client task not found or access denied');
-    }
-
-    // Update the task
-    const updatedTask = await prisma.clientTasks.update({
+    const updateUser = await prisma.clientTasks.update({
       where: { id: taskId },
-      data: {
-        ...data,
-        updatedAt: new Date(),
-      },
-      include: {
-        createdBy: {
-          select: {
-            id: true,
-            name: true,
-            email: true,
-            role: true,
-          },
-        },
-      },
+      data: { isDeleted: true },
     });
 
-    return {
-      success: true,
-      message: 'Client task updated successfully',
-      data: updatedTask,
-    };
-  } catch (error) {
-    return catchError(error);
+    return updateUser;
+  } catch {
+    throw new Error('Failed to delete task');
   }
-}
-
-/**
- * Delete a client task (soft delete) - only the creator can delete
- */
-export async function deleteClientTask(taskId: number, userId: number) {
-  try {
-    // Verify that the user has CLIENT role
-    const user = await prisma.user.findUnique({
-      where: { id: userId },
-      select: { role: true },
-    });
-
-    if (!user) {
-      throw new Error('User not found');
-    }
-
-    if (user.role !== 'CLIENT') {
-      throw new Error(
-        'Access denied - Only CLIENT role users can delete client tasks'
-      );
-    }
-
-    // Verify that the task exists and belongs to the current user
-    const existingTask = await prisma.clientTasks.findFirst({
-      where: {
-        id: taskId,
-        createdById: userId,
-        isDeleted: false,
-      },
-    });
-
-    if (!existingTask) {
-      throw new Error('Client task not found or access denied');
-    }
-
-    // Soft delete the task
-    await prisma.clientTasks.update({
-      where: { id: taskId },
-      data: {
-        isDeleted: true,
-        updatedAt: new Date(),
-      },
-    });
-
-    return {
-      success: true,
-      message: 'Client task deleted successfully',
-    };
-  } catch (error) {
-    return catchError(error);
-  }
-}
-
-/**
- * Get a single client task by ID - only the creator can view
- */
-export async function getClientTaskById(taskId: number, userId: number) {
-  try {
-    // Verify that the user has CLIENT role
-    const user = await prisma.user.findUnique({
-      where: { id: userId },
-      select: { role: true },
-    });
-
-    if (!user) {
-      throw new Error('User not found');
-    }
-
-    if (user.role !== 'CLIENT') {
-      throw new Error(
-        'Access denied - Only CLIENT role users can view client tasks'
-      );
-    }
-
-    // Find the task and verify ownership
-    const clientTask = await prisma.clientTasks.findFirst({
-      where: {
-        id: taskId,
-        createdById: userId,
-        isDeleted: false,
-      },
-      include: {
-        createdBy: {
-          select: {
-            id: true,
-            name: true,
-            email: true,
-            role: true,
-          },
-        },
-      },
-    });
-
-    if (!clientTask) {
-      throw new Error('Client task not found or access denied');
-    }
-
-    return {
-      success: true,
-      data: clientTask,
-    };
-  } catch (error) {
-    return catchError(error);
-  }
-}
+};
 
 export const fetchClientTasksByUserEmail = async (
   email: string,

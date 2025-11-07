@@ -1,7 +1,7 @@
 'use client';
 
 import { useSession } from 'next-auth/react';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useTransition } from 'react';
 import { Input } from '@/components/ui/input';
 import {
   Table,
@@ -26,6 +26,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import {
   clientTaskTypeConverter,
   generateQueryString,
+  getErrorMessage,
   paperTypeConvert,
   taskStatusConvert,
 } from '@/lib/utils';
@@ -36,7 +37,10 @@ import dayjs from 'dayjs';
 import Modal from '@/components/modal';
 import AlertModal from '@/components/alert-modal';
 import CreateClientTaskForm from '@/components/forms/create-client-task-form';
-import { useGetNewClientTasks } from '@/hooks/use-new-client';
+import {
+  useGetNewClientTasks,
+  useNewClientTasks,
+} from '@/hooks/use-new-client';
 import { ClientTaskType } from '@/types/common';
 import { getStatusBadge } from '../../(admin)/tasks/page';
 import {
@@ -49,6 +53,8 @@ import {
 } from '@/components/ui/dropdown-menu';
 import ClientTaskDetails from '@/components/client-task-details';
 import ClientTasksFilter from '@/components/filters/client-tasks-filter';
+import { toast } from 'sonner';
+import ConfirmModal from '@/components/confirm-modal';
 
 // const getStatusBadge = (status: string) => {
 //   const variants = {
@@ -69,10 +75,11 @@ export default function ClientTasksPage() {
   const searchParams = useSearchParams();
   const { data: session } = useSession();
   const email = session?.user?.email || undefined;
+  const [isPending, startTransition] = useTransition();
 
-  // const [taskId, setTaskId] = useState<number | null>(null);
+  const [taskId, setTaskId] = useState<number | null>(null);
   const [selectedTask, setSelectedTask] = useState<ClientTaskType | null>(null);
-  // const [openTask, setOpenTask] = useState(false);
+  const [confirmModal, setConfirmModal] = useState(false);
   const [openTaskDetails, setOpenTaskDetails] = useState(false);
   const [myTaskFilterOpen, setMyTaskFilterOpen] = useState(false);
 
@@ -96,6 +103,7 @@ export default function ClientTasksPage() {
 
   const queryString = generateQueryString(params);
 
+  const { deleteClientTaskAsync } = useNewClientTasks();
   const { fetchClientTasks, fetchClientTasksMutation } = useGetNewClientTasks(
     email,
     queryString
@@ -112,6 +120,25 @@ export default function ClientTasksPage() {
   useEffect(() => {
     router.push(queryString);
   }, [queryString, router]);
+
+  const handleDeleteClientTask = () => {
+    if (taskId === null) return;
+    startTransition(() => {
+      toast.promise(deleteClientTaskAsync(taskId), {
+        loading: 'Deleting task...',
+        success: () => {
+          setConfirmModal(false);
+          return 'Successfully Task Deleted';
+        },
+        error: (err) => getErrorMessage(err) || 'Something went wrong!',
+      });
+    });
+  };
+
+  const handleClickDelete = (taskId: number) => {
+    setTaskId(taskId);
+    setConfirmModal(true);
+  };
 
   const handleClickTaskDetails = (task: ClientTaskType) => {
     setSelectedTask(task);
@@ -421,7 +448,10 @@ export default function ClientTasksPage() {
                                   View Details
                                 </DropdownMenuItem>
                                 <DropdownMenuItem>Edit Task</DropdownMenuItem>
-                                <DropdownMenuItem className='text-red-600'>
+                                <DropdownMenuItem
+                                  className='text-red-600'
+                                  onClick={() => handleClickDelete(task.id)}
+                                >
                                   Delete Task
                                 </DropdownMenuItem>
                               </DropdownMenuContent>
@@ -614,6 +644,13 @@ export default function ClientTasksPage() {
       >
         {selectedTask && <ClientTaskDetails data={selectedTask} />}
       </Modal>
+      <ConfirmModal
+        isOpen={confirmModal}
+        setIsOpen={setConfirmModal}
+        loading={isPending}
+        title='This action cannot be undone. This will permanently delete your task '
+        onClick={handleDeleteClientTask}
+      />
     </div>
   );
 }

@@ -2,6 +2,7 @@
 
 import {
   createClientTasks,
+  deleteClientTask,
   fetchClientTasksByUserEmail,
 } from '@/server/client-tasks/client-tasks';
 import { CreateNewClientTaskType } from '@/server/types/client-type';
@@ -15,6 +16,7 @@ import {
 
 export function useNewClientTasks() {
   const queryClient = useQueryClient();
+
   const createClientTaskMutation = useMutation({
     mutationFn: async (data: CreateNewClientTaskType) => {
       const result = await createClientTasks(data);
@@ -28,9 +30,18 @@ export function useNewClientTasks() {
     },
   });
 
+  const deleteClientTaskMutation = useMutation({
+    mutationFn: (id: number) => deleteClientTask(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['client-tasks'] });
+    },
+  });
+
   return {
     createClientTaskMutation,
     createClientTaskMutationAsync: createClientTaskMutation.mutateAsync,
+    deleteClientTask: deleteClientTaskMutation.mutate,
+    deleteClientTaskAsync: deleteClientTaskMutation.mutateAsync,
   };
 }
 

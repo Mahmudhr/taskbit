@@ -773,7 +773,7 @@ export default function TasksPage() {
     fetchAllTaskWithCalcMutation,
   } = useTask(queryString);
 
-  const handleDeleTask = () => {
+  const handleDeleteTask = () => {
     if (taskId === null) return;
     startTransition(() => {
       toast.promise(deleteTaskAsync(taskId), {
@@ -1433,7 +1433,7 @@ export default function TasksPage() {
         setIsOpen={setConfirmModal}
         loading={isPending}
         title='This action cannot be undone. This will permanently delete your task '
-        onClick={handleDeleTask}
+        onClick={handleDeleteTask}
       />
       <AlertModal
         isOpen={openPayment}
