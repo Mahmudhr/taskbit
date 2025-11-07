@@ -69,6 +69,12 @@ export const taskStatusConvert = {
   SUBMITTED: 'Submitted',
 };
 
+export const clientTaskTypeConverter = {
+  REGULAR: 'Regular',
+  URGENT: 'Urgent',
+  CORRECTION: 'Correction',
+};
+
 export const paymentStatusConvert = {
   PENDING: 'Pending',
   COMPLETED: 'Completed',
@@ -97,7 +103,7 @@ export const paperTypeConvert = {
   REWRITE: 'Rewrite',
   OTHERS: 'Others',
 };
-
+export const clientAllTaskType = ['REGULAR', 'URGENT', 'CORRECTION'] as const;
 export const allTaskStatus = ['PENDING', 'IN_PROGRESS', 'COMPLETED'];
 
 export const formatDateToString = (date: Date | null | undefined): string => {

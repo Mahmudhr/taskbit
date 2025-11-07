@@ -32,6 +32,7 @@ model User {
   employeeOfMonths EmployeeOfMonth[]
   
   createdTasks    Task[]    @relation("CreatedTasks")
+  createdClientTasks ClientTasks[] @relation("CreatedClientTasks")
   payments        Payment[] @relation("UserPayments")
   salaries        Salary[]  @relation("UserSalaries")
   isDeleted       Boolean   @default(false) @map("is_deleted")
@@ -82,6 +83,29 @@ model Task {
   receivableAmounts ReceivableAmount[] @relation("TaskReceivableAmounts")
 
   @@map("tasks")
+}
+
+model ClientTasks{
+  id              Int       @id @default(autoincrement())
+  title           String
+  description     String?
+  correction_description     String?
+  amount          Float
+  paid_amount     Float    @default(0) @map("paid_amount")
+  status          TaskStatus @default(PENDING)
+  paper_type      PaperType @default(CONFERENCE)
+  task_type       ClientTaskType @default(REGULAR) @map("task_type")
+  isDeleted       Boolean   @default(false) @map("is_deleted")
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
+  duration        DateTime?
+  unique_id       String?   @unique @map("unique_id")
+  
+  // Relations - only CLIENT role users can create client tasks
+  createdBy       User      @relation("CreatedClientTasks", fields: [createdById], references: [id])
+  createdById     Int       @map("created_by_id")
+
+  @@map("client_tasks")
 }
 
 // Junction table for many-to-many relationship between Task and User
@@ -173,6 +197,12 @@ enum Role {
   USER
   EMPLOYEE
   CLIENT
+}
+
+enum ClientTaskType {
+  REGULAR
+  URGENT
+  CORRECTION
 }
 
 enum UserStatus {

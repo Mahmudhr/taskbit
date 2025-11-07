@@ -6,16 +6,25 @@ import { Input } from '@/components/ui/input';
 import {
   Table,
   TableBody,
+  TableCell,
   TableHead,
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
-import { Search, X, ListFilter, Plus } from 'lucide-react';
+import {
+  Search,
+  X,
+  ListFilter,
+  Plus,
+  ChevronLeft,
+  ChevronRight,
+  EllipsisVertical,
+} from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { useUserTask } from '@/hooks/use-user-task';
 import { useRouter, useSearchParams } from 'next/navigation';
 import {
+  clientTaskTypeConverter,
   generateQueryString,
   paperTypeConvert,
   taskStatusConvert,
@@ -25,8 +34,21 @@ import TaskTableSkeleton from '@/components/skeletons/task-table-skeleton';
 import TaskCardSkeleton from '@/components/skeletons/task-card-skeleton';
 import dayjs from 'dayjs';
 import Modal from '@/components/modal';
-
-import MyTasksFilter from '@/components/filters/my-tasks-filter';
+import AlertModal from '@/components/alert-modal';
+import CreateClientTaskForm from '@/components/forms/create-client-task-form';
+import { useGetNewClientTasks } from '@/hooks/use-new-client';
+import { ClientTaskType } from '@/types/common';
+import { getStatusBadge } from '../../(admin)/tasks/page';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import ClientTaskDetails from '@/components/client-task-details';
+import ClientTasksFilter from '@/components/filters/client-tasks-filter';
 
 // const getStatusBadge = (status: string) => {
 //   const variants = {
@@ -43,13 +65,15 @@ import MyTasksFilter from '@/components/filters/my-tasks-filter';
 // };
 
 export default function ClientTasksPage() {
+  const [createTaskOpen, setCreateTaskOpen] = useState(false);
   const searchParams = useSearchParams();
   const { data: session } = useSession();
   const email = session?.user?.email || undefined;
+
   // const [taskId, setTaskId] = useState<number | null>(null);
-  // const [selectedTask, setSelectedTask] = useState<UserTaskType | null>(null);
+  const [selectedTask, setSelectedTask] = useState<ClientTaskType | null>(null);
   // const [openTask, setOpenTask] = useState(false);
-  // const [openTaskDetails, setOpenTaskDetails] = useState(false);
+  const [openTaskDetails, setOpenTaskDetails] = useState(false);
   const [myTaskFilterOpen, setMyTaskFilterOpen] = useState(false);
 
   const router = useRouter();
@@ -64,18 +88,19 @@ export default function ClientTasksPage() {
     task_create_month: searchParams.get('task_create_month') || '',
     task_create_year: searchParams.get('task_create_year') || '',
     paper_type: searchParams.get('paper_type') || '',
+    task_type: searchParams.get('task_type') || '',
   });
   const [searchQuery, setSearchQuery] = useState(
     searchParams.get('search') || ''
   );
 
   const queryString = generateQueryString(params);
-  const { fetchUserTasks, fetchUserTasksMutation } = useUserTask(
+
+  const { fetchClientTasks, fetchClientTasksMutation } = useGetNewClientTasks(
     email,
     queryString
   );
-  const tasks = fetchUserTasks;
-  const loading = fetchUserTasksMutation.isLoading;
+  const loading = fetchClientTasksMutation.isLoading;
   const debounced = useDebouncedCallback((value) => {
     setParams((prevParams) => ({
       ...prevParams,
@@ -88,11 +113,18 @@ export default function ClientTasksPage() {
     router.push(queryString);
   }, [queryString, router]);
 
+  const handleClickTaskDetails = (task: ClientTaskType) => {
+    setSelectedTask(task);
+    setOpenTaskDetails(true);
+  };
+
   return (
     <div className='space-y-6'>
       <div className='flex items-center justify-between'>
-        <h1 className='text-xl md:text-3xl font-bold'>Client Tasks</h1>
-        <Button>
+        <h1 className='text-xl md:text-3xl font-bold'>
+          Client Tasks management
+        </h1>
+        <Button onClick={() => setCreateTaskOpen(true)}>
           <Plus className='mr-2 h-4 w-4' />
           Create new Task
         </Button>
@@ -181,6 +213,27 @@ export default function ClientTasksPage() {
                 </span>
               </div>
             )}
+            {params.task_type && (
+              <div className='pl-3 pr-2 py-1 border flex gap-2 items-center rounded-full text-sm'>
+                Paper Type:{' '}
+                {
+                  clientTaskTypeConverter[
+                    params.task_type as keyof typeof clientTaskTypeConverter
+                  ]
+                }
+                <span
+                  onClick={() => {
+                    setParams((prev) => ({
+                      ...prev,
+                      task_type: '',
+                      page: '1',
+                    }));
+                  }}
+                >
+                  <X className='w-4 h-4 cursor-pointer' />
+                </span>
+              </div>
+            )}
             {params.task_create && (
               <div className='pl-3 pr-2 py-1 border flex gap-2 items-center rounded-full text-sm'>
                 Task Create: {dayjs(params.task_create).format('DD-MM-YYYY')}
@@ -213,6 +266,70 @@ export default function ClientTasksPage() {
                 </span>
               </div>
             )}
+            {params.due_month && (
+              <div className='pl-3 pr-2 py-1 border flex gap-2 items-center rounded-full text-sm'>
+                Delivery Month: {dayjs(params.due_month).format('MMMM')}
+                <span
+                  onClick={() => {
+                    setParams((prev) => ({
+                      ...prev,
+                      due_month: '',
+                      page: '1',
+                    }));
+                  }}
+                >
+                  <X className='w-4 h-4 cursor-pointer' />
+                </span>
+              </div>
+            )}
+            {params.due_year && (
+              <div className='pl-3 pr-2 py-1 border flex gap-2 items-center rounded-full text-sm'>
+                Delivery Year: {params.due_year}
+                <span
+                  onClick={() => {
+                    setParams((prev) => ({
+                      ...prev,
+                      due_year: '',
+                      page: '1',
+                    }));
+                  }}
+                >
+                  <X className='w-4 h-4 cursor-pointer' />
+                </span>
+              </div>
+            )}
+            {params.task_create_month && (
+              <div className='pl-3 pr-2 py-1 border flex gap-2 items-center rounded-full text-sm'>
+                Delivery Month: {dayjs(params.task_create_month).format('MMMM')}
+                <span
+                  onClick={() => {
+                    setParams((prev) => ({
+                      ...prev,
+                      task_create_month: '',
+                      page: '1',
+                    }));
+                  }}
+                >
+                  <X className='w-4 h-4 cursor-pointer' />
+                </span>
+              </div>
+            )}
+            {params.task_create_year && (
+              <div className='pl-3 pr-2 py-1 border flex gap-2 items-center rounded-full text-sm'>
+                Delivery Year: {params.task_create_year}
+                <span
+                  onClick={() => {
+                    setParams((prev) => ({
+                      ...prev,
+                      task_create_year: '',
+                      page: '1',
+                    }));
+                  }}
+                >
+                  <X className='w-4 h-4 cursor-pointer' />
+                </span>
+              </div>
+            )}
           </div>
         </CardContent>
       </Card>
@@ -221,212 +338,216 @@ export default function ClientTasksPage() {
           <CardTitle>My Tasks List</CardTitle>
         </CardHeader>
         <CardContent>
-          {/* Desktop Table View */}
           <div className='hidden md:block'>
             <Table>
               <TableHeader>
                 <TableRow>
                   <TableHead>Serial</TableHead>
                   <TableHead>Task Title</TableHead>
+                  <TableHead>Unique ID</TableHead>
+                  <TableHead>Amount</TableHead>
+                  <TableHead>Paid Amount</TableHead>
                   <TableHead>Delivery Date</TableHead>
-                  <TableHead>Link</TableHead>
                   <TableHead>Status</TableHead>
+                  <TableHead>Task Type</TableHead>
                   <TableHead>Paper Type</TableHead>
                   <TableHead>Created At</TableHead>
                   <TableHead>Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {
-                  loading ? (
-                    <tr>
-                      <td colSpan={10} className='p-0'>
-                        <TaskTableSkeleton />
-                      </td>
-                    </tr>
-                  ) : null
-                  // (
-                  //   tasks?.data?.map((task: UserTaskType, index: number) => (
-                  //     <TableRow key={task.id}>
-                  //       <TableCell>{index + 1}</TableCell>
-                  //       <TableCell className='font-medium max-w-sm break-words'>
-                  //         {task.title}
-                  //       </TableCell>
-                  //       <TableCell>
-                  //         {task.duration
-                  //           ? dayjs(task.duration).format('DD-MM-YYYY')
-                  //           : '-'}
-                  //       </TableCell>
-                  //       <TableCell>
-                  //         {task.link ? (
-                  //           <Link
-                  //             href={task.link || '#'}
-                  //             className='text-blue-600 hover:underline'
-                  //             target='_blank'
-                  //             rel='noopener noreferrer'
-                  //           >
-                  //             View Link
-                  //           </Link>
-                  //         ) : (
-                  //           '-'
-                  //         )}
-                  //       </TableCell>
-
-                  //       <TableCell>{getStatusBadge(task.status)}</TableCell>
-                  //       <TableCell>
-                  //         {
-                  //           paperTypeConvert[
-                  //             task.paper_type as keyof typeof paperTypeConvert
-                  //           ]
-                  //         }
-                  //       </TableCell>
-                  //       <TableCell>
-                  //         {task.createdAt
-                  //           ? dayjs(task.createdAt).format('DD-MM-YYYY')
-                  //           : '-'}
-                  //       </TableCell>
-                  //       <TableCell>
-                  //         <div>
-                  //           <DropdownMenu>
-                  //             <DropdownMenuTrigger>
-                  //               <EllipsisVertical className='w-5 h-5 text-gray-600' />
-                  //             </DropdownMenuTrigger>
-                  //             <DropdownMenuContent align='end'>
-                  //               <DropdownMenuLabel>Options</DropdownMenuLabel>
-                  //               <DropdownMenuSeparator />
-                  //               <DropdownMenuItem
-                  //                 onClick={() => {
-                  //                   setOpenTaskDetails(true);
-                  //                   setSelectedTask(task);
-                  //                 }}
-                  //                 disabled={task.status === 'COMPLETED'}
-                  //               >
-                  //                 Details
-                  //               </DropdownMenuItem>
-                  //               <DropdownMenuItem
-                  //                 onClick={() => {
-                  //                   setOpenTask(true);
-                  //                   setSelectedTask(task);
-                  //                 }}
-                  //                 disabled={task.status === 'COMPLETED'}
-                  //               >
-                  //                 Task Delivery
-                  //               </DropdownMenuItem>
-                  //             </DropdownMenuContent>
-                  //           </DropdownMenu>
-                  //         </div>
-                  //       </TableCell>
-                  //     </TableRow>
-                  //   ))
-                  // )
-                }
+                {loading ? (
+                  <tr>
+                    <td colSpan={10} className='p-0'>
+                      <TaskTableSkeleton />
+                    </td>
+                  </tr>
+                ) : (
+                  fetchClientTasks?.data.map(
+                    (task: ClientTaskType, index: number) => (
+                      <TableRow key={task.id}>
+                        <TableCell>#{index + 1}</TableCell>
+                        <TableCell className='font-medium max-w-sm break-words'>
+                          {task.title}
+                        </TableCell>
+                        <TableCell className='font-mono text-sm'>
+                          {task.unique_id || '-'}
+                        </TableCell>
+                        <TableCell className='font-medium'>
+                          {task.amount?.toFixed(2) || '0.00'}
+                        </TableCell>
+                        <TableCell className='font-medium'>
+                          {task.paid_amount?.toFixed(2) || '0.00'}
+                        </TableCell>
+                        <TableCell>
+                          {task.duration
+                            ? dayjs(task.duration).format('DD-MM-YYYY')
+                            : '-'}
+                        </TableCell>
+                        <TableCell>{getStatusBadge(task.status)}</TableCell>
+                        <TableCell>
+                          {
+                            clientTaskTypeConverter[
+                              task.task_type as keyof typeof clientTaskTypeConverter
+                            ]
+                          }
+                        </TableCell>
+                        <TableCell>
+                          {
+                            paperTypeConvert[
+                              task.paper_type as keyof typeof paperTypeConvert
+                            ]
+                          }
+                        </TableCell>
+                        <TableCell>
+                          {task.createdAt
+                            ? dayjs(task.createdAt).format('DD-MM-YYYY')
+                            : '-'}
+                        </TableCell>
+                        <TableCell>
+                          <div>
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button variant='ghost' className='h-8 w-8 p-0'>
+                                  <EllipsisVertical className='w-4 h-4' />
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align='end'>
+                                <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                                <DropdownMenuSeparator />
+                                <DropdownMenuItem
+                                  onClick={() => handleClickTaskDetails(task)}
+                                >
+                                  View Details
+                                </DropdownMenuItem>
+                                <DropdownMenuItem>Edit Task</DropdownMenuItem>
+                                <DropdownMenuItem className='text-red-600'>
+                                  Delete Task
+                                </DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    )
+                  )
+                )}
               </TableBody>
             </Table>
           </div>
 
-          {/* Mobile Card View */}
-          <div className='md:hidden space-y-4'>
-            {
-              loading ? (
-                <TaskCardSkeleton />
-              ) : tasks?.data?.length === 0 ? (
-                <Card className='p-4 text-center'>No tasks found.</Card>
-              ) : null
-              // (
-              //   tasks?.data?.map((task: UserTaskType, index: number) => (
-              //     <Card key={task.id} className='p-4'>
-              //       <div className='flex justify-between items-start mb-3'>
-              //         <div className='flex items-start gap-2'>
-              //           <span className='text-sm text-muted-foreground'>
-              //             #{index + 1}
-              //           </span>
-              //           <h3 className='font-medium break-all'>{task.title}</h3>
-              //         </div>
-              //         <div>
-              //           <DropdownMenu>
-              //             <DropdownMenuTrigger>
-              //               <EllipsisVertical className='w-5 h-5 text-gray-600' />
-              //             </DropdownMenuTrigger>
-              //             <DropdownMenuContent align='end'>
-              //               <DropdownMenuLabel>Options</DropdownMenuLabel>
-              //               <DropdownMenuSeparator />
-              //               <DropdownMenuItem
-              //                 onClick={() => {
-              //                   setOpenTaskDetails(true);
-              //                   setSelectedTask(task);
-              //                 }}
-              //                 disabled={task.status === 'COMPLETED'}
-              //               >
-              //                 Details
-              //               </DropdownMenuItem>
-              //               <DropdownMenuItem
-              //                 onClick={() => {
-              //                   setOpenTask(true);
-              //                   setSelectedTask(task);
-              //                 }}
-              //                 disabled={task.status === 'COMPLETED'}
-              //               >
-              //                 Task Delivery
-              //               </DropdownMenuItem>
-              //             </DropdownMenuContent>
-              //           </DropdownMenu>
-              //         </div>
-              //       </div>
-              //       <div className='space-y-3 text-sm'>
-              //         <div className='flex justify-between text-xs'>
-              //           <span className='text-muted-foreground'>
-              //             Delivery Date:
-              //           </span>
-              //           <span>
-              //             {task.duration
-              //               ? dayjs(task.duration).format('DD-MM-YYYY')
-              //               : '-'}
-              //           </span>
-              //         </div>
-              //         <div className='flex justify-between items-center text-xs'>
-              //           <span className='text-muted-foreground'>Status:</span>
-              //           {getStatusBadge(task.status)}
-              //         </div>
-              //         <div className='flex justify-between items-center text-xs'>
-              //           <span className='text-muted-foreground'>Paper Type:</span>
-              //           {
-              //             paperTypeConvert[
-              //               task.paper_type as keyof typeof paperTypeConvert
-              //             ]
-              //           }
-              //         </div>
-              //         <div className='flex justify-between items-center text-xs'>
-              //           <span className='text-muted-foreground'>Created At:</span>
-              //           {task.createdAt
-              //             ? dayjs(task.createdAt).format('DD-MM-YYYY')
-              //             : '-'}
-              //         </div>
-              //         <div className='flex justify-between text-xs'>
-              //           <span className='text-muted-foreground'>Link:</span>
-              //           {task.link ? (
-              //             <Link
-              //               href={task.link || '#'}
-              //               className='text-blue-600 hover:underline'
-              //               target='_blank'
-              //               rel='noopener noreferrer'
-              //             >
-              //               View Link
-              //             </Link>
-              //           ) : (
-              //             '-'
-              //           )}
-              //         </div>
-              //       </div>
-              //     </Card>
-              //   ))
-              // )
-            }
+          <div className='md:hidden block space-y-4'>
+            {loading ? (
+              <TaskCardSkeleton />
+            ) : fetchClientTasks?.data?.length === 0 ? (
+              <Card className='p-4 text-center'>No tasks found.</Card>
+            ) : (
+              fetchClientTasks?.data.map(
+                (task: ClientTaskType, index: number) => (
+                  <Card key={task.id} className='p-4'>
+                    <div className='flex justify-between items-start mb-3'>
+                      <div className='flex items-start gap-2'>
+                        <span className='text-sm text-muted-foreground'>
+                          #{index + 1}
+                        </span>
+                        <h3 className='font-medium break-all'>{task.title}</h3>
+                      </div>
+                      <div>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant='ghost' className='h-8 w-8 p-0'>
+                              <EllipsisVertical className='w-4 h-4' />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align='end'>
+                            <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem
+                              onClick={() => handleClickTaskDetails(task)}
+                            >
+                              View Details
+                            </DropdownMenuItem>
+                            <DropdownMenuItem>Edit Task</DropdownMenuItem>
+                            <DropdownMenuItem className='text-red-600'>
+                              Delete Task
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </div>
+                    </div>
+                    <div className='space-y-2 text-sm'>
+                      <div className='flex justify-between text-xs'>
+                        <span className='text-muted-foreground'>
+                          Unique ID:
+                        </span>
+                        <span className='font-mono'>
+                          {task.unique_id || '-'}
+                        </span>
+                      </div>
+                      <div className='flex justify-between text-xs'>
+                        <span className='text-muted-foreground'>Amount:</span>
+                        <span className='font-medium'>
+                          ${task.amount?.toFixed(2) || '0.00'}
+                        </span>
+                      </div>
+                      <div className='flex justify-between text-xs'>
+                        <span className='text-muted-foreground'>
+                          Delivery Date:
+                        </span>
+                        <span>
+                          {task.duration
+                            ? dayjs(task.duration).format('DD-MM-YYYY')
+                            : '-'}
+                        </span>
+                      </div>
+                      <div className='flex justify-between items-center text-xs'>
+                        <span className='text-muted-foreground'>Status:</span>
+                        {getStatusBadge(task.status)}
+                      </div>
+                      <div className='flex justify-between items-center text-xs'>
+                        <span className='text-muted-foreground'>
+                          Paper Type:
+                        </span>
+                        <span>
+                          {
+                            paperTypeConvert[
+                              task.paper_type as keyof typeof paperTypeConvert
+                            ]
+                          }
+                        </span>
+                      </div>
+                      <div className='flex justify-between items-center text-xs'>
+                        <span className='text-muted-foreground'>
+                          Created At:
+                        </span>
+                        <span>
+                          {task.createdAt
+                            ? dayjs(task.createdAt).format('DD-MM-YYYY')
+                            : '-'}
+                        </span>
+                      </div>
+                      {task.description && (
+                        <div className='pt-2'>
+                          <span className='text-muted-foreground text-xs'>
+                            Description:
+                          </span>
+                          <p className='text-xs mt-1 text-gray-600'>
+                            {task.description}
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  </Card>
+                )
+              )
+            )}
           </div>
 
-          {/* {tasks && tasks?.meta.count > 0 && (
+          {fetchClientTasks && fetchClientTasks?.meta.count > 0 && (
             <div className='flex md:flex-row flex-col items-center md:justify-between justify-center gap-3 py-4'>
               <div className='text-sm text-muted-foreground'>
-                Showing 1 to {tasks?.data.length} of {tasks?.meta.count} results
+                Showing 1 to {fetchClientTasks?.data.length} of{' '}
+                {fetchClientTasks?.meta.count} results
               </div>
               <div className='flex items-center space-x-2'>
                 <Button
@@ -452,28 +573,46 @@ export default function ClientTasksPage() {
                       page: (+params.page + 1).toString(),
                     }))
                   }
-                  disabled={+params.page === (tasks && tasks.meta.totalPages)}
+                  disabled={
+                    +params.page ===
+                    (fetchClientTasks && fetchClientTasks.meta.totalPages)
+                  }
                 >
                   Next
                   <ChevronRight className='h-4 w-4' />
                 </Button>
               </div>
             </div>
-          )} */}
+          )}
         </CardContent>
       </Card>
-
+      <AlertModal
+        isOpen={createTaskOpen}
+        setIsOpen={setCreateTaskOpen}
+        title='Create new task'
+        description=' '
+      >
+        <CreateClientTaskForm setIsOpen={setCreateTaskOpen} />
+      </AlertModal>
       <Modal
         isOpen={myTaskFilterOpen}
         setIsOpen={setMyTaskFilterOpen}
-        title='Filter Salary'
+        title='Filter Tasks'
         description=' '
       >
-        <MyTasksFilter
+        <ClientTasksFilter
           setParams={setParams}
           params={params}
           setOpenTaskFilter={setMyTaskFilterOpen}
         />
+      </Modal>
+      <Modal
+        isOpen={openTaskDetails}
+        setIsOpen={setOpenTaskDetails}
+        title='Task Details'
+        description=' '
+      >
+        {selectedTask && <ClientTaskDetails data={selectedTask} />}
       </Modal>
     </div>
   );

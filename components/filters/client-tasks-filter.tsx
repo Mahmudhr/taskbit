@@ -19,6 +19,7 @@ type ParamsType = {
   page: string;
   status: string;
   paper_type: string;
+  task_type: string;
   due_date: string;
   due_month: string;
   due_year: string;
@@ -33,7 +34,7 @@ type MyTasksFilterProps = {
   setOpenTaskFilter: React.Dispatch<React.SetStateAction<boolean>>;
 };
 
-export default function MyTasksFilter({
+export default function ClientTasksFilter({
   setParams,
   params,
   setOpenTaskFilter,
@@ -50,6 +51,7 @@ export default function MyTasksFilter({
       page: '1',
       status: '',
       paper_type: '',
+      task_type: '',
       due_date: '',
       due_month: '',
       due_year: '',
@@ -116,6 +118,25 @@ export default function MyTasksFilter({
           <SelectItem value='PENDING'>Pending</SelectItem>
           <SelectItem value='IN_PROGRESS'>In Progress</SelectItem>
           <SelectItem value='COMPLETED'>Completed</SelectItem>
+        </SelectContent>
+      </Select>
+      <Select
+        value={params.task_type}
+        onValueChange={(value) => {
+          setParams((prev) => ({
+            ...prev,
+            task_type: value === 'ALL' ? '' : value,
+          }));
+        }}
+      >
+        <SelectTrigger className='w-full'>
+          <SelectValue placeholder='Filter by task type' />
+        </SelectTrigger>
+        <SelectContent className='z-[999]'>
+          <SelectItem value='ALL'>All Tasks Type</SelectItem>
+          <SelectItem value='REGULAR'>Regular</SelectItem>
+          <SelectItem value='URGENT'>Urgent</SelectItem>
+          <SelectItem value='CORRECTION'>Correction</SelectItem>
         </SelectContent>
       </Select>
       <div className='space-y-4'>

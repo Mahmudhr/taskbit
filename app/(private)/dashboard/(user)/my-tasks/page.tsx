@@ -231,6 +231,70 @@ export default function MyTasksPage() {
                 </span>
               </div>
             )}
+            {params.due_month && (
+              <div className='pl-3 pr-2 py-1 border flex gap-2 items-center rounded-full text-sm'>
+                Delivery Month: {dayjs(params.due_month).format('MMMM')}
+                <span
+                  onClick={() => {
+                    setParams((prev) => ({
+                      ...prev,
+                      due_month: '',
+                      page: '1',
+                    }));
+                  }}
+                >
+                  <X className='w-4 h-4 cursor-pointer' />
+                </span>
+              </div>
+            )}
+            {params.due_year && (
+              <div className='pl-3 pr-2 py-1 border flex gap-2 items-center rounded-full text-sm'>
+                Delivery Year: {params.due_year}
+                <span
+                  onClick={() => {
+                    setParams((prev) => ({
+                      ...prev,
+                      due_year: '',
+                      page: '1',
+                    }));
+                  }}
+                >
+                  <X className='w-4 h-4 cursor-pointer' />
+                </span>
+              </div>
+            )}
+            {params.task_create_month && (
+              <div className='pl-3 pr-2 py-1 border flex gap-2 items-center rounded-full text-sm'>
+                Delivery Month: {dayjs(params.task_create_month).format('MMMM')}
+                <span
+                  onClick={() => {
+                    setParams((prev) => ({
+                      ...prev,
+                      task_create_month: '',
+                      page: '1',
+                    }));
+                  }}
+                >
+                  <X className='w-4 h-4 cursor-pointer' />
+                </span>
+              </div>
+            )}
+            {params.task_create_year && (
+              <div className='pl-3 pr-2 py-1 border flex gap-2 items-center rounded-full text-sm'>
+                Delivery Year: {params.task_create_year}
+                <span
+                  onClick={() => {
+                    setParams((prev) => ({
+                      ...prev,
+                      task_create_year: '',
+                      page: '1',
+                    }));
+                  }}
+                >
+                  <X className='w-4 h-4 cursor-pointer' />
+                </span>
+              </div>
+            )}
           </div>
         </CardContent>
       </Card>
@@ -493,7 +557,7 @@ export default function MyTasksPage() {
       <Modal
         isOpen={myTaskFilterOpen}
         setIsOpen={setMyTaskFilterOpen}
-        title='Filter Salary'
+        title='Filter Tasks'
         description=' '
       >
         <MyTasksFilter
