@@ -42,6 +42,12 @@ export default withAuth(
       }
     }
 
+    if (role === 'ADMIN') {
+      if (CLIENT_PATHS.some((clientPath) => path.startsWith(clientPath))) {
+        return NextResponse.redirect(new URL('/dashboard/dashboard', req.url));
+      }
+    }
+
     if (role === 'CLIENT') {
       if (
         ADMIN_PATHS.some((clientPath) => path.startsWith(clientPath)) ||
