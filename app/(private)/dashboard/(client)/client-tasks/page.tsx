@@ -25,6 +25,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useRouter, useSearchParams } from 'next/navigation';
 import {
   clientTaskTypeConverter,
+  cn,
   generateQueryString,
   getErrorMessage,
   paperTypeConvert,
@@ -41,7 +42,7 @@ import {
   useGetNewClientTasks,
   useNewClientTasks,
 } from '@/hooks/use-new-client';
-import { ClientTaskType } from '@/types/common';
+import { ClientTasksType } from '@/types/common';
 import { getStatusBadge } from '../../(admin)/tasks/page';
 import {
   DropdownMenu,
@@ -55,30 +56,21 @@ import ClientTaskDetails from '@/components/client-task-details';
 import ClientTasksFilter from '@/components/filters/client-tasks-filter';
 import { toast } from 'sonner';
 import ConfirmModal from '@/components/confirm-modal';
-
-// const getStatusBadge = (status: string) => {
-//   const variants = {
-//     PENDING: 'bg-gray-100 text-gray-800 hover:bg-gray-200',
-//     IN_PROGRESS: 'bg-blue-100 text-blue-800 hover:bg-blue-200',
-//     SUBMITTED: 'bg-amber-100 text-amber-800 hover:bg-amber-200 ',
-//     COMPLETED: 'bg-green-100 text-green-800 hover:bg-green-200',
-//   } as const;
-//   return (
-//     <Badge className={cn(variants[status as keyof typeof variants])}>
-//       {taskStatusConvert[status as keyof typeof taskStatusConvert]}
-//     </Badge>
-//   );
-// };
+import UpdateClientTaskForm from '@/components/forms/update-client-task-form';
 
 export default function ClientTasksPage() {
   const [createTaskOpen, setCreateTaskOpen] = useState(false);
+  const [editTaskOpen, setEditTaskOpen] = useState(false);
+
   const searchParams = useSearchParams();
   const { data: session } = useSession();
   const email = session?.user?.email || undefined;
   const [isPending, startTransition] = useTransition();
 
   const [taskId, setTaskId] = useState<number | null>(null);
-  const [selectedTask, setSelectedTask] = useState<ClientTaskType | null>(null);
+  const [selectedTask, setSelectedTask] = useState<ClientTasksType | null>(
+    null
+  );
   const [confirmModal, setConfirmModal] = useState(false);
   const [openTaskDetails, setOpenTaskDetails] = useState(false);
   const [myTaskFilterOpen, setMyTaskFilterOpen] = useState(false);
@@ -140,9 +132,14 @@ export default function ClientTasksPage() {
     setConfirmModal(true);
   };
 
-  const handleClickTaskDetails = (task: ClientTaskType) => {
+  const handleClickTaskDetails = (task: ClientTasksType) => {
     setSelectedTask(task);
     setOpenTaskDetails(true);
+  };
+
+  const handleEditTask = (task: ClientTasksType) => {
+    setSelectedTask(task);
+    setEditTaskOpen(true);
   };
 
   return (
@@ -279,7 +276,7 @@ export default function ClientTasksPage() {
             )}
             {params.due_date && (
               <div className='pl-3 pr-2 py-1 border flex gap-2 items-center rounded-full text-sm'>
-                Delivery Date: {dayjs(params.due_date).format('DD-MM-YYYY')}
+                Deadline: {dayjs(params.due_date).format('DD-MM-YYYY')}
                 <span
                   onClick={() => {
                     setParams((prev) => ({
@@ -374,11 +371,13 @@ export default function ClientTasksPage() {
                   <TableHead>Unique ID</TableHead>
                   <TableHead>Amount</TableHead>
                   <TableHead>Paid Amount</TableHead>
-                  <TableHead>Delivery Date</TableHead>
+                  <TableHead>Due Amount</TableHead>
+                  <TableHead>Deadline</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>Task Type</TableHead>
                   <TableHead>Paper Type</TableHead>
                   <TableHead>Created At</TableHead>
+                  <TableHead>Updated At</TableHead>
                   <TableHead>Actions</TableHead>
                 </TableRow>
               </TableHeader>
@@ -391,7 +390,7 @@ export default function ClientTasksPage() {
                   </tr>
                 ) : (
                   fetchClientTasks?.data.map(
-                    (task: ClientTaskType, index: number) => (
+                    (task: ClientTasksType, index: number) => (
                       <TableRow key={task.id}>
                         <TableCell>#{index + 1}</TableCell>
                         <TableCell className='font-medium max-w-sm break-words'>
@@ -405,6 +404,17 @@ export default function ClientTasksPage() {
                         </TableCell>
                         <TableCell className='font-medium'>
                           {task.paid_amount?.toFixed(2) || '0.00'}
+                        </TableCell>
+                        <TableCell
+                          className={cn(
+                            'font-medium',
+                            task.amount - task.paid_amount === 0
+                              ? 'text-green-600'
+                              : 'text-red-600'
+                          )}
+                        >
+                          {(task.amount - task.paid_amount).toFixed(2) ||
+                            '0.00'}
                         </TableCell>
                         <TableCell>
                           {task.duration
@@ -432,6 +442,11 @@ export default function ClientTasksPage() {
                             : '-'}
                         </TableCell>
                         <TableCell>
+                          {task.updatedAt
+                            ? dayjs(task.updatedAt).format('DD-MM-YYYY')
+                            : '-'}
+                        </TableCell>
+                        <TableCell>
                           <div>
                             <DropdownMenu>
                               <DropdownMenuTrigger asChild>
@@ -447,7 +462,11 @@ export default function ClientTasksPage() {
                                 >
                                   View Details
                                 </DropdownMenuItem>
-                                <DropdownMenuItem>Edit Task</DropdownMenuItem>
+                                <DropdownMenuItem
+                                  onClick={() => handleEditTask(task)}
+                                >
+                                  Edit Task
+                                </DropdownMenuItem>
                                 <DropdownMenuItem
                                   className='text-red-600'
                                   onClick={() => handleClickDelete(task.id)}
@@ -473,7 +492,7 @@ export default function ClientTasksPage() {
               <Card className='p-4 text-center'>No tasks found.</Card>
             ) : (
               fetchClientTasks?.data.map(
-                (task: ClientTaskType, index: number) => (
+                (task: ClientTasksType, index: number) => (
                   <Card key={task.id} className='p-4'>
                     <div className='flex justify-between items-start mb-3'>
                       <div className='flex items-start gap-2'>
@@ -497,7 +516,11 @@ export default function ClientTasksPage() {
                             >
                               View Details
                             </DropdownMenuItem>
-                            <DropdownMenuItem>Edit Task</DropdownMenuItem>
+                            <DropdownMenuItem
+                              onClick={() => handleEditTask(task)}
+                            >
+                              Edit Task
+                            </DropdownMenuItem>
                             <DropdownMenuItem className='text-red-600'>
                               Delete Task
                             </DropdownMenuItem>
@@ -517,13 +540,35 @@ export default function ClientTasksPage() {
                       <div className='flex justify-between text-xs'>
                         <span className='text-muted-foreground'>Amount:</span>
                         <span className='font-medium'>
-                          ${task.amount?.toFixed(2) || '0.00'}
+                          {task.amount?.toFixed(2) || '0.00'}
                         </span>
                       </div>
                       <div className='flex justify-between text-xs'>
                         <span className='text-muted-foreground'>
-                          Delivery Date:
+                          Paid Amount:
                         </span>
+                        <span className='font-medium'>
+                          {task.paid_amount?.toFixed(2) || '0.00'}
+                        </span>
+                      </div>
+                      <div className='flex justify-between text-xs'>
+                        <span className='text-muted-foreground'>
+                          Due Amount:
+                        </span>
+                        <span
+                          className={cn(
+                            'font-medium',
+                            task.amount - task.paid_amount === 0
+                              ? 'text-green-600'
+                              : 'text-red-600'
+                          )}
+                        >
+                          {(task.amount - task.paid_amount).toFixed(2) ||
+                            '0.00'}
+                        </span>
+                      </div>
+                      <div className='flex justify-between text-xs'>
+                        <span className='text-muted-foreground'>Deadline:</span>
                         <span>
                           {task.duration
                             ? dayjs(task.duration).format('DD-MM-YYYY')
@@ -553,6 +598,16 @@ export default function ClientTasksPage() {
                         <span>
                           {task.createdAt
                             ? dayjs(task.createdAt).format('DD-MM-YYYY')
+                            : '-'}
+                        </span>
+                      </div>
+                      <div className='flex justify-between items-center text-xs'>
+                        <span className='text-muted-foreground'>
+                          Updated At:
+                        </span>
+                        <span>
+                          {task.updatedAt
+                            ? dayjs(task.updatedAt).format('DD-MM-YYYY')
                             : '-'}
                         </span>
                       </div>
@@ -623,6 +678,14 @@ export default function ClientTasksPage() {
         description=' '
       >
         <CreateClientTaskForm setIsOpen={setCreateTaskOpen} />
+      </AlertModal>
+      <AlertModal
+        isOpen={editTaskOpen}
+        setIsOpen={setEditTaskOpen}
+        title='Edit task'
+        description=' '
+      >
+        <UpdateClientTaskForm setIsOpen={setEditTaskOpen} data={selectedTask} />
       </AlertModal>
       <Modal
         isOpen={myTaskFilterOpen}

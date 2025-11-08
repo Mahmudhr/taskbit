@@ -4,9 +4,10 @@ import {
   createClientTasks,
   deleteClientTask,
   fetchClientTasksByUserEmail,
+  updateClientTasks,
 } from '@/server/client-tasks/client-tasks';
 import { CreateNewClientTaskType } from '@/server/types/client-type';
-import { ClientTaskType, Meta, Response } from '@/types/common';
+import { ClientTasksType, Meta, Response } from '@/types/common';
 import {
   keepPreviousData,
   useMutation,
@@ -30,6 +31,19 @@ export function useNewClientTasks() {
     },
   });
 
+  const updateClientTaskMutation = useMutation({
+    mutationFn: async (data: CreateNewClientTaskType) => {
+      const result = await updateClientTasks(data);
+      if (!result.success) {
+        throw new Error(result.message || 'Failed to create task');
+      }
+      return result;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['client-tasks'] });
+    },
+  });
+
   const deleteClientTaskMutation = useMutation({
     mutationFn: (id: number) => deleteClientTask(id),
     onSuccess: () => {
@@ -40,6 +54,8 @@ export function useNewClientTasks() {
   return {
     createClientTaskMutation,
     createClientTaskMutationAsync: createClientTaskMutation.mutateAsync,
+    updateClientTaskMutation,
+    updateClientTaskMutationAsync: updateClientTaskMutation.mutateAsync,
     deleteClientTask: deleteClientTaskMutation.mutate,
     deleteClientTaskAsync: deleteClientTaskMutation.mutateAsync,
   };
@@ -47,7 +63,7 @@ export function useNewClientTasks() {
 
 export function useGetNewClientTasks(email?: string, options?: string) {
   //   const queryClient = useQueryClient();
-  const fetchClientTasksMutation = useQuery<Response<ClientTaskType[], Meta>>({
+  const fetchClientTasksMutation = useQuery<Response<ClientTasksType[], Meta>>({
     queryKey: ['client-tasks', email, options],
     queryFn: async () => {
       if (!email)

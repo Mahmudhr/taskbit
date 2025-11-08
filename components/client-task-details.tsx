@@ -6,9 +6,9 @@ import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { Copy, Check } from 'lucide-react';
 import { toast } from 'sonner';
-import { ClientTaskType } from '@/types/common';
 import dayjs from 'dayjs';
 import { clientTaskTypeConverter } from '@/lib/utils';
+import { ClientTasksType } from '@/types/common';
 
 const getStatusBadge = (status: string) => {
   const statusVariants = {
@@ -133,7 +133,7 @@ const DetailItem = ({
   );
 };
 
-export default function ClientTaskDetails({ data }: { data: ClientTaskType }) {
+export default function ClientTaskDetails({ data }: { data: ClientTasksType }) {
   return (
     <div className='space-y-4'>
       {/* Task Title */}
@@ -207,11 +207,16 @@ export default function ClientTaskDetails({ data }: { data: ClientTaskType }) {
             value={`${data.paid_amount?.toFixed(2) || '0.00'}`}
             fieldName='Paid Amount'
           />
+          <DetailItem
+            label='Due Amount'
+            value={`${(data.amount - data.paid_amount).toFixed(2) || '0.00'}`}
+            fieldName='Due Amount'
+          />
         </div>
 
         <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
           <DetailItem
-            label='Duration/Deadline'
+            label='Deadline'
             value={
               data.duration
                 ? dayjs(data.duration).format('DD-MM-YYYY')

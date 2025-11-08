@@ -84,6 +84,48 @@ export async function createClientTasks(data: CreateNewClientTaskType) {
   }
 }
 
+export async function updateClientTasks(data: CreateNewClientTaskType) {
+  const {
+    id,
+    title,
+    description,
+    amount,
+    status,
+    duration,
+    paper_type,
+    unique_id,
+    createdById,
+    correction_description,
+    task_type,
+  } = data;
+  try {
+    const updatedTask = await prisma.clientTasks.update({
+      where: { id },
+      data: {
+        title,
+        description,
+        amount,
+        status,
+        duration,
+        paper_type,
+        unique_id,
+        createdById,
+        correction_description,
+        task_type,
+        updatedAt: new Date(),
+      },
+    });
+
+    return {
+      success: true,
+      message: 'Client task updated successfully',
+      data: updatedTask,
+    };
+  } catch (error) {
+    return catchError(error);
+  }
+}
+
 export const deleteClientTask = async (taskId: number) => {
   try {
     const updateUser = await prisma.clientTasks.update({

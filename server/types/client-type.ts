@@ -18,12 +18,13 @@ export type CreateNewClientType = {
 };
 
 export type CreateNewClientTaskType = {
+  id?: number;
   title: string;
   description?: string;
   amount: number;
   status: $Enums.TaskStatus;
   createdById?: number;
-  duration: Date;
+  duration?: Date | null | undefined;
   paper_type: $Enums.PaperType;
   updatedAt?: Date;
   unique_id?: string;
