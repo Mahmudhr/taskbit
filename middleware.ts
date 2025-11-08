@@ -11,11 +11,11 @@ const ADMIN_PATHS = [
   '/dashboard/users',
   '/dashboard/clients',
   '/dashboard/dashboard',
+  '/dashboard/new-clients-tasks',
   '/dashboard/employee-of-the-month',
 ];
 
 const CLIENT_PATHS = ['/dashboard/client-tasks'];
-
 const COMMON_PATHS = ['/dashboard/profile'];
 
 export default withAuth(

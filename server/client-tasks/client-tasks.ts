@@ -442,8 +442,6 @@ export const fetchClientTasksByUserEmail = async (
       updatedAt: task.updatedAt,
       duration: task.duration,
       unique_id: task.unique_id,
-      createdBy: task.createdBy,
-      createdById: task.createdById,
       paid_amount: task.paid_amount,
       correction_description: task.correction_description,
       task_type: task.task_type,

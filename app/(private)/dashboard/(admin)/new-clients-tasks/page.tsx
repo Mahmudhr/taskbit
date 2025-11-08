@@ -36,7 +36,7 @@ import Modal from '@/components/modal';
 import AlertModal from '@/components/alert-modal';
 import CreateClientTaskForm from '@/components/forms/create-client-task-form';
 import { useFetchNewClientTasks } from '@/hooks/use-new-client';
-import { ClientTasksType } from '@/types/common';
+import { NewClientTasksType } from '@/types/common';
 import { getStatusBadge } from '../tasks/page';
 import {
   DropdownMenu,
@@ -46,9 +46,9 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import ClientTaskDetails from '@/components/client-task-details';
 import ClientTasksFilter from '@/components/filters/client-tasks-filter';
 import UpdateNewClientTaskForm from '@/components/forms/update-new-client-task-form';
+import NewClientTaskDetails from '@/components/new-client-task-details';
 
 export default function NewClientsTasksPage() {
   const [createTaskOpen, setCreateTaskOpen] = useState(false);
@@ -58,7 +58,7 @@ export default function NewClientsTasksPage() {
   // const [isPending, startTransition] = useTransition();
 
   // const [taskId, setTaskId] = useState<number | null>(null);
-  const [selectedTask, setSelectedTask] = useState<ClientTasksType | null>(
+  const [selectedTask, setSelectedTask] = useState<NewClientTasksType | null>(
     null
   );
   // const [confirmModal, setConfirmModal] = useState(false);
@@ -121,12 +121,12 @@ export default function NewClientsTasksPage() {
   //   setConfirmModal(true);
   // };
 
-  const handleClickTaskDetails = (task: ClientTasksType) => {
+  const handleClickTaskDetails = (task: NewClientTasksType) => {
     setSelectedTask(task);
     setOpenTaskDetails(true);
   };
 
-  const handleEditTask = (task: ClientTasksType) => {
+  const handleEditTask = (task: NewClientTasksType) => {
     setSelectedTask(task);
     setEditTaskOpen(true);
   };
@@ -354,6 +354,7 @@ export default function NewClientsTasksPage() {
                   <TableHead>Serial</TableHead>
                   <TableHead>Task Title</TableHead>
                   <TableHead>Unique ID</TableHead>
+                  <TableHead>Client</TableHead>
                   <TableHead>Amount</TableHead>
                   <TableHead>Paid Amount</TableHead>
                   <TableHead>Due Amount</TableHead>
@@ -375,14 +376,17 @@ export default function NewClientsTasksPage() {
                   </tr>
                 ) : (
                   fetchClientAllTasks?.data.map(
-                    (task: ClientTasksType, index: number) => (
+                    (task: NewClientTasksType, index: number) => (
                       <TableRow key={task.id}>
                         <TableCell>#{index + 1}</TableCell>
                         <TableCell className='font-medium max-w-sm break-words'>
                           {task.title}
                         </TableCell>
-                        <TableCell className='font-mono text-sm'>
+                        <TableCell className='text-sm'>
                           {task.unique_id || '-'}
+                        </TableCell>
+                        <TableCell className='text-sm'>
+                          {task.createdBy.name || '-'}
                         </TableCell>
                         <TableCell className='font-medium'>
                           {task.amount?.toFixed(2) || '0.00'}
@@ -477,7 +481,7 @@ export default function NewClientsTasksPage() {
               <Card className='p-4 text-center'>No tasks found.</Card>
             ) : (
               fetchClientAllTasks?.data.map(
-                (task: ClientTasksType, index: number) => (
+                (task: NewClientTasksType, index: number) => (
                   <Card key={task.id} className='p-4'>
                     <div className='flex justify-between items-start mb-3'>
                       <div className='flex items-start gap-2'>
@@ -514,6 +518,12 @@ export default function NewClientsTasksPage() {
                       </div>
                     </div>
                     <div className='space-y-2 text-sm'>
+                      <div className='flex justify-between text-xs'>
+                        <span className='text-muted-foreground'>Client:</span>
+                        <span className='font-medium'>
+                          {task.createdBy.name || '-'}
+                        </span>
+                      </div>
                       <div className='flex justify-between text-xs'>
                         <span className='text-muted-foreground'>
                           Unique ID:
@@ -563,6 +573,18 @@ export default function NewClientsTasksPage() {
                       <div className='flex justify-between items-center text-xs'>
                         <span className='text-muted-foreground'>Status:</span>
                         {getStatusBadge(task.status)}
+                      </div>
+                      <div className='flex justify-between items-center text-xs'>
+                        <span className='text-muted-foreground'>
+                          Task Type:
+                        </span>
+                        <span>
+                          {
+                            clientTaskTypeConverter[
+                              task.task_type as keyof typeof clientTaskTypeConverter
+                            ]
+                          }
+                        </span>
                       </div>
                       <div className='flex justify-between items-center text-xs'>
                         <span className='text-muted-foreground'>
@@ -693,7 +715,7 @@ export default function NewClientsTasksPage() {
         title='Task Details'
         description=' '
       >
-        {selectedTask && <ClientTaskDetails data={selectedTask} />}
+        {selectedTask && <NewClientTaskDetails data={selectedTask} />}
       </Modal>
       {/* <ConfirmModal
         isOpen={confirmModal}

@@ -9,7 +9,12 @@ import {
   updateNewClientTasks,
 } from '@/server/client-tasks/client-tasks';
 import { CreateNewClientTaskType } from '@/server/types/client-type';
-import { ClientTasksType, Meta, Response } from '@/types/common';
+import {
+  ClientTasksType,
+  Meta,
+  NewClientTasksType,
+  Response,
+} from '@/types/common';
 import {
   keepPreviousData,
   useMutation,
@@ -100,7 +105,7 @@ export function useGetNewClientTasks(email?: string, options?: string) {
 
 export function useFetchNewClientTasks(options?: string) {
   const fetchClientAllTasksMutation = useQuery<
-    Response<ClientTasksType[], Meta>
+    Response<NewClientTasksType[], Meta>
   >({
     queryKey: ['client-tasks', options],
     queryFn: async () => fetchClientTasks(options),

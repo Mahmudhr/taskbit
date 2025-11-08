@@ -128,6 +128,27 @@ export type ClientTasksType = {
   task_type: $Enums.ClientTaskType;
 };
 
+export type NewClientTasksType = {
+  id: number;
+  title: string;
+  description?: string | null;
+  unique_id?: string | null;
+  status: $Enums.TaskStatus;
+  createdAt: Date;
+  updatedAt: Date;
+  duration?: Date | null;
+  paper_type: $Enums.PaperType;
+  amount: number;
+  paid_amount: number;
+  correction_description?: string | null;
+  task_type: $Enums.ClientTaskType;
+  createdBy: {
+    id: number;
+    name: string;
+    email: string;
+  };
+};
+
 export type PaymentTypes = {
   id: number;
   referenceNumber: string;
