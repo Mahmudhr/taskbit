@@ -39,28 +39,47 @@ import { useNewClientTasks } from '@/hooks/use-new-client';
 import { toast } from 'sonner';
 import { ClientTasksType } from '@/types/common';
 
-const FormSchema = z.object({
-  title: z.string().min(2, { message: 'Title must be at least 2 characters.' }),
-  description: z.string().optional(),
-  correction_description: z.string().optional(),
-  link: z
-    .string()
-    .url({ message: 'Must be a valid URL' })
-    .optional()
-    .or(z.literal('')),
-  amount: z.coerce
-    .number()
-    .min(1, { message: 'Amount must be greater than 0' }),
-  status: z.nativeEnum(TaskStatus),
-  paper_type: z.nativeEnum(PaperType),
-  task_type: z.nativeEnum(ClientTaskType),
-  assignedUserIds: z.array(z.number()).optional(),
-  clientId: z.coerce.number().optional(),
-  duration: z.date().optional().nullable(),
-  unique_id: z.string().min(2).max(100),
-});
+const FormSchema = z
+  .object({
+    title: z
+      .string()
+      .min(2, { message: 'Title must be at least 2 characters.' }),
+    description: z.string().optional(),
+    correction_description: z.string().optional(),
+    link: z
+      .string()
+      .url({ message: 'Must be a valid URL' })
+      .optional()
+      .or(z.literal('')),
+    amount: z.coerce
+      .number()
+      .min(1, { message: 'Amount must be greater than 0' }),
+    paid_amount: z.coerce
+      .number()
+      .min(0, { message: 'Paid amount cannot be negative' })
+      .optional(),
+    status: z.nativeEnum(TaskStatus),
+    paper_type: z.nativeEnum(PaperType),
+    task_type: z.nativeEnum(ClientTaskType),
+    assignedUserIds: z.array(z.number()).optional(),
+    clientId: z.coerce.number().optional(),
+    duration: z.date().optional().nullable(),
+    unique_id: z.string().min(2).max(100),
+  })
+  .refine(
+    (data) => {
+      if (data.paid_amount !== undefined && data.paid_amount > data.amount) {
+        return false;
+      }
+      return true;
+    },
+    {
+      message: 'Paid amount cannot be greater than total amount',
+      path: ['paid_amount'],
+    }
+  );
 
-export default function UpdateClientTaskForm({
+export default function UpdateNewClientTaskForm({
   setIsOpen,
   data,
 }: {
@@ -68,7 +87,7 @@ export default function UpdateClientTaskForm({
   data?: ClientTasksType | null;
 }) {
   const [isPending, startTransition] = useTransition();
-  const { updateClientTaskMutationAsync } = useNewClientTasks();
+  const { updateNewClientTaskMutationAsync } = useNewClientTasks();
 
   const form = useForm<z.infer<typeof FormSchema>>({
     resolver: zodResolver(FormSchema),
@@ -76,6 +95,7 @@ export default function UpdateClientTaskForm({
       title: data?.title || '',
       description: data?.description || '',
       amount: data?.amount || 0,
+      paid_amount: data?.paid_amount || 0,
       status: data?.status || TaskStatus.PENDING,
       duration: data?.duration || null,
       unique_id: data?.unique_id || '',
@@ -91,7 +111,7 @@ export default function UpdateClientTaskForm({
     };
 
     startTransition(() => {
-      toast.promise(updateClientTaskMutationAsync(payload), {
+      toast.promise(updateNewClientTaskMutationAsync(payload), {
         loading: 'Creating Task...',
         success: (res) => {
           setIsOpen(false);
@@ -181,6 +201,27 @@ export default function UpdateClientTaskForm({
                   className='w-full'
                   type='number'
                   placeholder='Enter amount'
+                  {...field}
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
+          name='paid_amount'
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Paid Amount (Optional)</FormLabel>
+              <FormControl>
+                <Input
+                  className='w-full'
+                  type='number'
+                  placeholder='Enter paid amount'
+                  min='0'
+                  step='0.01'
                   {...field}
                 />
               </FormControl>

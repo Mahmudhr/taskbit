@@ -70,6 +70,11 @@ const adminMenuItems = [
     icon: Users,
   },
   {
+    title: 'New Clients Tasks',
+    url: '/dashboard/new-clients-tasks',
+    icon: Users,
+  },
+  {
     title: 'Employee of the month',
     url: '/dashboard/employee-of-the-month',
     icon: Users,

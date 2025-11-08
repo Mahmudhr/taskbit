@@ -1,7 +1,6 @@
 'use client';
 
-import { useSession } from 'next-auth/react';
-import { useEffect, useState, useTransition } from 'react';
+import { useEffect, useState } from 'react';
 import { Input } from '@/components/ui/input';
 import {
   Table,
@@ -16,7 +15,6 @@ import {
   Search,
   X,
   ListFilter,
-  Plus,
   ChevronLeft,
   ChevronRight,
   EllipsisVertical,
@@ -27,7 +25,6 @@ import {
   clientTaskTypeConverter,
   cn,
   generateQueryString,
-  getErrorMessage,
   paperTypeConvert,
   taskStatusConvert,
 } from '@/lib/utils';
@@ -38,12 +35,9 @@ import dayjs from 'dayjs';
 import Modal from '@/components/modal';
 import AlertModal from '@/components/alert-modal';
 import CreateClientTaskForm from '@/components/forms/create-client-task-form';
-import {
-  useGetNewClientTasks,
-  useNewClientTasks,
-} from '@/hooks/use-new-client';
+import { useFetchNewClientTasks } from '@/hooks/use-new-client';
 import { ClientTasksType } from '@/types/common';
-import { getStatusBadge } from '../../(admin)/tasks/page';
+import { getStatusBadge } from '../tasks/page';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -54,24 +48,20 @@ import {
 } from '@/components/ui/dropdown-menu';
 import ClientTaskDetails from '@/components/client-task-details';
 import ClientTasksFilter from '@/components/filters/client-tasks-filter';
-import { toast } from 'sonner';
-import ConfirmModal from '@/components/confirm-modal';
-import UpdateClientTaskForm from '@/components/forms/update-client-task-form';
+import UpdateNewClientTaskForm from '@/components/forms/update-new-client-task-form';
 
-export default function ClientTasksPage() {
+export default function NewClientsTasksPage() {
   const [createTaskOpen, setCreateTaskOpen] = useState(false);
   const [editTaskOpen, setEditTaskOpen] = useState(false);
 
   const searchParams = useSearchParams();
-  const { data: session } = useSession();
-  const email = session?.user?.email || undefined;
-  const [isPending, startTransition] = useTransition();
+  // const [isPending, startTransition] = useTransition();
 
-  const [taskId, setTaskId] = useState<number | null>(null);
+  // const [taskId, setTaskId] = useState<number | null>(null);
   const [selectedTask, setSelectedTask] = useState<ClientTasksType | null>(
     null
   );
-  const [confirmModal, setConfirmModal] = useState(false);
+  // const [confirmModal, setConfirmModal] = useState(false);
   const [openTaskDetails, setOpenTaskDetails] = useState(false);
   const [myTaskFilterOpen, setMyTaskFilterOpen] = useState(false);
 
@@ -95,12 +85,11 @@ export default function ClientTasksPage() {
 
   const queryString = generateQueryString(params);
 
-  const { deleteClientTaskAsync } = useNewClientTasks();
-  const { fetchClientTasks, fetchClientTasksMutation } = useGetNewClientTasks(
-    email,
-    queryString
-  );
-  const loading = fetchClientTasksMutation.isLoading;
+  // const { deleteClientTaskAsync } = useNewClientTasks();
+
+  const { fetchClientAllTasks, fetchClientAllTasksMutation } =
+    useFetchNewClientTasks(queryString);
+  const loading = fetchClientAllTasksMutation.isLoading;
   const debounced = useDebouncedCallback((value) => {
     setParams((prevParams) => ({
       ...prevParams,
@@ -113,24 +102,24 @@ export default function ClientTasksPage() {
     router.push(queryString);
   }, [queryString, router]);
 
-  const handleDeleteClientTask = () => {
-    if (taskId === null) return;
-    startTransition(() => {
-      toast.promise(deleteClientTaskAsync(taskId), {
-        loading: 'Deleting task...',
-        success: () => {
-          setConfirmModal(false);
-          return 'Successfully Task Deleted';
-        },
-        error: (err) => getErrorMessage(err) || 'Something went wrong!',
-      });
-    });
-  };
+  // const handleDeleteClientTask = () => {
+  //   if (taskId === null) return;
+  //   startTransition(() => {
+  //     toast.promise(deleteClientTaskAsync(taskId), {
+  //       loading: 'Deleting task...',
+  //       success: () => {
+  //         setConfirmModal(false);
+  //         return 'Successfully Task Deleted';
+  //       },
+  //       error: (err) => getErrorMessage(err) || 'Something went wrong!',
+  //     });
+  //   });
+  // };
 
-  const handleClickDelete = (taskId: number) => {
-    setTaskId(taskId);
-    setConfirmModal(true);
-  };
+  // const handleClickDelete = (taskId: number) => {
+  //   setTaskId(taskId);
+  //   setConfirmModal(true);
+  // };
 
   const handleClickTaskDetails = (task: ClientTasksType) => {
     setSelectedTask(task);
@@ -148,10 +137,6 @@ export default function ClientTasksPage() {
         <h1 className='text-xl md:text-3xl font-bold'>
           Client Tasks management
         </h1>
-        <Button onClick={() => setCreateTaskOpen(true)}>
-          <Plus className='mr-2 h-4 w-4' />
-          Create new Task
-        </Button>
       </div>
 
       <Card>
@@ -359,7 +344,7 @@ export default function ClientTasksPage() {
       </Card>
       <Card>
         <CardHeader>
-          <CardTitle>My Tasks List</CardTitle>
+          <CardTitle>Client Tasks List</CardTitle>
         </CardHeader>
         <CardContent>
           <div className='hidden md:block'>
@@ -389,7 +374,7 @@ export default function ClientTasksPage() {
                     </td>
                   </tr>
                 ) : (
-                  fetchClientTasks?.data.map(
+                  fetchClientAllTasks?.data.map(
                     (task: ClientTasksType, index: number) => (
                       <TableRow key={task.id}>
                         <TableCell>#{index + 1}</TableCell>
@@ -467,12 +452,12 @@ export default function ClientTasksPage() {
                                 >
                                   Update task
                                 </DropdownMenuItem>
-                                <DropdownMenuItem
+                                {/* <DropdownMenuItem
                                   className='text-red-600'
                                   onClick={() => handleClickDelete(task.id)}
                                 >
                                   Delete Task
-                                </DropdownMenuItem>
+                                </DropdownMenuItem> */}
                               </DropdownMenuContent>
                             </DropdownMenu>
                           </div>
@@ -488,10 +473,10 @@ export default function ClientTasksPage() {
           <div className='md:hidden block space-y-4'>
             {loading ? (
               <TaskCardSkeleton />
-            ) : fetchClientTasks?.data?.length === 0 ? (
+            ) : fetchClientAllTasks?.data?.length === 0 ? (
               <Card className='p-4 text-center'>No tasks found.</Card>
             ) : (
-              fetchClientTasks?.data.map(
+              fetchClientAllTasks?.data.map(
                 (task: ClientTasksType, index: number) => (
                   <Card key={task.id} className='p-4'>
                     <div className='flex justify-between items-start mb-3'>
@@ -521,12 +506,9 @@ export default function ClientTasksPage() {
                             >
                               Update task
                             </DropdownMenuItem>
-                            <DropdownMenuItem
-                              className='text-red-600'
-                              onClick={() => handleClickDelete(task.id)}
-                            >
+                            {/* <DropdownMenuItem className='text-red-600'>
                               Delete Task
-                            </DropdownMenuItem>
+                            </DropdownMenuItem> */}
                           </DropdownMenuContent>
                         </DropdownMenu>
                       </div>
@@ -631,11 +613,11 @@ export default function ClientTasksPage() {
             )}
           </div>
 
-          {fetchClientTasks && fetchClientTasks?.meta.count > 0 && (
+          {fetchClientAllTasks && fetchClientAllTasks?.meta.count > 0 && (
             <div className='flex md:flex-row flex-col items-center md:justify-between justify-center gap-3 py-4'>
               <div className='text-sm text-muted-foreground'>
-                Showing 1 to {fetchClientTasks?.data.length} of{' '}
-                {fetchClientTasks?.meta.count} results
+                Showing 1 to {fetchClientAllTasks?.data.length} of{' '}
+                {fetchClientAllTasks?.meta.count} results
               </div>
               <div className='flex items-center space-x-2'>
                 <Button
@@ -663,7 +645,7 @@ export default function ClientTasksPage() {
                   }
                   disabled={
                     +params.page ===
-                    (fetchClientTasks && fetchClientTasks.meta.totalPages)
+                    (fetchClientAllTasks && fetchClientAllTasks.meta.totalPages)
                   }
                 >
                   Next
@@ -688,7 +670,10 @@ export default function ClientTasksPage() {
         title='Update task'
         description=' '
       >
-        <UpdateClientTaskForm setIsOpen={setEditTaskOpen} data={selectedTask} />
+        <UpdateNewClientTaskForm
+          setIsOpen={setEditTaskOpen}
+          data={selectedTask}
+        />
       </AlertModal>
       <Modal
         isOpen={myTaskFilterOpen}
@@ -710,13 +695,13 @@ export default function ClientTasksPage() {
       >
         {selectedTask && <ClientTaskDetails data={selectedTask} />}
       </Modal>
-      <ConfirmModal
+      {/* <ConfirmModal
         isOpen={confirmModal}
         setIsOpen={setConfirmModal}
         loading={isPending}
         title='This action cannot be undone. This will permanently delete your task '
         onClick={handleDeleteClientTask}
-      />
+      /> */}
     </div>
   );
 }

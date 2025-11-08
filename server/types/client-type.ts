@@ -22,6 +22,7 @@ export type CreateNewClientTaskType = {
   title: string;
   description?: string;
   amount: number;
+  paid_amount?: number;
   status: $Enums.TaskStatus;
   createdById?: number;
   duration?: Date | null | undefined;

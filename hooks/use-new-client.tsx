@@ -3,8 +3,10 @@
 import {
   createClientTasks,
   deleteClientTask,
+  fetchClientTasks,
   fetchClientTasksByUserEmail,
   updateClientTasks,
+  updateNewClientTasks,
 } from '@/server/client-tasks/client-tasks';
 import { CreateNewClientTaskType } from '@/server/types/client-type';
 import { ClientTasksType, Meta, Response } from '@/types/common';
@@ -44,6 +46,19 @@ export function useNewClientTasks() {
     },
   });
 
+  const updateNewClientTaskMutation = useMutation({
+    mutationFn: async (data: CreateNewClientTaskType) => {
+      const result = await updateNewClientTasks(data);
+      if (!result.success) {
+        throw new Error(result.message || 'Failed to create task');
+      }
+      return result;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['client-tasks'] });
+    },
+  });
+
   const deleteClientTaskMutation = useMutation({
     mutationFn: (id: number) => deleteClientTask(id),
     onSuccess: () => {
@@ -56,13 +71,14 @@ export function useNewClientTasks() {
     createClientTaskMutationAsync: createClientTaskMutation.mutateAsync,
     updateClientTaskMutation,
     updateClientTaskMutationAsync: updateClientTaskMutation.mutateAsync,
+    updateNewClientTaskMutation,
+    updateNewClientTaskMutationAsync: updateNewClientTaskMutation.mutateAsync,
     deleteClientTask: deleteClientTaskMutation.mutate,
     deleteClientTaskAsync: deleteClientTaskMutation.mutateAsync,
   };
 }
 
 export function useGetNewClientTasks(email?: string, options?: string) {
-  //   const queryClient = useQueryClient();
   const fetchClientTasksMutation = useQuery<Response<ClientTasksType[], Meta>>({
     queryKey: ['client-tasks', email, options],
     queryFn: async () => {
@@ -79,5 +95,19 @@ export function useGetNewClientTasks(email?: string, options?: string) {
   return {
     fetchClientTasksMutation,
     fetchClientTasks: fetchClientTasksMutation.data,
+  };
+}
+
+export function useFetchNewClientTasks(options?: string) {
+  const fetchClientAllTasksMutation = useQuery<
+    Response<ClientTasksType[], Meta>
+  >({
+    queryKey: ['client-tasks', options],
+    queryFn: async () => fetchClientTasks(options),
+    placeholderData: keepPreviousData,
+  });
+  return {
+    fetchClientAllTasksMutation,
+    fetchClientAllTasks: fetchClientAllTasksMutation.data,
   };
 }
