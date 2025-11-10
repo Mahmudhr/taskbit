@@ -18,6 +18,9 @@ export type SalaryType = {
   // user: UserType;
 };
 
+// Internal user roles (excluding CLIENT)
+export type InternalRole = 'USER' | 'ADMIN' | 'EMPLOYEE';
+
 export type UserType = {
   id: number;
   name: string;
@@ -31,7 +34,7 @@ export type UserType = {
   branchName: string | null;
   bankName: string | null;
   swiftCode: string | null;
-  role: $Enums.Role;
+  role: InternalRole;
   status: $Enums.UserStatus;
   createdAt?: Date;
   updatedAt?: Date;

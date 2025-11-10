@@ -2,11 +2,22 @@
 
 import AlertModal from '@/components/alert-modal';
 import AddNewClientForm from '@/components/forms/add-new-client-form';
+import UpdateNewClientForm from '@/components/forms/update-new-client-form';
+import Modal from '@/components/modal';
+import NewClientDetailsView from '@/components/new-client-detail-views';
 import UserCardSkeleton from '@/components/skeletons/user-card-skeleton';
 import UserTableSkeleton from '@/components/skeletons/user-table-skeleton';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { Input } from '@/components/ui/input';
 import {
   Select,
@@ -29,8 +40,16 @@ import {
   roleConvert,
   userStatusConvert,
 } from '@/lib/utils';
+import { NewClientType } from '@/types/common';
 import dayjs from 'dayjs';
-import { ChevronLeft, ChevronRight, Plus, Search, X } from 'lucide-react';
+import {
+  ChevronLeft,
+  ChevronRight,
+  EllipsisVertical,
+  Plus,
+  Search,
+  X,
+} from 'lucide-react';
 import { useSearchParams } from 'next/navigation';
 import { useState } from 'react';
 import { useDebouncedCallback } from 'use-debounce';
@@ -50,7 +69,9 @@ const getStatusBadge = (status: string) => {
 export default function NewClientsPage() {
   const searchParams = useSearchParams();
   const [addUserOpen, setAddUserOpen] = useState(false);
-
+  const [viewClientOpen, setViewClientOpen] = useState(false);
+  const [updateUserOpen, setUpdateUserOpen] = useState(false);
+  const [selectedUser, setSelectedUser] = useState<NewClientType | null>(null);
   const [statusFilter, setStatusFilter] = useState(
     searchParams.get('status') || 'all'
   );
@@ -76,6 +97,16 @@ export default function NewClientsPage() {
       page: '1',
     }));
   }, 500);
+
+  const handleUpdateClient = (user: NewClientType) => {
+    setUpdateUserOpen(true);
+    setSelectedUser(user);
+  };
+
+  const handleViewUser = (user: NewClientType) => {
+    setViewClientOpen(true);
+    setSelectedUser(user);
+  };
 
   return (
     <div className='space-y-6'>
@@ -211,7 +242,7 @@ export default function NewClientsPage() {
                         </TableCell>
                         <TableCell className='flex gap-2 justify-center'>
                           <div>
-                            {/* <DropdownMenu>
+                            <DropdownMenu>
                               <DropdownMenuTrigger>
                                 <EllipsisVertical className='w-5 h-5 text-gray-600' />
                               </DropdownMenuTrigger>
@@ -219,40 +250,27 @@ export default function NewClientsPage() {
                                 <DropdownMenuLabel>Options</DropdownMenuLabel>
                                 <DropdownMenuSeparator />
                                 <DropdownMenuItem
-                                  onClick={() =>
-                                    handleCreatePayment(
-                                      user.id,
-                                      user.salary || 0
-                                    )
-                                  }
-                                >
-                                  <Banknote className='mr-2 h-4 w-4' />
-                                  Make Payment
-                                </DropdownMenuItem>
-                                <DropdownMenuItem
                                   onClick={() => handleViewUser(user)}
                                 >
-                                  <Eye className='mr-2 h-4 w-4' />
                                   Details
                                 </DropdownMenuItem>
                                 <DropdownMenuItem
-                                  onClick={() => handleEditUser(user)}
+                                  onClick={() => handleUpdateClient(user)}
                                 >
-                                  <Edit className='mr-2 h-4 w-4' />
-                                  Edit
+                                  Edit Client
                                 </DropdownMenuItem>
+
                                 <DropdownMenuItem
-                                  onClick={() => {
-                                    setConfirmModal(true);
-                                    setUserId(user.id);
-                                  }}
+                                  // onClick={() => {
+                                  //   setConfirmModal(true);
+                                  //   setUserId(user.id);
+                                  // }}
                                   className='text-red-600'
                                 >
-                                  <UserX className='mr-2 h-4 w-4' />
                                   Delete
                                 </DropdownMenuItem>
                               </DropdownMenuContent>
-                            </DropdownMenu> */}
+                            </DropdownMenu>
                           </div>
                         </TableCell>
                       </TableRow>
@@ -395,11 +413,30 @@ export default function NewClientsPage() {
       <AlertModal
         isOpen={addUserOpen}
         setIsOpen={setAddUserOpen}
-        title='Create new user'
+        title='Create new client'
         description=' '
       >
         <AddNewClientForm setIsOpen={setAddUserOpen} />
       </AlertModal>
+      <AlertModal
+        isOpen={updateUserOpen}
+        setIsOpen={setUpdateUserOpen}
+        title='Update Client'
+        description=' '
+      >
+        <UpdateNewClientForm
+          setIsOpen={setUpdateUserOpen}
+          data={selectedUser}
+        />
+      </AlertModal>
+      <Modal
+        isOpen={viewClientOpen}
+        setIsOpen={setViewClientOpen}
+        title='User Details'
+        description=' '
+      >
+        {selectedUser && <NewClientDetailsView user={selectedUser} />}
+      </Modal>
     </div>
   );
 }

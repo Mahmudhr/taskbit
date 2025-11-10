@@ -5,6 +5,58 @@ import { CreateUserType } from '../types/user-type';
 import bcrypt from 'bcryptjs';
 import { $Enums } from '@prisma/client';
 import { catchError } from '@/lib/utils';
+import { InternalRole } from '@/types/common';
+
+// Type for the users returned by fetchAllUser (excluding CLIENT role)
+type InternalUserData = {
+  id: number;
+  name: string;
+  email: string;
+  phone: string | null;
+  whatsapp: string | null;
+  bkashNumber: string | null;
+  nagadNumber: string | null;
+  bankAccountNumber: string | null;
+  branchName: string | null;
+  bankName: string | null;
+  swiftCode: string | null;
+  role: InternalRole;
+  status: $Enums.UserStatus;
+  createdAt: Date;
+  updatedAt: Date;
+  salary: number | null;
+  salaries: {
+    id: number;
+    month: number;
+    year: number;
+    salaryType: $Enums.SalaryType;
+    amount: number;
+    referenceNumber: string | null;
+    paymentType: $Enums.PaymentType;
+    status: $Enums.SalaryStatus;
+    createdAt: Date;
+  }[];
+  payments: {
+    id: number;
+    userId: number;
+    taskId: number;
+    amount: number;
+    referenceNumber: string;
+    paymentType: $Enums.PaymentType;
+    status: $Enums.PaymentStatus;
+    createdAt: Date;
+  }[];
+};
+
+type FetchAllUserResponse = {
+  data: InternalUserData[];
+  meta: {
+    count: number;
+    page: number;
+    limit: number;
+    totalPages: number;
+  };
+};
 
 export async function createUser(data: CreateUserType) {
   const { email, password, name, phone, role, salary } = data;
@@ -38,7 +90,9 @@ export async function createUser(data: CreateUserType) {
   }
 }
 
-export const fetchAllUser = async (data?: string) => {
+export const fetchAllUser = async (
+  data?: string
+): Promise<FetchAllUserResponse> => {
   const params = new URLSearchParams(data);
   const search = params.get('search') || '';
   const page = parseInt(params.get('page') ?? '1') || 1;
@@ -51,7 +105,7 @@ export const fetchAllUser = async (data?: string) => {
     const whereClause: any = {
       AND: [
         { OR: [{ isDeleted: false }] },
-        { role: { not: 'CLIENT' } },
+        { role: { in: ['ADMIN', 'USER', 'EMPLOYEE'] } },
         {
           OR: [
             {
@@ -140,7 +194,7 @@ export const fetchAllUser = async (data?: string) => {
     });
 
     return {
-      data: users,
+      data: users as InternalUserData[],
       meta: {
         count,
         page,
@@ -208,7 +262,7 @@ export const UpdateUser = async ({
       message: 'User updated successfully',
     };
   } catch {
-    throw new Error('Failed to User');
+    throw new Error('Failed to Update User');
   }
 };
 

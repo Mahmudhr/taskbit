@@ -398,3 +398,45 @@ export const fetchAllNewClients = async (data?: string) => {
     throw new Error('Failed to load users');
   }
 };
+
+export const updateNewClient = async ({
+  data,
+  id,
+}: {
+  data: CreateNewClientType;
+  id: number;
+}) => {
+  const hashedPassword = await bcrypt.hash(data.password, 10);
+
+  const payload: {
+    name: string;
+    email: string;
+    password?: string;
+    phone: string;
+    status: $Enums.UserStatus;
+    updatedAt: Date;
+  } = {
+    name: data.name,
+    email: data.email,
+    phone: data.phone,
+    status: data.status,
+    updatedAt: new Date(),
+  };
+
+  if (data.password) {
+    payload.password = hashedPassword;
+  }
+
+  try {
+    const updateUser = await prisma.user.update({
+      where: { id },
+      data: payload,
+    });
+    return {
+      ...updateUser,
+      message: 'User updated successfully',
+    };
+  } catch {
+    throw new Error('Failed to Update User');
+  }
+};

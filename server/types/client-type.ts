@@ -17,6 +17,15 @@ export type CreateNewClientType = {
   status: 'ACTIVE' | 'INACTIVE';
 };
 
+export type UpdateNewClientType = {
+  email: string;
+  password?: string;
+  name: string;
+  phone: string;
+  // role: 'CLIENT';
+  status: 'ACTIVE' | 'INACTIVE';
+};
+
 export type CreateNewClientTaskType = {
   id?: number;
   title: string;

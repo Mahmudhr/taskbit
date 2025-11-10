@@ -13,15 +13,19 @@ import {
   updateUserProfile,
 } from '../server/user/user';
 import { CreateUserType } from '../server/types/user-type';
-import { Meta, NewClientType, Response, UserType } from '@/types/common';
-import { createNewClient, fetchAllNewClients } from '@/server/client/client';
+import { Meta, NewClientType, Response } from '@/types/common';
+import {
+  createNewClient,
+  fetchAllNewClients,
+  updateNewClient,
+} from '@/server/client/client';
 import { CreateNewClientType } from '@/server/types/client-type';
 
 export function useUser(options?: string) {
   const queryClient = useQueryClient();
 
-  // Fetch users
-  const fetchUsersQuery = useQuery<Response<UserType[], Meta>>({
+  // Fetch users - Now properly typed with the filtered response
+  const fetchUsersQuery = useQuery({
     queryKey: ['users', options],
     queryFn: async () => {
       const res = await fetchAllUser(options);
@@ -68,6 +72,23 @@ export function useUser(options?: string) {
     },
   });
 
+  const updateNewClientMutation = useMutation({
+    mutationFn: async ({
+      id,
+      data,
+    }: {
+      id: number;
+      data: CreateNewClientType;
+    }) => {
+      const result = await updateNewClient({ id, data });
+      return result;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['users'] });
+      queryClient.invalidateQueries({ queryKey: ['new-clients'] });
+    },
+  });
+
   const deleteUserMutation = useMutation({
     mutationFn: (id: number) => deleteUser(id),
     onSuccess: () => {
@@ -93,6 +114,9 @@ export function useUser(options?: string) {
     createUserMutation,
     createNewClient: createNewClientMutation.mutate,
     createNewClientAsync: createNewClientMutation.mutateAsync,
+    updateNewClientMutation,
+    updateNewClient: updateNewClientMutation.mutate,
+    updateNewClientAsync: updateNewClientMutation.mutateAsync,
     createNewClientMutation,
     deleteUser: deleteUserMutation.mutate,
     deleteUserAsync: deleteUserMutation.mutateAsync,

@@ -360,7 +360,7 @@ export default function UsersPage() {
                           {user.email}
                         </TableCell>
                         <TableCell className='capitalize'>
-                          {roleConvert[user.role]}
+                          {roleConvert[user.role as keyof typeof roleConvert]}
                         </TableCell>
                         {/* ✅ Updated: Show salary with due status */}
                         <TableCell>
