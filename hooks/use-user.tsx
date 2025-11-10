@@ -93,6 +93,7 @@ export function useUser(options?: string) {
     mutationFn: (id: number) => deleteUser(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['users'] });
+      queryClient.invalidateQueries({ queryKey: ['new-clients'] });
     },
   });
 

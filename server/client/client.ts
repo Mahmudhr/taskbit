@@ -434,9 +434,9 @@ export const updateNewClient = async ({
     });
     return {
       ...updateUser,
-      message: 'User updated successfully',
+      message: 'Client updated successfully',
     };
   } catch {
-    throw new Error('Failed to Update User');
+    throw new Error('Failed to Update Client');
   }
 };

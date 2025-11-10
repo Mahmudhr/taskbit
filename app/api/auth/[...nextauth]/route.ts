@@ -57,7 +57,7 @@ const authOptions = {
         }
 
         const user = await prisma.user.findUnique({
-          where: { email, status: 'ACTIVE' },
+          where: { email, status: 'ACTIVE', isDeleted: false },
         });
 
         if (!user || !(await bcrypt.compare(password, user?.password ?? ''))) {

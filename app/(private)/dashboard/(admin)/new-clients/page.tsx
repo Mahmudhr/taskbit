@@ -1,6 +1,7 @@
 'use client';
 
 import AlertModal from '@/components/alert-modal';
+import ConfirmModal from '@/components/confirm-modal';
 import AddNewClientForm from '@/components/forms/add-new-client-form';
 import UpdateNewClientForm from '@/components/forms/update-new-client-form';
 import Modal from '@/components/modal';
@@ -37,6 +38,7 @@ import {
 import { useUser } from '@/hooks/use-user';
 import {
   generateQueryString,
+  getErrorMessage,
   roleConvert,
   userStatusConvert,
 } from '@/lib/utils';
@@ -51,7 +53,8 @@ import {
   X,
 } from 'lucide-react';
 import { useSearchParams } from 'next/navigation';
-import { useState } from 'react';
+import { useState, useTransition } from 'react';
+import { toast } from 'sonner';
 import { useDebouncedCallback } from 'use-debounce';
 
 const getStatusBadge = (status: string) => {
@@ -71,10 +74,13 @@ export default function NewClientsPage() {
   const [addUserOpen, setAddUserOpen] = useState(false);
   const [viewClientOpen, setViewClientOpen] = useState(false);
   const [updateUserOpen, setUpdateUserOpen] = useState(false);
+  const [confirmModal, setConfirmModal] = useState(false);
+  const [userId, setUserId] = useState<number | null>(null);
   const [selectedUser, setSelectedUser] = useState<NewClientType | null>(null);
   const [statusFilter, setStatusFilter] = useState(
     searchParams.get('status') || 'all'
   );
+  const [isPending, startTransition] = useTransition();
 
   const [params, setParams] = useState({
     search: searchParams.get('search') || '',
@@ -88,7 +94,8 @@ export default function NewClientsPage() {
 
   const queryString = generateQueryString(params);
 
-  const { fetchNewClientsQuery, fetchNewClients } = useUser(queryString);
+  const { fetchNewClientsQuery, fetchNewClients, deleteUserAsync } =
+    useUser(queryString);
 
   const debounced = useDebouncedCallback((value) => {
     setParams((prevParams) => ({
@@ -106,6 +113,20 @@ export default function NewClientsPage() {
   const handleViewUser = (user: NewClientType) => {
     setViewClientOpen(true);
     setSelectedUser(user);
+  };
+
+  const handleDeleUser = () => {
+    if (userId === null) return;
+    startTransition(() => {
+      toast.promise(deleteUserAsync(userId), {
+        loading: 'Deleting user...',
+        success: () => {
+          setConfirmModal(false);
+          return 'Successfully User Deleted';
+        },
+        error: (err) => getErrorMessage(err) || 'Something went wrong!',
+      });
+    });
   };
 
   return (
@@ -200,7 +221,7 @@ export default function NewClientsPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Users List</CardTitle>
+          <CardTitle>Clients List</CardTitle>
         </CardHeader>
         <CardContent>
           {/* Desktop Table View */}
@@ -261,10 +282,10 @@ export default function NewClientsPage() {
                                 </DropdownMenuItem>
 
                                 <DropdownMenuItem
-                                  // onClick={() => {
-                                  //   setConfirmModal(true);
-                                  //   setUserId(user.id);
-                                  // }}
+                                  onClick={() => {
+                                    setConfirmModal(true);
+                                    setUserId(user.id);
+                                  }}
                                   className='text-red-600'
                                 >
                                   Delete
@@ -437,6 +458,13 @@ export default function NewClientsPage() {
       >
         {selectedUser && <NewClientDetailsView user={selectedUser} />}
       </Modal>
+      <ConfirmModal
+        isOpen={confirmModal}
+        setIsOpen={setConfirmModal}
+        loading={isPending}
+        title='This action cannot be undone. This will permanently delete your client '
+        onClick={handleDeleUser}
+      />
     </div>
   );
 }
