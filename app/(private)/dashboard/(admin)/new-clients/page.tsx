@@ -47,9 +47,12 @@ import dayjs from 'dayjs';
 import {
   ChevronLeft,
   ChevronRight,
+  Edit,
   EllipsisVertical,
+  Eye,
   Plus,
   Search,
+  UserX,
   X,
 } from 'lucide-react';
 import { useSearchParams } from 'next/navigation';
@@ -317,7 +320,7 @@ export default function NewClientsPage() {
                         <h3 className='font-medium'>{user.name}</h3>
                       </div>
                       <div className='flex gap-2'>
-                        {/* <DropdownMenu>
+                        <DropdownMenu>
                           <DropdownMenuTrigger>
                             <EllipsisVertical className='w-5 h-5 text-gray-600' />
                           </DropdownMenuTrigger>
@@ -325,24 +328,16 @@ export default function NewClientsPage() {
                             <DropdownMenuLabel>Options</DropdownMenuLabel>
                             <DropdownMenuSeparator />
                             <DropdownMenuItem
-                              onClick={() =>
-                                handleCreatePayment(user.id, user.salary || 0)
-                              }
-                            >
-                              <Banknote className='mr-2 h-4 w-4' />
-                              Make Payment
-                            </DropdownMenuItem>
-                            <DropdownMenuItem
                               onClick={() => handleViewUser(user)}
                             >
                               <Eye className='mr-2 h-4 w-4' />
                               Details
                             </DropdownMenuItem>
                             <DropdownMenuItem
-                              onClick={() => handleEditUser(user)}
+                              onClick={() => handleUpdateClient(user)}
                             >
                               <Edit className='mr-2 h-4 w-4' />
-                              Edit
+                              Edit Client
                             </DropdownMenuItem>
                             <DropdownMenuItem
                               onClick={() => {
@@ -355,7 +350,7 @@ export default function NewClientsPage() {
                               Delete
                             </DropdownMenuItem>
                           </DropdownMenuContent>
-                        </DropdownMenu> */}
+                        </DropdownMenu>
                       </div>
                     </div>
 
@@ -363,16 +358,25 @@ export default function NewClientsPage() {
                       <div className='flex justify-between'>
                         <span className='text-muted-foreground'>Email:</span>
                         <span>
-                          {user.email.length > 25
+                          {user.email && user.email.length > 25
                             ? user.email.slice(0, 25) + '...'
-                            : user.email}
+                            : user.email || 'N/A'}
                         </span>
                       </div>
                       <div className='flex justify-between'>
                         <span className='text-muted-foreground'>Phone:</span>
-                        <span>{user.phone}</span>
+                        <span>{user.phone || 'N/A'}</span>
                       </div>
-
+                      <div className='flex justify-between'>
+                        <span className='text-muted-foreground'>Role:</span>
+                        <span className='capitalize'>
+                          {roleConvert[user.role]}
+                        </span>
+                      </div>
+                      <div className='flex justify-between'>
+                        <span className='text-muted-foreground'>Status:</span>
+                        <span>{getStatusBadge(user.status)}</span>
+                      </div>
                       <div className='flex justify-between'>
                         <span className='text-muted-foreground'>Created:</span>
                         <span>
@@ -453,7 +457,7 @@ export default function NewClientsPage() {
       <Modal
         isOpen={viewClientOpen}
         setIsOpen={setViewClientOpen}
-        title='User Details'
+        title='Client Details'
         description=' '
       >
         {selectedUser && <NewClientDetailsView user={selectedUser} />}
