@@ -112,6 +112,14 @@ const clientMenuItems = [
   },
 ];
 
+const coAdminMenuItems = [
+  {
+    title: 'Tasks',
+    url: '/dashboard/tasks',
+    icon: CheckSquare,
+  },
+];
+
 const MenuSkeleton = () => (
   <SidebarGroup>
     <SidebarGroupLabel>
@@ -204,6 +212,28 @@ export function AppSidebar() {
                 <SidebarGroupContent>
                   <SidebarMenu>
                     {clientMenuItems.map((item) => (
+                      <SidebarMenuItem key={item.title}>
+                        <SidebarMenuButton
+                          asChild
+                          isActive={pathname === item.url}
+                        >
+                          <Link href={item.url}>
+                            <item.icon />
+                            <span>{item.title}</span>
+                          </Link>
+                        </SidebarMenuButton>
+                      </SidebarMenuItem>
+                    ))}
+                  </SidebarMenu>
+                </SidebarGroupContent>
+              </SidebarGroup>
+            )}
+            {userRole === 'CO_ADMIN' && (
+              <SidebarGroup>
+                <SidebarGroupLabel>Co Admin Panel</SidebarGroupLabel>
+                <SidebarGroupContent>
+                  <SidebarMenu>
+                    {coAdminMenuItems.map((item) => (
                       <SidebarMenuItem key={item.title}>
                         <SidebarMenuButton
                           asChild

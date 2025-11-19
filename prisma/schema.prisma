@@ -194,6 +194,7 @@ model ForgotPassword {
 
 enum Role {
   ADMIN
+  CO_ADMIN
   USER
   EMPLOYEE
   CLIENT

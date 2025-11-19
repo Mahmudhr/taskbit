@@ -105,7 +105,7 @@ export const fetchAllUser = async (
     const whereClause: any = {
       AND: [
         { OR: [{ isDeleted: false }] },
-        { role: { in: ['ADMIN', 'USER', 'EMPLOYEE'] } },
+        { role: { in: ['ADMIN', 'USER', 'EMPLOYEE', 'CO_ADMIN'] } },
         {
           OR: [
             {

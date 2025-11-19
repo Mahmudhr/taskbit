@@ -17,6 +17,7 @@ const ADMIN_PATHS = [
 
 const CLIENT_PATHS = ['/dashboard/client-tasks'];
 const COMMON_PATHS = ['/dashboard/profile'];
+const CO_ADMIN_PATHS = ['/dashboard/tasks'];
 
 export default withAuth(
   function middleware(req) {
@@ -39,6 +40,18 @@ export default withAuth(
 
       if (!isAllowedPath) {
         return NextResponse.redirect(new URL('/dashboard/my-tasks', req.url));
+      }
+    }
+
+    if (role === 'CO_ADMIN') {
+      if (!CO_ADMIN_PATHS.some((coAdminPath) => path.startsWith(coAdminPath))) {
+        return NextResponse.redirect(new URL('/dashboard/tasks', req.url));
+      }
+      const isAllowedPath = CO_ADMIN_PATHS.some((coAdminPath) =>
+        path.startsWith(coAdminPath)
+      );
+      if (!isAllowedPath) {
+        return NextResponse.redirect(new URL('/dashboard/tasks', req.url));
       }
     }
 

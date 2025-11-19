@@ -3,7 +3,7 @@ export type CreateUserType = {
   password: string;
   name: string;
   phone: string;
-  role: 'ADMIN' | 'USER' | 'EMPLOYEE';
+  role: 'ADMIN' | 'USER' | 'EMPLOYEE' | 'CO_ADMIN';
   status: 'ACTIVE' | 'INACTIVE';
   salary: number;
 };

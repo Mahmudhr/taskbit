@@ -62,6 +62,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import TaskAssignee from '@/components/task-assignee';
 import CreateReceivablePaymentForm from '@/components/forms/create-recievale-payment-form';
 import ExportTasksForm from '@/components/forms/export-tasks-form';
+import { useSession } from 'next-auth/react';
 
 const statusTabs = [
   { label: 'All', value: '' },
@@ -730,6 +731,7 @@ const TaskRowSkeleton = () => (
 );
 
 export default function TasksPage() {
+  const { data: session } = useSession();
   const searchParams = useSearchParams();
   const [taskOpen, setTaskOpen] = useState(false);
   const [updateTaskOpen, setUpdateTaskOpen] = useState(false);
@@ -933,89 +935,90 @@ export default function TasksPage() {
       {/* All amounts */}
 
       <div>
-        {!fetchAllTaskWithCalcMutation.isLoading ? (
-          <div className='grid grid-cols-2 md:grid-cols-3 gap-4'>
-            <Card
-              className='cursor-pointer'
-              onClick={() => {
-                setParams((prev) => ({
-                  ...prev,
-                  payment_status: '',
-                  status: '',
-                }));
-              }}
-            >
-              <CardContent className='p-4 text-center space-y-2'>
-                <div>
-                  <div className='text-2xl font-bold dark:text-gray-100'>
-                    ৳ {fetchAllTaskWithCalcMutation?.data?.totalAmount || 0}
+        {session?.user.role !== 'CO_ADMIN' &&
+          (!fetchAllTaskWithCalcMutation.isLoading ? (
+            <div className='grid grid-cols-2 md:grid-cols-3 gap-4'>
+              <Card
+                className='cursor-pointer'
+                onClick={() => {
+                  setParams((prev) => ({
+                    ...prev,
+                    payment_status: '',
+                    status: '',
+                  }));
+                }}
+              >
+                <CardContent className='p-4 text-center space-y-2'>
+                  <div>
+                    <div className='text-2xl font-bold dark:text-gray-100'>
+                      ৳ {fetchAllTaskWithCalcMutation?.data?.totalAmount || 0}
+                    </div>
+                    <div className='text-xs text-muted-foreground dark:text-gray-400'>
+                      Total Tasks Amounts
+                    </div>
                   </div>
-                  <div className='text-xs text-muted-foreground dark:text-gray-400'>
-                    Total Tasks Amounts
+                  <div>
+                    <div className='text-lg font-bold dark:text-gray-100'>
+                      {fetchAllTaskWithCalcMutation?.data?.totalTaskCount || 0}
+                    </div>
+                    <div className='text-xs text-muted-foreground dark:text-gray-400'>
+                      Total Tasks
+                    </div>
                   </div>
-                </div>
-                <div>
-                  <div className='text-lg font-bold dark:text-gray-100'>
-                    {fetchAllTaskWithCalcMutation?.data?.totalTaskCount || 0}
+                </CardContent>
+              </Card>
+              <Card
+                className='cursor-pointer'
+                onClick={() => {
+                  setParams((prev) => ({
+                    ...prev,
+                    payment_status: 'paid',
+                    status: '',
+                  }));
+                }}
+              >
+                <CardContent className='p-4 text-center space-y-2'>
+                  <div>
+                    <div className='text-2xl font-bold text-green-600 dark:text-green-400'>
+                      ৳ {fetchAllTaskWithCalcMutation?.data?.paidAmount}
+                    </div>
+                    <div className='text-xs text-muted-foreground dark:text-gray-400'>
+                      Total Paid Amount
+                    </div>
                   </div>
-                  <div className='text-xs text-muted-foreground dark:text-gray-400'>
-                    Total Tasks
+                  <div>
+                    <div className='text-lg font-bold text-green-600 dark:text-green-400'>
+                      {fetchAllTaskWithCalcMutation?.data?.paidTaskCount}
+                    </div>
+                    <div className='text-xs text-muted-foreground dark:text-gray-400'>
+                      Total Paid Tasks
+                    </div>
                   </div>
-                </div>
-              </CardContent>
-            </Card>
-            <Card
-              className='cursor-pointer'
-              onClick={() => {
-                setParams((prev) => ({
-                  ...prev,
-                  payment_status: 'paid',
-                  status: '',
-                }));
-              }}
-            >
-              <CardContent className='p-4 text-center space-y-2'>
-                <div>
-                  <div className='text-2xl font-bold text-green-600 dark:text-green-400'>
-                    ৳ {fetchAllTaskWithCalcMutation?.data?.paidAmount}
+                </CardContent>
+              </Card>
+              <Card
+                className='cursor-pointer'
+                onClick={() => {
+                  setParams((prev) => ({
+                    ...prev,
+                    payment_status: 'due',
+                    status: '',
+                  }));
+                }}
+              >
+                <CardContent className='p-4 text-center space-y-2'>
+                  <div>
+                    <div className='text-2xl font-bold text-red-600 dark:text-red-400'>
+                      ৳ {fetchAllTaskWithCalcMutation?.data?.receivableAmount}
+                    </div>
+                    <div className='text-xs text-muted-foreground dark:text-gray-400'>
+                      Total Receivable Amount
+                    </div>
                   </div>
-                  <div className='text-xs text-muted-foreground dark:text-gray-400'>
-                    Total Paid Amount
-                  </div>
-                </div>
-                <div>
-                  <div className='text-lg font-bold text-green-600 dark:text-green-400'>
-                    {fetchAllTaskWithCalcMutation?.data?.paidTaskCount}
-                  </div>
-                  <div className='text-xs text-muted-foreground dark:text-gray-400'>
-                    Total Paid Tasks
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-            <Card
-              className='cursor-pointer'
-              onClick={() => {
-                setParams((prev) => ({
-                  ...prev,
-                  payment_status: 'due',
-                  status: '',
-                }));
-              }}
-            >
-              <CardContent className='p-4 text-center space-y-2'>
-                <div>
-                  <div className='text-2xl font-bold text-red-600 dark:text-red-400'>
-                    ৳ {fetchAllTaskWithCalcMutation?.data?.receivableAmount}
-                  </div>
-                  <div className='text-xs text-muted-foreground dark:text-gray-400'>
-                    Total Receivable Amount
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+                </CardContent>
+              </Card>
 
-            {/* <Card>
+              {/* <Card>
               <CardContent className='p-4 text-center'>
                 <div className='text-2xl font-bold text-green-600 dark:text-green-400'>
                   {fetchTasksCalculationMutation?.data?.submittedCount}
@@ -1025,27 +1028,27 @@ export default function TasksPage() {
                 </div>
               </CardContent>
             </Card> */}
-          </div>
-        ) : (
-          <div className='grid grid-cols-1 md:grid-cols-3 gap-4'>
-            {[1, 2, 3].map((i) => (
-              <Card
-                key={i}
-                className='dark:bg-gray-800/50 dark:border-gray-700'
-              >
-                <CardContent className='p-6'>
-                  <div className='flex items-center justify-between'>
-                    <div>
-                      <Skeleton className='h-4 w-24 mb-2 dark:bg-gray-700' />
-                      <Skeleton className='h-8 w-16 dark:bg-gray-700' />
+            </div>
+          ) : (
+            <div className='grid grid-cols-1 md:grid-cols-3 gap-4'>
+              {[1, 2, 3].map((i) => (
+                <Card
+                  key={i}
+                  className='dark:bg-gray-800/50 dark:border-gray-700'
+                >
+                  <CardContent className='p-6'>
+                    <div className='flex items-center justify-between'>
+                      <div>
+                        <Skeleton className='h-4 w-24 mb-2 dark:bg-gray-700' />
+                        <Skeleton className='h-8 w-16 dark:bg-gray-700' />
+                      </div>
+                      <Skeleton className='h-8 w-8 dark:bg-gray-700' />
                     </div>
-                    <Skeleton className='h-8 w-8 dark:bg-gray-700' />
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        )}
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          ))}
       </div>
 
       {/* Search & Filters */}
