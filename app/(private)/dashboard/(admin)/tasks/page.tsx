@@ -124,6 +124,7 @@ const TaskCard = ({
   onPayment: () => void;
 }) => {
   const dueAmount = task.paid ? task.amount - task.paid : task.amount;
+  const { data: session } = useSession();
 
   return (
     <Card className='hover:shadow-lg transition-all duration-200 border-l-4 border-l-blue-500 dark:border-l-blue-400 h-full'>
@@ -195,7 +196,9 @@ const TaskCard = ({
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   onClick={onPayment}
-                  disabled={task.amount === 0}
+                  disabled={
+                    task.amount === 0 || session?.user.role === 'CO_ADMIN'
+                  }
                   className='cursor-pointer dark:hover:bg-gray-700 dark:text-gray-200'
                 >
                   <CreditCard className='mr-2 h-4 w-4' />
@@ -299,46 +302,48 @@ const TaskCard = ({
         </div>
 
         {/* Payment Information */}
-        <div className='bg-gray-50 dark:bg-gray-700/50 rounded-lg p-4'>
-          <div className='flex items-center justify-between mb-3'>
-            <div className='flex items-center gap-2'>
-              <DollarSign className='w-4 h-4 text-green-600 dark:text-green-400' />
-              <span className='font-medium text-sm dark:text-gray-200'>
-                Payment Status
-              </span>
+        {session?.user?.role !== 'CO_ADMIN' && (
+          <div className='bg-gray-50 dark:bg-gray-700/50 rounded-lg p-4'>
+            <div className='flex items-center justify-between mb-3'>
+              <div className='flex items-center gap-2'>
+                <DollarSign className='w-4 h-4 text-green-600 dark:text-green-400' />
+                <span className='font-medium text-sm dark:text-gray-200'>
+                  Payment Status
+                </span>
+              </div>
+              {getPaymentStatusBadge(dueAmount)}
             </div>
-            {getPaymentStatusBadge(dueAmount)}
-          </div>
 
-          <div className='grid grid-cols-3 gap-2 text-sm'>
-            <div className='text-center'>
-              <p className='text-muted-foreground dark:text-gray-400 text-xs'>
-                Total
-              </p>
-              <p className='font-bold text-base dark:text-gray-200'>
-                ৳{task.amount}
-              </p>
-            </div>
-            <div className='text-center'>
-              <p className='text-muted-foreground dark:text-gray-400 text-xs'>
-                Paid
-              </p>
-              <p className='font-bold text-base text-green-600 dark:text-green-400'>
-                ৳{task.paid || 0}
-              </p>
-            </div>
-            <div className='text-center'>
-              <p className='text-muted-foreground dark:text-gray-400 text-xs'>
-                Due
-              </p>
-              <p
-                className={`font-bold text-base text-red-600 dark:text-red-400`}
-              >
-                ৳{dueAmount}
-              </p>
+            <div className='grid grid-cols-3 gap-2 text-sm'>
+              <div className='text-center'>
+                <p className='text-muted-foreground dark:text-gray-400 text-xs'>
+                  Total
+                </p>
+                <p className='font-bold text-base dark:text-gray-200'>
+                  ৳{task.amount}
+                </p>
+              </div>
+              <div className='text-center'>
+                <p className='text-muted-foreground dark:text-gray-400 text-xs'>
+                  Paid
+                </p>
+                <p className='font-bold text-base text-green-600 dark:text-green-400'>
+                  ৳{task.paid || 0}
+                </p>
+              </div>
+              <div className='text-center'>
+                <p className='text-muted-foreground dark:text-gray-400 text-xs'>
+                  Due
+                </p>
+                <p
+                  className={`font-bold text-base text-red-600 dark:text-red-400`}
+                >
+                  ৳{dueAmount}
+                </p>
+              </div>
             </div>
           </div>
-        </div>
+        )}
 
         {/* Links and Description */}
         <div className='space-y-3'>
@@ -392,6 +397,7 @@ const TaskRow = ({
   onPayment: () => void;
 }) => {
   const dueAmount = task.paid ? task.amount - task.paid : task.amount;
+  const { data: session } = useSession();
 
   return (
     <Card className='border rounded-lg hover:shadow-md transition-all duration-200 p-4'>
@@ -464,7 +470,9 @@ const TaskRow = ({
               </DropdownMenuItem>
               <DropdownMenuItem
                 onClick={onPayment}
-                disabled={task.amount === 0}
+                disabled={
+                  task.amount === 0 || session?.user.role === 'CO_ADMIN'
+                }
                 className='cursor-pointer dark:hover:bg-gray-700 dark:text-gray-200'
               >
                 <CreditCard className='mr-2 h-4 w-4' />
@@ -569,49 +577,52 @@ const TaskRow = ({
       <CardContent className='rounded-lg p-3'>
         <div className='flex items-center justify-between'>
           {/* Payment Details */}
-          <div className='flex items-center gap-6'>
-            <div className='flex items-center gap-2'>
-              <DollarSign className='w-4 h-4 text-green-600 dark:text-green-400' />
-              <span className='font-medium text-sm dark:text-gray-200'>
-                Payment:
-              </span>
-            </div>
+          {session?.user.role !== 'CO_ADMIN' && (
+            <div className='flex items-center gap-6'>
+              <div className='flex items-center gap-2'>
+                <DollarSign className='w-4 h-4 text-green-600 dark:text-green-400' />
+                <span className='font-medium text-sm dark:text-gray-200'>
+                  Payment:
+                </span>
+              </div>
 
-            <div className='flex items-center gap-4 text-sm'>
-              <div className='text-center'>
-                <p className='text-muted-foreground dark:text-gray-400 text-xs'>
-                  Total
-                </p>
-                <p className='font-bold dark:text-gray-200'>৳{task.amount}</p>
-              </div>
-              <div className='text-center'>
-                <p className='text-muted-foreground dark:text-gray-400 text-xs'>
-                  Paid
-                </p>
-                <p className='font-bold text-green-600 dark:text-green-400'>
-                  ৳{task.paid || 0}
-                </p>
-              </div>
-              <div className='text-center'>
-                <p className='text-muted-foreground dark:text-gray-400 text-xs'>
-                  Due
-                </p>
-                <p
-                  className={`font-bold ${
-                    dueAmount
-                      ? 'text-red-600 dark:text-red-400'
-                      : 'text-green-600 dark:text-green-400'
-                  }`}
-                >
-                  ৳{dueAmount}
-                </p>
+              <div className='flex items-center gap-4 text-sm'>
+                <div className='text-center'>
+                  <p className='text-muted-foreground dark:text-gray-400 text-xs'>
+                    Total
+                  </p>
+                  <p className='font-bold dark:text-gray-200'>৳{task.amount}</p>
+                </div>
+                <div className='text-center'>
+                  <p className='text-muted-foreground dark:text-gray-400 text-xs'>
+                    Paid
+                  </p>
+                  <p className='font-bold text-green-600 dark:text-green-400'>
+                    ৳{task.paid || 0}
+                  </p>
+                </div>
+                <div className='text-center'>
+                  <p className='text-muted-foreground dark:text-gray-400 text-xs'>
+                    Due
+                  </p>
+                  <p
+                    className={`font-bold ${
+                      dueAmount
+                        ? 'text-red-600 dark:text-red-400'
+                        : 'text-green-600 dark:text-green-400'
+                    }`}
+                  >
+                    ৳{dueAmount}
+                  </p>
+                </div>
               </div>
             </div>
-          </div>
+          )}
 
           {/* Payment Status & Links */}
           <div className='flex items-center gap-3'>
-            {getPaymentStatusBadge(dueAmount)}
+            {session?.user.role !== 'CO_ADMIN' &&
+              getPaymentStatusBadge(dueAmount)}
 
             {task.link && (
               <Link
