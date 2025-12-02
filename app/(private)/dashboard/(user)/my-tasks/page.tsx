@@ -379,7 +379,6 @@ export default function MyTasksPage() {
                                   setOpenTaskDetails(true);
                                   setSelectedTask(task);
                                 }}
-                                disabled={task.status === 'COMPLETED'}
                               >
                                 Details
                               </DropdownMenuItem>
@@ -432,7 +431,6 @@ export default function MyTasksPage() {
                               setOpenTaskDetails(true);
                               setSelectedTask(task);
                             }}
-                            disabled={task.status === 'COMPLETED'}
                           >
                             Details
                           </DropdownMenuItem>
