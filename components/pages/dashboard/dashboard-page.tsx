@@ -24,6 +24,7 @@ import { Button } from '@/components/ui/button';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { currentMonth, generateQueryString } from '@/lib/utils';
 import Loading from '@/components/loading';
+import { ExpensesType, PaymentTypes } from '@/types/common';
 
 // Updated formatCurrency function with Bangladeshi Taka
 export const formatCurrency = (amount: number) => {
@@ -54,14 +55,14 @@ export default function DashboardPage() {
     fetchCurrentDashboardMutationData: fetchDashboardDataCurrentMonthData,
     fetchCurrentDashboardMutation,
   } = useCurrentDashboard(`?month=${currentMonth}`);
-
   useEffect(() => {
     router.push(queryString);
   }, [queryString, router]);
 
   if (
     fetchDashboardMutation?.isLoading ||
-    fetchCurrentDashboardMutation?.isLoading
+    fetchCurrentDashboardMutation?.isLoading ||
+    status === 'loading'
   ) {
     return <Loading />;
   }
@@ -427,7 +428,7 @@ export default function DashboardPage() {
           </CardHeader>
           <CardContent>
             <div className='space-y-3'>
-              {recent.payments.slice(0, 5).map((payment) => (
+              {recent.payments.slice(0, 5).map((payment: PaymentTypes) => (
                 <div
                   key={payment.id}
                   className='flex items-center justify-between gap-3'
@@ -470,7 +471,7 @@ export default function DashboardPage() {
           </CardHeader>
           <CardContent>
             <div className='space-y-3'>
-              {recent.expenses.slice(0, 5).map((expense) => (
+              {recent.expenses.slice(0, 5).map((expense: ExpensesType) => (
                 <div
                   key={expense.id}
                   className='flex items-center justify-between'
