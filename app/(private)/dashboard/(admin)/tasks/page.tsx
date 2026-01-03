@@ -1088,13 +1088,15 @@ export default function TasksPage() {
               <ListFilter className='mr-2 h-4 w-4' />
               Filter
             </Button>
-            <Button
-              onClick={() => setOpenExport(true)}
-              className='w-full sm:w-auto'
-            >
-              <FileSpreadsheet className='mr-2 h-4 w-4' />
-              Export
-            </Button>
+            {session?.user.role !== 'CO_ADMIN' && (
+              <Button
+                onClick={() => setOpenExport(true)}
+                className='w-full sm:w-auto'
+              >
+                <FileSpreadsheet className='mr-2 h-4 w-4' />
+                Export
+              </Button>
+            )}
           </div>
           <div className='flex flex-wrap gap-2'>
             {params.search && (

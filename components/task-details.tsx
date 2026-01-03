@@ -13,6 +13,7 @@ import {
   getPaymentStatusBadge,
   getStatusBadge,
 } from '@/app/(private)/dashboard/(admin)/tasks/page';
+import { useSession } from 'next-auth/react';
 
 const getPaperTypeBadge = (paperType: string) => {
   const paperTypeVariants = {
@@ -102,6 +103,7 @@ const DetailItem = ({
 };
 
 export default function TaskDetails({ task }: { task: TaskType }) {
+  const { data: session } = useSession();
   return (
     <div className='space-y-4'>
       <DetailItem label='Title' value={task.title} fieldName='Title' />
@@ -122,21 +124,26 @@ export default function TaskDetails({ task }: { task: TaskType }) {
             <div className='mt-1'>{getPaperTypeBadge(task.paper_type)}</div>
           </div>
         </div>
-        <DetailItem
-          label='Amount'
-          value={`৳ ${task.amount}`}
-          fieldName='Amount'
-        />
-        <DetailItem
-          label='Due Amount'
-          value={`৳ ${task.paid ? task.amount - task.paid : task.amount}`}
-          fieldName='Due Amount'
-        />
-        <DetailItem
-          label='Paid Amount'
-          value={`৳ ${task.paid}`}
-          fieldName='Paid Amount'
-        />
+        {session?.user?.role !== 'CO_ADMIN' && (
+          <>
+            <DetailItem
+              label='Amount'
+              value={`৳ ${task.amount}`}
+              fieldName='Amount'
+            />
+            <DetailItem
+              label='Due Amount'
+              value={`৳ ${task.paid ? task.amount - task.paid : task.amount}`}
+              fieldName='Due Amount'
+            />
+            <DetailItem
+              label='Paid Amount'
+              value={`৳ ${task.paid}`}
+              fieldName='Paid Amount'
+            />
+          </>
+        )}
+
         <div className='flex items-center justify-between p-3 border rounded-lg'>
           <div>
             <label className='text-sm font-medium text-muted-foreground'>
