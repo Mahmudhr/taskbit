@@ -6,6 +6,7 @@ import { ThemeProvider } from '@/components/theme-provider';
 import { Suspense } from 'react';
 import { Toaster } from 'sonner';
 import Loading from '@/components/loading';
+import NextTopLoader from 'nextjs-toploader';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -36,6 +37,12 @@ export default function RootLayout({
             <div suppressHydrationWarning>{children}</div>
             <Toaster richColors position='top-center' />
           </ThemeProvider>
+          <NextTopLoader
+            color='#E78A53'
+            showSpinner={false}
+            showAtBottom={false}
+            shadow='0 0 0 0'
+          />
         </Suspense>
       </body>
     </html>
