@@ -350,7 +350,6 @@ export const fetchUserById = async (userId: number) => {
     const user = await prisma.user.findUnique({
       where: {
         id: userId,
-        isDeleted: false,
       },
       select: {
         id: true,
