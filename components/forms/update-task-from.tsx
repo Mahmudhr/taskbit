@@ -40,6 +40,7 @@ import { SearchClientOption, useClient } from '@/hooks/use-client';
 import { Textarea } from '../ui/textarea';
 import { Badge } from '../ui/badge';
 import { UserSearchAndSelect } from '../ui/user-search-and-select';
+import { useSession } from 'next-auth/react';
 
 const FormSchema = z.object({
   title: z.string().min(2, { message: 'Title must be at least 2 characters.' }),
@@ -69,6 +70,7 @@ export default function UpdateTaskForm({
   setIsOpen,
   data,
 }: UpdateTaskFormProps) {
+  const { data: session } = useSession();
   const [isPending, startTransition] = useTransition();
   const { updateTaskMutationAsync } = useTask();
   const [selectedUsers, setSelectedUsers] = useState<SearchUserOption[]>([]);
@@ -318,43 +320,26 @@ export default function UpdateTaskForm({
             </FormItem>
           )}
         />
-        <FormField
-          control={form.control}
-          name='amount'
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Amount</FormLabel>
-              <FormControl>
-                <Input
-                  className='w-full'
-                  type='number'
-                  placeholder='Enter amount'
-                  {...field}
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        <FormField
-          control={form.control}
-          name='amount'
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Amount</FormLabel>
-              <FormControl>
-                <Input
-                  className='w-full'
-                  type='number'
-                  placeholder='Enter amount'
-                  {...field}
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+        {session?.user.role !== 'CO_ADMIN' && (
+          <FormField
+            control={form.control}
+            name='amount'
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Amount</FormLabel>
+                <FormControl>
+                  <Input
+                    className='w-full'
+                    type='number'
+                    placeholder='Enter amount'
+                    {...field}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        )}
 
         <FormField
           control={form.control}

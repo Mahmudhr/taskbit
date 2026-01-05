@@ -40,6 +40,7 @@ import { Textarea } from '../ui/textarea';
 import { Badge } from '../ui/badge';
 import { UserSearchAndSelect } from '../ui/user-search-and-select';
 import { DatePicker } from '../ui/date-picker';
+import { useSession } from 'next-auth/react';
 
 const FormSchema = z.object({
   title: z.string().min(2, { message: 'Title must be at least 2 characters.' }),
@@ -49,9 +50,8 @@ const FormSchema = z.object({
     .url({ message: 'Must be a valid URL' })
     .optional()
     .or(z.literal('')),
-  amount: z.coerce
-    .number()
-    .min(1, { message: 'Amount must be greater than 0' }),
+  // Allow 0 for CO_ADMIN, check in onSubmit
+  amount: z.coerce.number().min(0, { message: 'Amount must be 0 or greater' }),
   status: z.nativeEnum(TaskStatus),
   paper_type: z.nativeEnum(PaperType),
   assignedUserIds: z.array(z.number()).optional(),
@@ -66,6 +66,7 @@ type CreateTaskFormProps = {
 };
 
 export default function CreateTaskForm({ setIsOpen }: CreateTaskFormProps) {
+  const { data: session } = useSession();
   const [isPending, startTransition] = useTransition();
   const { createTaskMutationAsync } = useTask();
   const [selectedUsers, setSelectedUsers] = useState<SearchUserOption[]>([]);
@@ -88,30 +89,30 @@ export default function CreateTaskForm({ setIsOpen }: CreateTaskFormProps) {
     },
   });
 
-  // Function to add user to selected users
   const addUser = (user: SearchUserOption) => {
     const isAlreadySelected = selectedUsers.some((u) => u.value === user.value);
     if (!isAlreadySelected) {
       const newSelectedUsers = [...selectedUsers, user];
       setSelectedUsers(newSelectedUsers);
 
-      // Update form value
       const userIds = newSelectedUsers.map((u) => u.value);
       form.setValue('assignedUserIds', userIds);
     }
   };
 
-  // Function to remove user from selected users
   const removeUser = (userId: number) => {
     const newSelectedUsers = selectedUsers.filter((u) => u.value !== userId);
     setSelectedUsers(newSelectedUsers);
 
-    // Update form value
     const userIds = newSelectedUsers.map((u) => u.value);
     form.setValue('assignedUserIds', userIds);
   };
 
   function onSubmit(data: z.infer<typeof FormSchema>) {
+    if (session?.user.role !== 'CO_ADMIN' && data.amount === 0) {
+      form.setError('amount', { message: 'Amount must be greater than 0' });
+      return;
+    }
     const payload = {
       ...data,
       clientId: data.clientId === 0 ? undefined : data.clientId,
@@ -302,24 +303,26 @@ export default function CreateTaskForm({ setIsOpen }: CreateTaskFormProps) {
           )}
         />
 
-        <FormField
-          control={form.control}
-          name='amount'
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Amount</FormLabel>
-              <FormControl>
-                <Input
-                  className='w-full'
-                  type='number'
-                  placeholder='Enter amount'
-                  {...field}
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+        {session?.user.role !== 'CO_ADMIN' && (
+          <FormField
+            control={form.control}
+            name='amount'
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Amount</FormLabel>
+                <FormControl>
+                  <Input
+                    className='w-full'
+                    type='number'
+                    placeholder='Enter amount'
+                    {...field}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        )}
 
         <FormField
           control={form.control}
