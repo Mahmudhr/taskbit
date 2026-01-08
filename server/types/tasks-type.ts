@@ -3,7 +3,7 @@ import { $Enums } from '@prisma/client';
 export type CreateTaskType = {
   title: string;
   description?: string;
-  amount: number;
+  amount?: number;
   status: $Enums.TaskStatus;
   clientId?: number;
   duration: Date;

@@ -52,7 +52,10 @@ const FormSchema = z.object({
     .or(z.literal('')),
   amount: z.coerce
     .number()
-    .min(1, { message: 'Amount must be greater than 0' }),
+    .optional()
+    .refine((val) => val === undefined || val >= 0, {
+      message: 'Amount must be 0 or greater',
+    }),
   status: z.nativeEnum(TaskStatus),
   paper_type: z.nativeEnum(PaperType),
   assignedUserIds: z.array(z.number()).optional(),
