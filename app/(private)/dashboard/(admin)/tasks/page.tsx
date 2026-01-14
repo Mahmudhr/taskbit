@@ -753,7 +753,7 @@ export default function TasksPage() {
   const [openPayment, setOpenPayment] = useState(false);
   const [viewTask, setViewTask] = useState<TaskType | null>(null);
   const [viewTaskModal, setViewTaskModal] = useState(false);
-  const [openSalaryFilter, setOpenSalaryFilter] = useState(false);
+  const [openTaskFilter, setOpenTaskFilter] = useState(false);
   const [openExport, setOpenExport] = useState(false);
   const [createReceivablePaymentOpen, setCreateReceivablePaymentOpen] =
     useState(false);
@@ -1082,7 +1082,7 @@ export default function TasksPage() {
               />
             </div>
             <Button
-              onClick={() => setOpenSalaryFilter(true)}
+              onClick={() => setOpenTaskFilter(true)}
               className='w-full sm:w-auto'
             >
               <ListFilter className='mr-2 h-4 w-4' />
@@ -1479,15 +1479,15 @@ export default function TasksPage() {
         {viewTask && <TaskDetailsView task={viewTask} />}
       </Modal>
       <Modal
-        isOpen={openSalaryFilter}
-        setIsOpen={setOpenSalaryFilter}
-        title='Filter Salary'
+        isOpen={openTaskFilter}
+        setIsOpen={setOpenTaskFilter}
+        title='Filter Tasks'
         description=' '
       >
         <TaskFilter
           setParams={setParams}
           params={params}
-          setOpenTaskFilter={setOpenSalaryFilter}
+          setOpenTaskFilter={setOpenTaskFilter}
         />
       </Modal>
       <Modal
