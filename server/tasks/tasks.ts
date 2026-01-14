@@ -39,7 +39,7 @@ export async function createTasks(data: CreateTaskType) {
     } = {
       title,
       description,
-      amount,
+      amount: amount || 0,
       status,
       paper_type,
       duration,
