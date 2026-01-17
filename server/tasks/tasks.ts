@@ -680,6 +680,7 @@ export const fetchAllTasks = async (data?: string) => {
           },
           client: { select: { id: true, name: true, email: true } },
           payments: {
+            where: { status: 'COMPLETED' },
             select: {
               id: true,
               amount: true,
@@ -689,24 +690,18 @@ export const fetchAllTasks = async (data?: string) => {
               createdAt: true,
             },
           },
-          createdBy: { select: { id: true, name: true, email: true } },
+          // createdBy: { select: { id: true, name: true, email: true } }, // Removed if unused, or keep if used in UI (didn't see it used in row)
         },
       }),
     ]);
 
-    const taskIds = tasks.map((t) => t.id);
-    const paidData = await prisma.payment.groupBy({
-      by: ['taskId'],
-      where: { taskId: { in: taskIds }, status: 'COMPLETED' },
-      _sum: { amount: true },
-    });
-
-    const paidMap = Object.fromEntries(
-      paidData.map((p) => [p.taskId, p._sum.amount || 0])
-    );
-
     let result = tasks.map((task) => {
-      const paid = paidMap[task.id] || 0;
+      // OPTIMIZATION: Calculate paid amount directly from the included payments
+      // The include already filters for status: 'COMPLETED'
+      const paid = task.payments.reduce(
+        (total, p) => total + (p.amount || 0),
+        0
+      );
       const assignedUsers = task.taskAssignments.map((t) => t.user);
 
       return {
@@ -962,6 +957,7 @@ export const fetchTasksByUserEmail = async (email: string, option?: string) => {
         client: { select: { id: true, name: true, email: true } },
         payments: {
           where: { status: 'COMPLETED' },
+          select: { amount: true },
         },
       },
     });
@@ -985,9 +981,11 @@ export const fetchTasksByUserEmail = async (email: string, option?: string) => {
     });
 
     const tasksWithPaid = sortedTasks.map((task) => {
-      const paid = task.payments
-        .filter((p) => p.status === 'COMPLETED')
-        .reduce((total, p) => total + (p.amount || 0), 0);
+      // OPTIMIZATION: Calculate paid amount directly from included payments
+      const paid = task.payments.reduce(
+        (total, p) => total + (p.amount || 0),
+        0
+      );
 
       // Extract assigned users from task assignments
       const assignedUsers = task.taskAssignments.map(
@@ -1216,19 +1214,34 @@ export const fetchAllTaskCalculation = async (data?: string) => {
     whereConditions.length > 0 ? { AND: whereConditions } : {};
 
   try {
-    const totalTasks = await prisma.task.count({ where });
+    // OPTIMIZATION: Use groupBy to get all status counts in one query
+    const [statusCounts, totalTasks] = await Promise.all([
+      prisma.task.groupBy({
+        by: ['status'],
+        where,
+        _count: {
+          status: true,
+        },
+      }),
+      prisma.task.count({ where }),
+    ]);
 
-    const pendingCount = await prisma.task.count({
-      where: { ...where, status: 'PENDING' },
+    const counts = {
+      PENDING: 0,
+      IN_PROGRESS: 0,
+      COMPLETED: 0,
+      SUBMITTED: 0, // Assuming SUBMITTED exists in TaskStatus
+    };
+
+    statusCounts.forEach((group) => {
+      if (group.status in counts) {
+        counts[group.status] = group._count.status;
+      }
     });
 
-    const inProgressCount = await prisma.task.count({
-      where: { ...where, status: 'IN_PROGRESS' },
-    });
-
-    const completedCount = await prisma.task.count({
-      where: { ...where, status: 'COMPLETED' },
-    });
+    const pendingCount = counts.PENDING;
+    const inProgressCount = counts.IN_PROGRESS;
+    const completedCount = counts.COMPLETED;
 
     const pendingPercentage =
       totalTasks > 0 ? Math.round((pendingCount / totalTasks) * 100) : 0;
