@@ -129,7 +129,7 @@ export default function TaskFilter({
           </SelectTrigger>
           <SelectContent className='z-[9999]'>
             {Object.values(PaperType).map((status) => (
-              <SelectItem key={status} value={status}>
+              <SelectItem key={status as string} value={status as string}>
                 {paperTypeConvert[status as keyof typeof paperTypeConvert]}
               </SelectItem>
             ))}

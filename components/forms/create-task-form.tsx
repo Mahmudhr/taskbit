@@ -21,10 +21,9 @@ import {
   SelectValue,
 } from '../ui/select';
 import { toast } from 'sonner';
-import { useTransition } from 'react';
 import { useSearchUser, SearchUserOption } from '@/hooks/use-search-user';
 import { Card } from '../ui/card';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   allTaskStatus,
   generateUniqueId,
@@ -67,8 +66,7 @@ type CreateTaskFormProps = {
 
 export default function CreateTaskForm({ setIsOpen }: CreateTaskFormProps) {
   const { data: session } = useSession();
-  const [isPending, startTransition] = useTransition();
-  const { createTaskMutationAsync } = useTask();
+  const { createTaskMutation } = useTask();
   const [selectedUsers, setSelectedUsers] = useState<SearchUserOption[]>([]);
   const [selectedClient, setSelectedClient] =
     useState<SearchClientOption | null>(null);
@@ -120,17 +118,27 @@ export default function CreateTaskForm({ setIsOpen }: CreateTaskFormProps) {
       assignedUserIds: data.assignedUserIds || [],
     };
 
-    startTransition(() => {
-      toast.promise(createTaskMutationAsync(payload), {
-        loading: 'Creating Task...',
-        success: (res) => {
-          setIsOpen(false);
-          return res.message || 'Successfully Task Created';
-        },
-        error: (err) => getErrorMessage(err),
-      });
+    createTaskMutation.mutate(payload, {
+      onSuccess: (res) => {
+        toast.success(res.message || 'Successfully Task Created');
+        form.reset();
+        setSelectedUsers([]);
+        setSelectedClient(null);
+        setIsOpen(false);
+      },
+      onError: (err) => {
+        toast.error(getErrorMessage(err));
+      },
     });
   }
+
+  useEffect(() => {
+    if (createTaskMutation.isSuccess) {
+      form.reset();
+      setSelectedUsers([]);
+      setSelectedClient(null);
+    }
+  }, [createTaskMutation.isSuccess, form]);
 
   return (
     <Form {...form}>
@@ -174,6 +182,7 @@ export default function CreateTaskForm({ setIsOpen }: CreateTaskFormProps) {
         <div className='space-y-2'>
           <FormLabel>Assign To Users</FormLabel>
           <UserSearchAndSelect
+            queryKey={['search-task-users']}
             placeholder='Search user by name or email...'
             search={search}
             onSelect={(option) => addUser(option)}
@@ -229,6 +238,7 @@ export default function CreateTaskForm({ setIsOpen }: CreateTaskFormProps) {
               name='clientId'
               render={({ field }) => (
                 <UserSearchAndSelect
+                  queryKey={['search-task-clients']}
                   placeholder='Search user by name or email...'
                   search={async (query: string) => {
                     const results = await searchClients(query);
@@ -420,11 +430,13 @@ export default function CreateTaskForm({ setIsOpen }: CreateTaskFormProps) {
 
         <Button
           type='submit'
-          disabled={isPending}
-          className='flex justify-start'
+          disabled={createTaskMutation.isPending}
+          className='flex justify-start gap-2'
         >
-          {isPending && <Loader2Icon className='animate-spin' />}
-          Create Task
+          {createTaskMutation.isPending && (
+            <Loader2Icon className='h-4 w-4 animate-spin' />
+          )}
+          {createTaskMutation.isPending ? 'Creating...' : 'Create Task'}
         </Button>
       </form>
     </Form>

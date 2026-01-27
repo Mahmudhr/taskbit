@@ -1,8 +1,11 @@
 'use client';
 
 import { Card } from '@/components/ui/card';
+import { Skeleton } from '@/components/ui/skeleton';
 import { Input } from './input';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { useDebounce } from 'use-debounce';
 
 type Option = {
   value: number;
@@ -18,40 +21,31 @@ type SearchAndSelectProps = {
   placeholder?: string;
   search: (query: string) => Promise<Option[]>;
   onSelect: (option: Option) => void;
+  queryKey: string[];
 };
 
 export const UserSearchAndSelect = ({
   placeholder = 'Search...',
   search,
   onSelect,
+  queryKey,
 }: SearchAndSelectProps) => {
   const [inputValue, setInputValue] = useState('');
-  const [options, setOptions] = useState<Option[]>([]);
+  const [debouncedValue] = useDebounce(inputValue, 500);
   const [isOpen, setIsOpen] = useState(false);
 
-  useEffect(() => {
-    let isCancelled = false;
-    const timeoutId = setTimeout(async () => {
-      if (isOpen && !isCancelled) {
-        try {
-          const results = await search(inputValue);
-          if (!isCancelled) {
-            setOptions(results);
-          }
-        } catch (error) {
-          if (!isCancelled) {
-            console.error('Search error:', error);
-            setOptions([]);
-          }
-        }
-      }
-    }, 300);
-
-    return () => {
-      isCancelled = true;
-      clearTimeout(timeoutId);
-    };
-  }, [inputValue, search, isOpen]);
+  const {
+    data: options = [],
+    isLoading,
+    isFetching,
+  } = useQuery({
+    queryKey: [...queryKey, debouncedValue],
+    queryFn: async () => {
+      const res = await search(debouncedValue);
+      return res;
+    },
+    enabled: isOpen,
+  });
 
   const handleInputFocus = () => {
     setIsOpen(true);
@@ -89,7 +83,13 @@ export const UserSearchAndSelect = ({
       />
       {isOpen && (
         <Card className='mt-2 p-2 absolute z-10 w-full shadow-lg min-[300px]:max-h-60 overflow-y-auto'>
-          {options.length > 0 ? (
+          {isLoading || isFetching ? (
+            <div className='space-y-2'>
+              <Skeleton className='h-8 w-full' />
+              <Skeleton className='h-8 w-full' />
+              <Skeleton className='h-8 w-full' />
+            </div>
+          ) : options.length > 0 ? (
             options.map((option) => (
               <div
                 key={option.value}
@@ -100,7 +100,9 @@ export const UserSearchAndSelect = ({
               </div>
             ))
           ) : (
-            <div className='text-gray-500'>No options found.</div>
+            <div className='text-gray-500 p-2 text-center'>
+              No options found.
+            </div>
           )}
         </Card>
       )}

@@ -1,5 +1,6 @@
 services:
   frontend:
+    image: devmhimran/taskbit:v1.0
     build:
       context: .
       dockerfile: Dockerfile
@@ -9,25 +10,21 @@ services:
       watch:
         - path: ./package.json
           action: rebuild
-        - path: ./yarn.lock # Updated from package-lock.json
+        - path: ./yarn.lock
           action: rebuild
         - path: .
           target: /app
           action: sync
     environment:
-      # Database Connection
-      - DATABASE_URL=postgresql://myuser:mypassword@db:5432/mydb
+      - DATABASE_URL=${DATABASE_URL}
 
-      # Auth & Security
       - NEXT_PUBLIC_JWT_ACCESS_SECRET=${NEXT_PUBLIC_JWT_ACCESS_SECRET}
       - NEXT_PUBLIC_JWT_REFRESH_SECRET=${NEXT_PUBLIC_JWT_REFRESH_SECRET}
       - NEXT_PUBLIC_AUTH_SECRET=${NEXT_PUBLIC_AUTH_SECRET}
 
-      # URLs
       - NEXT_PUBLIC_APP_URL=${NEXT_PUBLIC_APP_URL}
       - APP_BASE_URL=${APP_BASE_URL}
 
-      # Email Service (Resend)
       - RESEND_API_KEY=${RESEND_API_KEY}
       - EMAIL_FROM_ADDRESS=${EMAIL_FROM_ADDRESS}
     depends_on:
@@ -37,28 +34,25 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    # Overwrite the default start command of the Dockerfile
     command: sh -c "yarn prisma generate && yarn prisma studio"
     ports:
       - '5555:5555'
     environment:
-      - DATABASE_URL=postgresql://myuser:mypassword@db:5432/mydb
+      - DATABASE_URL=${DATABASE_URL}
     depends_on:
       - db
 
   db:
-    image: postgres:latest # (This is likely pulling version 18+)
+    image: postgres:latest
     restart: always
     environment:
       - POSTGRES_USER=myuser
       - POSTGRES_PASSWORD=mypassword
       - POSTGRES_DB=mydb
-      # Add this line to tell Postgres where the data is inside the volume
       - PGDATA=/var/lib/postgresql/data/pgdata
     ports:
       - '5432:5432'
     volumes:
-      # Change the right side to the parent folder
       - postgres_data:/var/lib/postgresql
 
 volumes:
