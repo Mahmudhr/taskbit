@@ -110,7 +110,7 @@ export default function UpdateTaskForm({
           label: `${user.name} (${user.email})`,
           value: user.id,
           user: user,
-        })
+        }),
       );
       setSelectedUsers(usersToSelect);
       const userIds = usersToSelect.map((u) => u.value);
@@ -215,6 +215,7 @@ export default function UpdateTaskForm({
         <div className='space-y-2'>
           <FormLabel>Assign To Users</FormLabel>
           <UserSearchAndSelect
+            queryKey={['search-task-clients']}
             placeholder='Search user by name or email...'
             search={search}
             onSelect={(option) => addUser(option)}
@@ -263,6 +264,7 @@ export default function UpdateTaskForm({
               name='clientId'
               render={({ field }) => (
                 <UserSearchAndSelect
+                  queryKey={['search-task-clients']}
                   placeholder='Search user by name or email...'
                   search={async (query: string) => {
                     const results = await searchClients(query);
