@@ -68,7 +68,7 @@ export default function CreateEmployeeOfTheMonthForm({
   const [isPending, startTransition] = useTransition();
   const { search } = useSearchUser();
   const [selectedUser, setSelectedUser] = useState<SearchUserOption | null>(
-    null
+    null,
   );
 
   const { createEmployeeOfTheMonthMutationAsync } = useEmployeeOfTheMonth();
@@ -115,6 +115,7 @@ export default function CreateEmployeeOfTheMonthForm({
               name='assignedToId'
               render={({ field }) => (
                 <UserSearchAndSelect
+                  queryKey={['search-task-users']}
                   placeholder='Search user by name or email...'
                   search={async (query: string) => {
                     const results = await search(query);

@@ -67,7 +67,7 @@ const FormSchema = z
       message:
         "Link is required and must be a valid URL when status is 'Submitted'",
       path: ['link'],
-    }
+    },
   );
 
 export default function CreateTaskDeliveryForm({
@@ -108,7 +108,7 @@ export default function CreateTaskDeliveryForm({
           label: `${user.name} (${user.email})`,
           value: user.id,
           user: user,
-        })
+        }),
       );
       setSelectedUsers(usersToSelect);
       const userIds = usersToSelect.map((u) => u.value);
@@ -219,6 +219,7 @@ export default function CreateTaskDeliveryForm({
 
             {/* User Search */}
             <UserSearchAndSelect
+              queryKey={['search-task-users']}
               placeholder='Search user by name or email...'
               search={search}
               onSelect={(option) => addUser(option)}
@@ -317,7 +318,7 @@ export default function CreateTaskDeliveryForm({
                   {(session?.user?.role === 'EMPLOYEE'
                     ? allTaskStatus.filter(
                         (status) =>
-                          status === 'PENDING' || status === 'IN_PROGRESS'
+                          status === 'PENDING' || status === 'IN_PROGRESS',
                       )
                     : allTaskStatus
                   ).map((status) => (
