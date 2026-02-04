@@ -8,6 +8,6 @@ export default function Homepage() {
   const { data: session, status } = useSession();
   if (status === 'loading') return <Loading />;
   redirect(
-    `/dashboard/${session?.user.role === 'USER' ? '/my-tasks' : '/tasks'}`
+    `/dashboard/${session?.user.role === 'USER' ? '/my-tasks' : '/tasks'}`,
   );
 }
