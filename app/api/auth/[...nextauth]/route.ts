@@ -84,8 +84,8 @@ export const authOptions = {
   ],
 
   pages: {
-    signIn: process.env.NEXT_PUBLIC_APP_URL + '/signin',
-    error: process.env.NEXT_PUBLIC_APP_URL + '/signin',
+    signIn: '/signin',
+    error: '/signin',
   },
 
   secret: process.env.NEXT_PUBLIC_AUTH_SECRET,

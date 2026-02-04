@@ -91,7 +91,7 @@ export async function createUser(data: CreateUserType) {
 }
 
 export const fetchAllUser = async (
-  data?: string
+  data?: string,
 ): Promise<FetchAllUserResponse> => {
   const params = new URLSearchParams(data);
   const search = params.get('search') || '';
@@ -310,7 +310,7 @@ export const searchMember = async (query: string) => {
     const whereClause = {
       status: 'ACTIVE' as const,
       isDeleted: false,
-      role: $Enums.Role.EMPLOYEE,
+      role: { not: $Enums.Role.CO_ADMIN },
       ...(query && query.trim() !== ''
         ? {
             OR: [
@@ -400,7 +400,7 @@ export const updateUserProfile = async (
     bankName?: string;
     swiftCode?: string;
     password?: string;
-  }
+  },
 ) => {
   try {
     const updateData: {

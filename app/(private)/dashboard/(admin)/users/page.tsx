@@ -126,10 +126,10 @@ const SalaryDisplay = ({ user }: { user: UserType }) => {
 export default function UsersPage() {
   const searchParams = useSearchParams();
   const [statusFilter, setStatusFilter] = useState(
-    searchParams.get('status') || 'all'
+    searchParams.get('status') || 'all',
   );
   const [roleFilter, setRoleFilter] = useState(
-    searchParams.get('role') || 'all'
+    searchParams.get('role') || 'all',
   );
 
   const [addUserOpen, setAddUserOpen] = useState(false);
@@ -153,7 +153,7 @@ export default function UsersPage() {
     role: searchParams.get('role') || '',
   });
   const [searchQuery, setSearchQuery] = useState(
-    searchParams.get('search') || ''
+    searchParams.get('search') || '',
   );
 
   const queryString = generateQueryString(params);
@@ -264,7 +264,8 @@ export default function UsersPage() {
               <SelectContent>
                 <SelectItem value='all'>All Roles</SelectItem>
                 <SelectItem value='ADMIN'>Admin</SelectItem>
-                <SelectItem value='USER'>User</SelectItem>
+                <SelectItem value='CO_ADMIN'>Co-Admin</SelectItem>
+                <SelectItem value='EMPLOYEE'>Employee</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -384,7 +385,7 @@ export default function UsersPage() {
                                   onClick={() =>
                                     handleCreatePayment(
                                       user.id,
-                                      user.salary || 0
+                                      user.salary || 0,
                                     )
                                   }
                                 >
