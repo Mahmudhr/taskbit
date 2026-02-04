@@ -108,7 +108,12 @@ export default function SignInPage() {
                   <FormItem>
                     <FormLabel>Email</FormLabel>
                     <FormControl>
-                      <Input placeholder='enter your email' {...field} />
+                      <Input
+                        placeholder='enter your email'
+                        {...field}
+                        name='email'
+                        autoComplete='username'
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -125,6 +130,8 @@ export default function SignInPage() {
                         placeholder='Enter your password'
                         type={!showPass ? 'password' : 'text'}
                         {...field}
+                        name='password'
+                        autoComplete='current-password'
                       />
                     </FormControl>
                     {!showPass ? (
