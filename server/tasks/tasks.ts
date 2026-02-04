@@ -80,10 +80,10 @@ export async function createTasks(data: CreateTaskType) {
         if (existingUsers.length !== userIdsToAssign.length) {
           const foundIds = existingUsers.map((u) => u.id);
           const missingIds = userIdsToAssign.filter(
-            (id) => !foundIds.includes(id)
+            (id) => !foundIds.includes(id),
           );
           throw new Error(
-            `Users not found or inactive: ${missingIds.join(', ')}`
+            `Users not found or inactive: ${missingIds.join(', ')}`,
           );
         }
 
@@ -98,7 +98,8 @@ export async function createTasks(data: CreateTaskType) {
         });
 
         const baseUrl =
-          process.env.NEXT_PUBLIC_APP_URL || 'https://taskbit-pi.vercel.app';
+          process.env.NEXT_PUBLIC_APP_URL || 'https://taskbit.insightedu.cloud';
+
         const encodedTitle = encodeURIComponent(title);
         const taskUrl = `${baseUrl}/dashboard/my-tasks?search=${encodedTitle}&page=1`;
 
@@ -112,8 +113,8 @@ export async function createTasks(data: CreateTaskType) {
               duration,
             }).catch((error) => {
               console.error(`Failed to send email to ${user.email}:`, error);
-            })
-          )
+            }),
+          ),
         );
       }
 
@@ -170,7 +171,7 @@ export async function assignUsersToTask(taskId: number, userIds: number[]) {
         const foundIds = existingUsers.map((u) => u.id);
         const missingIds = userIds.filter((id) => !foundIds.includes(id));
         throw new Error(
-          `Users not found or inactive: ${missingIds.join(', ')}`
+          `Users not found or inactive: ${missingIds.join(', ')}`,
         );
       }
 
@@ -184,7 +185,7 @@ export async function assignUsersToTask(taskId: number, userIds: number[]) {
 
       const alreadyAssignedIds = existingAssignments.map((a) => a.userId);
       const newAssignments = userIds.filter(
-        (id) => !alreadyAssignedIds.includes(id)
+        (id) => !alreadyAssignedIds.includes(id),
       );
 
       if (newAssignments.length === 0) {
@@ -344,11 +345,11 @@ export async function updateTask(id: number, data: CreateTaskType) {
         const newUserIds = assignedUserIds.map((userId) => +userId);
 
         const usersToRemove = currentUserIds.filter(
-          (userId) => !newUserIds.includes(userId)
+          (userId) => !newUserIds.includes(userId),
         );
 
         const usersToAdd = newUserIds.filter(
-          (userId) => !currentUserIds.includes(userId)
+          (userId) => !currentUserIds.includes(userId),
         );
 
         if (usersToRemove.length > 0) {
@@ -375,10 +376,10 @@ export async function updateTask(id: number, data: CreateTaskType) {
           if (existingUsers.length !== usersToAdd.length) {
             const foundIds = existingUsers.map((u) => u.id);
             const missingIds = usersToAdd.filter(
-              (id) => !foundIds.includes(id)
+              (id) => !foundIds.includes(id),
             );
             throw new Error(
-              `Users not found or inactive: ${missingIds.join(', ')}`
+              `Users not found or inactive: ${missingIds.join(', ')}`,
             );
           }
 
@@ -391,10 +392,10 @@ export async function updateTask(id: number, data: CreateTaskType) {
           });
 
           const existingAssignmentUserIds = existingAssignments.map(
-            (a) => a.userId
+            (a) => a.userId,
           );
           const removedAssignments = existingAssignments.filter(
-            (a) => a.status === 'REMOVED'
+            (a) => a.status === 'REMOVED',
           );
           const removedUserIds = removedAssignments.map((a) => a.userId);
 
@@ -410,7 +411,7 @@ export async function updateTask(id: number, data: CreateTaskType) {
           }
 
           const completelyNewUsers = usersToAdd.filter(
-            (userId) => !existingAssignmentUserIds.includes(userId)
+            (userId) => !existingAssignmentUserIds.includes(userId),
           );
 
           if (completelyNewUsers.length > 0) {
@@ -441,7 +442,7 @@ export async function updateTask(id: number, data: CreateTaskType) {
 
 export async function updateUserTaskDelivery(
   id: number,
-  data: UpdateUserTaskDeliveryType
+  data: UpdateUserTaskDeliveryType,
 ) {
   const { note, link, status, assignedUserIds } = data;
   try {
@@ -473,11 +474,11 @@ export async function updateUserTaskDelivery(
         const newUserIds = assignedUserIds.map((userId) => +userId);
 
         const usersToRemove = currentUserIds.filter(
-          (userId) => !newUserIds.includes(userId)
+          (userId) => !newUserIds.includes(userId),
         );
 
         const usersToAdd = newUserIds.filter(
-          (userId) => !currentUserIds.includes(userId)
+          (userId) => !currentUserIds.includes(userId),
         );
 
         if (usersToRemove.length > 0) {
@@ -504,10 +505,10 @@ export async function updateUserTaskDelivery(
           if (existingUsers.length !== usersToAdd.length) {
             const foundIds = existingUsers.map((u) => u.id);
             const missingIds = usersToAdd.filter(
-              (id) => !foundIds.includes(id)
+              (id) => !foundIds.includes(id),
             );
             throw new Error(
-              `Users not found or inactive: ${missingIds.join(', ')}`
+              `Users not found or inactive: ${missingIds.join(', ')}`,
             );
           }
 
@@ -520,10 +521,10 @@ export async function updateUserTaskDelivery(
           });
 
           const existingAssignmentUserIds = existingAssignments.map(
-            (a) => a.userId
+            (a) => a.userId,
           );
           const removedAssignments = existingAssignments.filter(
-            (a) => a.status === 'REMOVED'
+            (a) => a.status === 'REMOVED',
           );
           const removedUserIds = removedAssignments.map((a) => a.userId);
 
@@ -539,7 +540,7 @@ export async function updateUserTaskDelivery(
           }
 
           const completelyNewUsers = usersToAdd.filter(
-            (userId) => !existingAssignmentUserIds.includes(userId)
+            (userId) => !existingAssignmentUserIds.includes(userId),
           );
 
           if (completelyNewUsers.length > 0) {
@@ -634,19 +635,19 @@ export const fetchAllTasks = async (data?: string) => {
     if (d && !isNaN(d.getTime()))
       return buildRange(
         new Date(d.setHours(0, 0, 0, 0)),
-        new Date(d.setHours(23, 59, 59, 999))
+        new Date(d.setHours(23, 59, 59, 999)),
       );
 
     if (m && y > 0)
       return buildRange(
         new Date(y, m - 1, 1),
-        new Date(y, m, 0, 23, 59, 59, 999)
+        new Date(y, m, 0, 23, 59, 59, 999),
       );
 
     if (y > 0)
       return buildRange(
         new Date(y, 0, 1),
-        new Date(y, 11, 31, 23, 59, 59, 999)
+        new Date(y, 11, 31, 23, 59, 59, 999),
       );
 
     return undefined;
@@ -656,7 +657,7 @@ export const fetchAllTasks = async (data?: string) => {
   const taskCreateFilter = createDateFilter(
     task_create,
     task_create_month,
-    task_create_year
+    task_create_year,
   );
 
   if (dueFilter) where.duration = dueFilter;
@@ -700,7 +701,7 @@ export const fetchAllTasks = async (data?: string) => {
       // The include already filters for status: 'COMPLETED'
       const paid = task.payments.reduce(
         (total, p) => total + (p.amount || 0),
-        0
+        0,
       );
       const assignedUsers = task.taskAssignments.map((t) => t.user);
 
@@ -715,7 +716,7 @@ export const fetchAllTasks = async (data?: string) => {
       result = result.filter((t) =>
         paymentStatus === 'paid'
           ? t.amount - t.paid <= 0
-          : t.amount - t.paid > 0
+          : t.amount - t.paid > 0,
       );
     }
 
@@ -766,7 +767,7 @@ export const fetchTasksByUserEmail = async (email: string, option?: string) => {
         23,
         59,
         59,
-        999
+        999,
       ),
     });
 
@@ -776,7 +777,7 @@ export const fetchTasksByUserEmail = async (email: string, option?: string) => {
     });
 
     const getYearSpan = async (
-      field: 'duration' | 'createdAt'
+      field: 'duration' | 'createdAt',
     ): Promise<{ start: number; end: number }> => {
       if (field === 'duration') {
         const minRec = await prisma.task.findFirst({
@@ -984,12 +985,12 @@ export const fetchTasksByUserEmail = async (email: string, option?: string) => {
       // OPTIMIZATION: Calculate paid amount directly from included payments
       const paid = task.payments.reduce(
         (total, p) => total + (p.amount || 0),
-        0
+        0,
       );
 
       // Extract assigned users from task assignments
       const assignedUsers = task.taskAssignments.map(
-        (assignment) => assignment.user
+        (assignment) => assignment.user,
       );
 
       return {
@@ -1067,7 +1068,7 @@ export const fetchAllTaskCalculation = async (data?: string) => {
   });
 
   const getYearSpan = async (
-    field: 'duration' | 'createdAt'
+    field: 'duration' | 'createdAt',
   ): Promise<{ start: number; end: number }> => {
     if (field === 'duration') {
       const minRec = await prisma.task.findFirst({
@@ -1300,7 +1301,7 @@ export const fetchAllTaskWithCalculation = async (data?: string) => {
   });
 
   const getYearSpan = async (
-    field: 'duration' | 'createdAt'
+    field: 'duration' | 'createdAt',
   ): Promise<{ start: number; end: number }> => {
     if (field === 'duration') {
       const minRec = await prisma.task.findFirst({

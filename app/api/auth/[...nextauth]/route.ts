@@ -45,7 +45,7 @@ export const authOptions = {
         password: { label: 'Password', type: 'password' },
       },
       async authorize(
-        credentials: Record<'email' | 'password', string> | undefined
+        credentials: Record<'email' | 'password', string> | undefined,
       ): Promise<User | null> {
         if (!credentials) {
           throw new Error('Missing credentials');
@@ -84,8 +84,8 @@ export const authOptions = {
   ],
 
   pages: {
-    signIn: '/signin',
-    error: '/signin',
+    signIn: process.env.NEXT_PUBLIC_APP_URL + '/signin',
+    error: process.env.NEXT_PUBLIC_APP_URL + '/signin',
   },
 
   secret: process.env.NEXT_PUBLIC_AUTH_SECRET,
