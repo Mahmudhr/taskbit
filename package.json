@@ -1,7 +1,10 @@
 {
-  "name": "my-v0-project",
+  "name": "taskbit",
   "version": "0.1.0",
   "private": true,
+  "engines": {
+    "node": ">=20.0.0"
+  },
   "scripts": {
     "build": "prisma generate && npx prisma migrate deploy && next build",
     "start": "npx prisma migrate deploy && next start",
