@@ -154,12 +154,22 @@ export function AppSidebar() {
   ]);
   const canSeeFacebookClient = allowedFacebookEmails.has(userEmail);
 
-  const filteredAdminMenuItems = adminMenuItems.filter(
-    (item) =>
+  const isDevmhimranTaskbit =
+    process.env.NEXT_PUBLIC_DEVMHIMRAN_TASKBIT === 'true';
+
+  const filteredAdminMenuItems = adminMenuItems.filter((item) => {
+    if (isDevmhimranTaskbit) {
+      return (
+        item.url !== '/dashboard/facebook-client' &&
+        item.url !== '/dashboard/correction-lists'
+      );
+    }
+    return (
       (item.url !== '/dashboard/facebook-client' &&
         item.url !== '/dashboard/correction-lists') ||
       canSeeFacebookClient
-  );
+    );
+  });
 
   return (
     <Sidebar>
