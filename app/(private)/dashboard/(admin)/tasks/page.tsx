@@ -41,7 +41,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { useTask } from '@/hooks/use-task';
 import { useDebouncedCallback } from 'use-debounce';
 import UpdateTaskForm from '@/components/forms/update-task-from';
-import { TaskType } from '@/types/common';
+import { Meta, TaskType } from '@/types/common';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -111,6 +111,7 @@ export const getPaymentStatusBadge = (amount: number) => {
 const TaskCard = ({
   task,
   index,
+  meta,
   onEdit,
   onView,
   onDelete,
@@ -118,6 +119,7 @@ const TaskCard = ({
 }: {
   task: TaskType;
   index: number;
+  meta: Meta;
   onEdit: () => void;
   onView: () => void;
   onDelete: () => void;
@@ -132,7 +134,7 @@ const TaskCard = ({
         <div className='flex items-start justify-between'>
           <div className='flex gap-3 flex-1 items-start'>
             <div className='bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-300 rounded-full w-10 h-10 flex items-center justify-center text-sm font-semibold'>
-              #{index + 1}
+              #{(meta.page - 1) * meta.limit + index + 1}
             </div>
             <div className='flex-1 min-w-0'>
               {task.unique_id && (
@@ -384,6 +386,7 @@ const TaskCard = ({
 const TaskRow = ({
   task,
   index,
+  meta,
   onEdit,
   onView,
   onDelete,
@@ -391,6 +394,7 @@ const TaskRow = ({
 }: {
   task: TaskType;
   index: number;
+  meta: Meta;
   onEdit: () => void;
   onView: () => void;
   onDelete: () => void;
@@ -405,7 +409,7 @@ const TaskRow = ({
       <div className='flex items-start justify-between mb-3'>
         <div className='flex items-start gap-3 flex-1'>
           <div className='bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-300 rounded-full w-8 h-8 flex items-center justify-center text-sm font-semibold'>
-            #{index + 1}
+            #{(meta.page - 1) * meta.limit + index + 1}
           </div>
           <div className='flex-1 min-w-0'>
             {task.unique_id && (
@@ -774,7 +778,7 @@ export default function TasksPage() {
     task_create_month: searchParams.get('task_create_month') || '',
   });
   const [searchQuery, setSearchQuery] = useState(
-    searchParams.get('search') || ''
+    searchParams.get('search') || '',
   );
 
   const queryString = generateQueryString(params);
@@ -1328,6 +1332,7 @@ export default function TasksPage() {
                       key={task.id}
                       task={task}
                       index={index}
+                      meta={fetchTasks.meta}
                       onEdit={() => handleEditTask(task)}
                       onView={() => handleViewTask(task)}
                       onDelete={() => {
@@ -1350,6 +1355,7 @@ export default function TasksPage() {
                       <TaskRow
                         key={task.id}
                         task={task}
+                        meta={fetchTasks.meta}
                         index={index}
                         onEdit={() => handleEditTask(task)}
                         onView={() => handleViewTask(task)}
@@ -1387,8 +1393,15 @@ export default function TasksPage() {
           {fetchTasks && fetchTasks?.meta.count > 0 && (
             <div className='flex md:flex-row flex-col items-center md:justify-between justify-center gap-3 py-4 mt-6'>
               <div className='text-sm text-muted-foreground dark:text-gray-400'>
-                Showing 1 to {fetchTasks?.data.length} of{' '}
-                {fetchTasks?.meta.count} results
+                {/* Showing 1 to {fetchTasks?.data.length} of{' '}
+                {fetchTasks?.meta.count} results */}
+                Showing{' '}
+                {(fetchTasks?.meta.page - 1) * fetchTasks?.meta.limit + 1} to{' '}
+                {Math.min(
+                  fetchTasks?.meta.page * fetchTasks?.meta.limit,
+                  fetchTasks?.meta.count,
+                )}{' '}
+                of {fetchTasks?.meta.count} results
               </div>
               <div className='flex items-center space-x-2'>
                 <Button
