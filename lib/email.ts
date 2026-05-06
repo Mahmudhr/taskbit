@@ -19,7 +19,7 @@ export async function sendTaskAssignmentEmail({
   try {
     const { data, error } = await resend.emails.send({
       from: `TaskBit <${
-        process.env.EMAIL_FROM_ADDRESS || 'notifications@zentechventure.com'
+        process.env.EMAIL_FROM_ADDRESS || 'no-reply@insightedu.cloud'
       } >`,
       to: userEmail,
       subject: `New Task Assignment: ${taskTitle}`,
@@ -63,7 +63,7 @@ export async function sendTaskAssignmentEmail({
                         <polyline points="12 6 12 12 16 14"></polyline>
                       </svg>
                       <span style="color: #64748b; font-size: 14px;">Delivery Date: ${dayjs(
-                        duration
+                        duration,
                       ).format('DD MMM YYYY')}</span>
                     </div>
                     `

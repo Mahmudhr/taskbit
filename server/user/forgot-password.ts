@@ -33,7 +33,7 @@ export async function sendForgotPasswordEmail(data: { email: string }) {
 
     const { error } = await resend.emails.send({
       from: `TaskBit <${
-        process.env.EMAIL_FROM_ADDRESS || 'notifications@zentechventure.com'
+        process.env.EMAIL_FROM_ADDRESS || 'no-reply@insightedu.cloud'
       } >`,
       to: email,
       subject: 'Password Reset Code - TaskBit',
@@ -145,7 +145,7 @@ export async function verifyOtpCode(data: { code: string; email: string }) {
         data: { is_valid: false },
       });
       throw new Error(
-        'Verification code has expired. Please request a new one.'
+        'Verification code has expired. Please request a new one.',
       );
     }
 
@@ -183,7 +183,7 @@ export async function resetPassword(data: {
 
     if (!otpRecord) {
       throw new Error(
-        'Your session has expired. Please request a new password reset.'
+        'Your session has expired. Please request a new password reset.',
       );
     }
 
