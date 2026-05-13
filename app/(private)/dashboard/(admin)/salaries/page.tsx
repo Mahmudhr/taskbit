@@ -45,7 +45,7 @@ import {
 import { $Enums } from '@prisma/client';
 import dayjs from 'dayjs';
 import { toast } from 'sonner';
-import { SalaryType, UserType } from '@/types/common';
+import { Meta, SalaryType, UserType } from '@/types/common';
 import { useDebouncedCallback } from 'use-debounce';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -103,11 +103,13 @@ const getPaymentTypeBadge = (type: $Enums.PaymentType) => {
 // Salary card component for mobile view
 const SalaryCard = ({
   salary,
+  meta,
   index,
   setConfirmModal,
   setDeletingSalaryId,
 }: {
   salary: Omit<SalaryType, 'user'> & { user: Partial<UserType> };
+  meta: Meta;
   index: number;
   setConfirmModal: (open: boolean) => void;
   setDeletingSalaryId: (id: number | null) => void;
@@ -144,7 +146,10 @@ const SalaryCard = ({
     <Card className='mb-4'>
       <CardHeader className='pb-3'>
         <div className='flex items-center justify-between'>
-          <CardTitle className='text-lg'>Salary #{index + 1}</CardTitle>
+          <CardTitle className='text-lg'>
+            {' '}
+            #{(meta.page - 1) * meta.limit + index + 1}
+          </CardTitle>
           <div className='flex gap-2'>
             <div className='text-right'>
               <div className='text-lg font-semibold text-green-600'>
@@ -185,7 +190,7 @@ const SalaryCard = ({
       </CardHeader>
       <CardContent className='space-y-3'>
         {/* Employee Info */}
-        <div className='flex items-center gap-2 p-2 bg-blue-50 rounded'>
+        <div className='flex items-center gap-2 p-2 bg-blue-50 dark:bg-blue-50/10 rounded'>
           <User className='h-4 w-4 text-blue-600' />
           <div>
             <div className='font-medium text-sm'>{salary.user.name}</div>
@@ -266,7 +271,7 @@ export default function SalariesPage() {
   });
 
   const [searchQuery, setSearchQuery] = useState(
-    searchParams.get('search') || ''
+    searchParams.get('search') || '',
   );
 
   const queryString = generateQueryString(params);
@@ -641,7 +646,11 @@ export default function SalariesPage() {
                       {allSalaries?.data.map((salary, index) => (
                         <TableRow key={salary.id}>
                           <TableCell className='font-medium'>
-                            #{index + 1}
+                            #
+                            {(allSalaries.meta.page - 1) *
+                              allSalaries.meta.limit +
+                              index +
+                              1}
                           </TableCell>
                           <TableCell>
                             <div>
@@ -659,7 +668,7 @@ export default function SalariesPage() {
                           <TableCell>
                             {new Date(0, salary.month - 1).toLocaleString(
                               'default',
-                              { month: 'short' }
+                              { month: 'short' },
                             )}{' '}
                             {salary.year}
                           </TableCell>
@@ -744,6 +753,7 @@ export default function SalariesPage() {
                   <SalaryCard
                     key={salary.id}
                     salary={salary}
+                    meta={allSalaries.meta}
                     index={index}
                     setConfirmModal={setConfirmModal}
                     setDeletingSalaryId={setDeletingSalaryId}
@@ -761,10 +771,12 @@ export default function SalariesPage() {
           {allSalaries && allSalaries?.meta.count > 0 && (
             <div className='flex md:flex-row flex-col items-center md:justify-between justify-center gap-3 py-4'>
               <div className='text-sm text-muted-foreground'>
-                {allSalaries &&
-                  ` Showing ${params.page} to ${
-                    allSalaries.meta.page * allSalaries.data.length
-                  } of ${allSalaries.meta.count} results`}
+                {(allSalaries?.meta.page - 1) * allSalaries?.meta.limit + 1} to{' '}
+                {Math.min(
+                  allSalaries?.meta.page * allSalaries?.meta.limit,
+                  allSalaries?.meta.count,
+                )}{' '}
+                of {allSalaries?.meta.count} results
               </div>
               <div className='flex items-center space-x-2'>
                 <Button

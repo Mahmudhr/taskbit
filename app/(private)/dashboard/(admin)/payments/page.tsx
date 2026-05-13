@@ -87,7 +87,7 @@ export default function PaymentsPage() {
     year: searchParams.get('year') || '',
   });
   const [searchQuery, setSearchQuery] = useState(
-    searchParams.get('search') || ''
+    searchParams.get('search') || '',
   );
   const queryString = generateQueryString(params);
   const {
@@ -96,6 +96,8 @@ export default function PaymentsPage() {
     fetchPaymentsCalculationMutation,
     deletePaymentAsync,
   } = usePayment(queryString);
+
+  console.log({ fetchPayments });
 
   const debounced = useDebouncedCallback((value) => {
     setParams((prevParams) => ({
@@ -303,7 +305,13 @@ export default function PaymentsPage() {
                   {fetchPayments &&
                     fetchPayments.data.map((payment, index) => (
                       <TableRow key={payment.id}>
-                        <TableCell>{index + 1}</TableCell>
+                        <TableCell>
+                          #
+                          {(fetchPayments.meta.page - 1) *
+                            fetchPayments.meta.limit +
+                            index +
+                            1}
+                        </TableCell>
                         <TableCell className='font-medium'>
                           {payment.referenceNumber}
                         </TableCell>
@@ -377,7 +385,11 @@ export default function PaymentsPage() {
                   <div className='flex justify-between items-start mb-3'>
                     <div className='flex items-center gap-2'>
                       <span className='text-sm text-muted-foreground'>
-                        #{index + 1}
+                        #{' '}
+                        {(fetchPayments.meta.page - 1) *
+                          fetchPayments.meta.limit +
+                          index +
+                          1}
                       </span>
                       <span className='font-medium'>
                         {payment.referenceNumber}
@@ -441,8 +453,14 @@ export default function PaymentsPage() {
             <div className='flex md:flex-row flex-col items-center md:justify-between justify-center gap-3 py-4'>
               {
                 <div className='text-sm text-muted-foreground'>
-                  Showing 1 to {fetchPayments.data.length} of{' '}
-                  {fetchPayments.meta.count} results
+                  {(fetchPayments?.meta.page - 1) * fetchPayments?.meta.limit +
+                    1}{' '}
+                  to{' '}
+                  {Math.min(
+                    fetchPayments?.meta.page * fetchPayments?.meta.limit,
+                    fetchPayments?.meta.count,
+                  )}{' '}
+                  of {fetchPayments?.meta.count} results
                 </div>
               }
               <div className='flex items-center space-x-2'>

@@ -353,7 +353,11 @@ export default function UsersPage() {
                   {fetchUsers &&
                     fetchUsers.data.map((user, index) => (
                       <TableRow key={user.id}>
-                        <TableCell>{index + 1}</TableCell>
+                        <TableCell>
+                          {(fetchUsers.meta.page - 1) * fetchUsers.meta.limit +
+                            index +
+                            1}
+                        </TableCell>
                         <TableCell className='font-medium'>
                           {user.name}
                         </TableCell>
@@ -436,7 +440,10 @@ export default function UsersPage() {
                     <div className='flex justify-between items-start mb-3'>
                       <div className='flex items-start gap-2'>
                         <span className='text-sm text-muted-foreground'>
-                          #{index + 1}
+                          #
+                          {(fetchUsers.meta.page - 1) * fetchUsers.meta.limit +
+                            index +
+                            1}
                         </span>
                         <h3 className='font-medium'>{user.name}</h3>
                       </div>
@@ -527,10 +534,12 @@ export default function UsersPage() {
           {fetchUsers && fetchUsers?.meta.count > 0 && (
             <div className='flex md:flex-row flex-col items-center md:justify-between justify-center gap-3 py-4'>
               <div className='text-sm text-muted-foreground'>
-                {fetchUsers &&
-                  ` Showing ${params.page} to ${
-                    fetchUsers.meta.page * fetchUsers.data.length
-                  } of ${fetchUsers.meta.count} results`}
+                {(fetchUsers.meta.page - 1) * fetchUsers.meta.limit + 1} to{' '}
+                {Math.min(
+                  fetchUsers.meta.page * fetchUsers.meta.limit,
+                  fetchUsers.meta.count,
+                )}{' '}
+                of {fetchUsers.meta.count} results
               </div>
               <div className='flex items-center space-x-2'>
                 <Button

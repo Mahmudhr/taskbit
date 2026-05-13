@@ -1,6 +1,7 @@
 import type React from 'react';
 import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
+// @ts-expect-error CSS module side-effect import
 import './globals.css';
 import { ThemeProvider } from '@/components/theme-provider';
 import { Suspense } from 'react';
@@ -21,10 +22,11 @@ export default function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
+  console.log({ url: process.env.DATABASE_URL });
   return (
     <html lang='en' suppressHydrationWarning>
       <body
-        className={`${inter.className} antialiased`}
+        className={`${inter.className} antialiased bg-blue-200`}
         suppressHydrationWarning
       >
         <Suspense fallback={<Loading />}>

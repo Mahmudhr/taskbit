@@ -47,7 +47,7 @@ import {
   useFetchAllExpenses,
   useFetchExpenseCalculation,
 } from '@/hooks/use-expense';
-import { ExpensesType } from '@/types/common';
+import { ExpensesType, Meta } from '@/types/common';
 import AlertModal from '@/components/alert-modal';
 import CreateExpenseForm from '@/components/forms/create-expense-form';
 import { useRouter, useSearchParams } from 'next/navigation';
@@ -64,6 +64,7 @@ import ExpenseCardSkeleton from '@/components/skeletons/expense-table-card-skele
 // Expense Card Component for Mobile
 const ExpenseCard = ({
   expense,
+  meta,
   index,
   setSelectedExpense,
   setIsOpen,
@@ -71,6 +72,7 @@ const ExpenseCard = ({
   setSelectedExpenseId,
 }: {
   expense: ExpensesType;
+  meta: Meta;
   index: number;
   setIsOpen: (open: boolean) => void;
   setSelectedExpense: (expense: ExpensesType | null) => void;
@@ -83,15 +85,12 @@ const ExpenseCard = ({
         <div className='flex items-start justify-between mb-3'>
           <div className='flex items-center space-x-3'>
             <div className='w-10 h-10 bg-gradient-to-r from-green-500 to-green-600 rounded-full flex items-center justify-center text-white font-semibold text-sm'>
-              #
+              #{(meta.page - 1) * meta.limit + index + 1}
             </div>
             <div>
               <h3 className='font-semibold text-gray-900 dark:text-gray-200'>
                 {expense.title}
               </h3>
-              <p className='text-sm text-gray-500 dark:text-gray-200'>
-                ID: #{index + 1}
-              </p>
             </div>
           </div>
           <div className='text-right'>
@@ -151,6 +150,7 @@ const ExpenseCard = ({
 // Table Row Component
 const ExpenseTableRow = ({
   expense,
+  meta,
   index,
   setSelectedExpense,
   setIsOpen,
@@ -158,6 +158,7 @@ const ExpenseTableRow = ({
   setSelectedExpenseId,
 }: {
   expense: ExpensesType;
+  meta: Meta;
   index: number;
   setIsOpen: (open: boolean) => void;
   setSelectedExpense: (expense: ExpensesType | null) => void;
@@ -166,7 +167,9 @@ const ExpenseTableRow = ({
 }) => {
   return (
     <TableRow>
-      <TableCell className='font-medium'>#{index + 1}</TableCell>
+      <TableCell className='font-medium'>
+        #{(meta.page - 1) * meta.limit + index + 1}
+      </TableCell>
       <TableCell className='font-medium'>{expense.title}</TableCell>
       <TableCell className='font-semibold text-green-600'>
         ৳ {expense.amount.toLocaleString()}
@@ -218,17 +221,17 @@ export default function ExpensePage() {
   const [dateFilter, setDateFilter] = useState('ALL');
   const [openCreateExpense, setOpenCreateExpense] = useState(false);
   const [selectedExpense, setSelectedExpense] = useState<ExpensesType | null>(
-    null
+    null,
   );
   const [openUpdateExpense, setOpenUpdateExpense] = useState(false);
   const [searchQuery, setSearchQuery] = useState(
-    searchParams.get('search') || ''
+    searchParams.get('search') || '',
   );
   const [isPending, startTransition] = useTransition();
 
   const [confirmModal, setConfirmModal] = useState(false);
   const [selectedExpenseId, setSelectedExpenseId] = useState<number | null>(
-    null
+    null,
   );
 
   const { deleteExpenseMutationAsync } = useExpenses();
@@ -667,13 +670,14 @@ export default function ExpensePage() {
                               <ExpenseTableRow
                                 key={expense.id}
                                 expense={expense}
+                                meta={expensesData.meta}
                                 index={index}
                                 setSelectedExpense={setSelectedExpense}
                                 setIsOpen={setOpenUpdateExpense}
                                 setConfirmDelete={setConfirmModal}
                                 setSelectedExpenseId={setSelectedExpenseId}
                               />
-                            )
+                            ),
                           )}
                       </TableBody>
                     </Table>
@@ -717,13 +721,14 @@ export default function ExpensePage() {
                       <ExpenseCard
                         key={expense.id}
                         expense={expense}
+                        meta={expensesData.meta}
                         index={index}
                         setSelectedExpense={setSelectedExpense}
                         setIsOpen={setOpenUpdateExpense}
                         setConfirmDelete={setConfirmModal}
                         setSelectedExpenseId={setSelectedExpenseId}
                       />
-                    )
+                    ),
                   )}
               </div>
             ) : (
@@ -739,10 +744,12 @@ export default function ExpensePage() {
       {expensesData && expensesData?.meta.count > 0 && (
         <div className='flex md:flex-row flex-col items-center md:justify-between justify-center gap-3 py-4'>
           <div className='text-sm text-muted-foreground'>
-            {expensesData &&
-              ` Showing ${params.page} to ${
-                expensesData.meta.page * expensesData.data.length
-              } of ${expensesData.meta.count} results`}
+            {(expensesData?.meta.page - 1) * expensesData?.meta.limit + 1} to{' '}
+            {Math.min(
+              expensesData?.meta.page * expensesData?.meta.limit,
+              expensesData?.meta.count,
+            )}{' '}
+            of {expensesData?.meta.count} results
           </div>
           <div className='flex items-center space-x-2'>
             <Button
