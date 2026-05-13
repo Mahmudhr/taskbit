@@ -22,11 +22,10 @@ export default function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
-  console.log({ url: process.env.DATABASE_URL });
   return (
     <html lang='en' suppressHydrationWarning>
       <body
-        className={`${inter.className} antialiased bg-blue-200`}
+        className={`${inter.className} antialiased`}
         suppressHydrationWarning
       >
         <Suspense fallback={<Loading />}>
