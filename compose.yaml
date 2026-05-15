@@ -27,6 +27,7 @@ services:
 
       - RESEND_API_KEY=${RESEND_API_KEY}
       - EMAIL_FROM_ADDRESS=${EMAIL_FROM_ADDRESS}
+      - NEXT_PUBLIC_SHEET_URL=${NEXT_PUBLIC_SHEET_URL}
     depends_on:
       - db
 

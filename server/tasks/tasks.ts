@@ -8,6 +8,7 @@ import {
 } from '../types/tasks-type';
 import { catchError, generateUniqueId } from '@/lib/utils';
 import { sendTaskAssignmentEmail } from '@/lib/email';
+import dayjs from 'dayjs';
 
 export async function createTasks(data: CreateTaskType) {
   const {
@@ -120,6 +121,59 @@ export async function createTasks(data: CreateTaskType) {
 
       return newTask;
     });
+
+    const GOOGLE_SHEET_URL = process.env.NEXT_PUBLIC_SHEET_URL;
+    if (GOOGLE_SHEET_URL) {
+      try {
+        const fullTask = await prisma.task.findUnique({
+          where: { id: result.id },
+          include: {
+            client: true,
+            createdBy: true,
+            taskAssignments: { include: { user: true } },
+          },
+        });
+
+        if (fullTask) {
+          const DATE_FORMAT = 'DD-MM-YY';
+          const sheetData = {
+            tasks: [
+              {
+                title: fullTask.title,
+                description: fullTask.description || '',
+                paper_type: fullTask.paper_type || '',
+                note: fullTask.note || '',
+                amount: fullTask.amount,
+                status: fullTask.status,
+                client: fullTask.client?.name || 'N/A',
+                created_at: dayjs(fullTask.createdAt).format(DATE_FORMAT),
+                // Changed from duration to delivery_date to match your Script headers
+                delivery_date: fullTask.duration
+                  ? dayjs(fullTask.duration).format(DATE_FORMAT)
+                  : '',
+                startDate: fullTask.startDate
+                  ? dayjs(fullTask.startDate).format(DATE_FORMAT)
+                  : '',
+                unique_id: fullTask.unique_id || '',
+                assign: fullTask.taskAssignments
+                  .map((a) => a.user.name)
+                  .join(', '),
+                created_by: fullTask.createdBy?.name || 'System',
+              },
+            ],
+          };
+
+          fetch(GOOGLE_SHEET_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(sheetData),
+            keepalive: true,
+          }).catch((err) => console.error('Single Task Sync Error:', err));
+        }
+      } catch (error) {
+        console.error('Sheet Sync Setup Error:', error);
+      }
+    }
 
     return {
       success: true,
